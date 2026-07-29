@@ -43,6 +43,11 @@ class ProfileScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(Icons.settings_outlined, size: 20, color: AppColors.black),
+
+
+
+
+
                     SizedBox(width: 12),
                     Text("Settings", style: TextStyle(fontSize: 14)),
                   ],
