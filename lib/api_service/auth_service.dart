@@ -1,0 +1,80 @@
+import 'package:dio/dio.dart';
+import 'package:teacher_app_attendance/utils/api_url.dart';
+import 'package:teacher_app_attendance/utils/dio_client.dart';
+
+import '../models/login_models.dart';
+import '../services/device_service.dart';
+
+
+import '../services/storage_services.dart';
+
+class AuthService {
+
+  Future<bool> sendOtp({required String mobile}) async {
+    try {
+      final url = ApiUrls.otpRequest;
+
+      final device = await DeviceService.getDeviceInfo();
+
+      print("REQUEST OTP API HIT");
+      print("URL: $url");
+      print("MOBILE: $mobile");
+
+      final response = await DioClient.dio.post(
+        url,
+        data: {
+          "whatsapp_number": mobile,
+          "device_uuid": device["device_uuid"],
+          "device_name": device["device_name"],
+          "device_os": device["device_os"],
+        },
+      );
+
+      return response.data["success"] == true;
+    } on DioException catch (e) {
+      throw e.response?.data["message"] ?? "Failed to send OTP";
+    }
+  }
+
+  Future<LoginModel> verifyOtp({
+    required String mobile,
+    required String otp,
+  }) async {
+    try {
+      final url = ApiUrls.verifyOtp;
+
+      final device = await DeviceService.getDeviceInfo();
+
+      final response = await DioClient.dio.post(
+        url,
+        data: {
+          "whatsapp_number": mobile,
+          "otp_code": otp,
+          "device_uuid": device["device_uuid"],
+          "device_name": device["device_name"],
+          "device_os": device["device_os"],
+        },
+      );
+
+      return LoginModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data["message"] ?? "OTP verification failed";
+    }
+  }
+
+  Future<bool> logout() async {
+    try {
+      final url = "${ApiUrls.baseUrl}/auth/logout";
+
+      final response = await DioClient.dio.post(url);
+
+      if (response.statusCode == 200) {
+        await StorageService.clearToken();
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      throw "Logout failed";
+    }
+  }}
