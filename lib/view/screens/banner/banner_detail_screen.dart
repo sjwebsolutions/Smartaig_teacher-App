@@ -54,12 +54,12 @@ class BannerDetailScreen extends StatelessWidget {
             ),
           ),
           
-          // Top Bar (Back & Share)
+          // Top Bar (Back)
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   CircleAvatar(
                     backgroundColor: Colors.black.withOpacity(0.5),
@@ -68,22 +68,57 @@ class BannerDetailScreen extends StatelessWidget {
                       onPressed: () => Get.back(),
                     ),
                   ),
-                  CircleAvatar(
-                    backgroundColor: Colors.black.withOpacity(0.5),
-                    child: IconButton(
-                      icon: const Icon(Icons.share, color: Colors.white),
-                      onPressed: () {
-                        if (banner.imageUrl != null) {
-                          ShareService.shareBanner(
-                            banner.imageUrl!,
-                            banner.name,
-                            banner.wishing,
-                          );
-                        }
-                      },
-                    ),
-                  ),
                 ],
+              ),
+            ),
+          ),
+
+          // Bottom Share Button
+          Positioned(
+            bottom: 40,
+            left: 20,
+            right: 20,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () {
+                  if (banner.imageUrl != null) {
+                    ShareService.shareBanner(
+                      banner.imageUrl!,
+                      banner.name,
+                      banner.wishing,
+                    );
+                  }
+                },
+                child: Container(
+                  height: 55,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.share_rounded, color: Colors.white, size: 22),
+                      SizedBox(width: 12),
+                      Text(
+                        "Share with Others",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

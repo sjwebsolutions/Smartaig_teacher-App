@@ -18,33 +18,47 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Light greyish background for the screen
-      appBar: AppTopBar(
-        backgroundColor: Colors.white,
-        showBack: true,
-        showDivider: true,
-        customTitle: Text("View Marks ", style: AppTextStyles.appbarh4.copyWith(color: const Color(0xFF1A237E))),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Light greyish background for the screen
+        appBar: AppTopBar(
+          backgroundColor: Colors.transparent,
+          showBack: false,
+          showDivider: true,
+          customTitle: Text("Marks Screen", style: AppTextStyles.appbarh4),
+        ),
       body: Obx(() {
         if (marksController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildExamCategoryDropdown(),
-            ),
-            Expanded(
-              child: marksController.isClassesLoading.value
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildClassList(),
-            ),
-          ],
+        return RefreshIndicator(
+          onRefresh: () async => marksController.fetchMarksEntries(),
+          color: AppColors.primary,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 5),
+                  child: _buildExamCategoryDropdown(),
+                ),
+              ),
+              marksController.isClassesLoading.value
+                  ? const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : _buildSliverClassList(),
+            ],
+          ),
         );
       }),
-    );
+    ));
   }
 
   Widget _buildExamCategoryDropdown() {
@@ -125,135 +139,138 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
     );
   }
 
-  Widget _buildClassList() {
+  Widget _buildSliverClassList() {
     final classes = marksController.uniqueClasses;
 
     if (classes.isEmpty) {
-      return const Center(child: Text("No classes found"));
+      return const SliverFillRemaining(
+        child: Center(child: Text("No classes found")),
+      );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => marksController.fetchMarksEntries(),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: classes.length,
-        itemBuilder: (context, index) {
-          final classData = classes[index];
-          final classId = classData.classId ?? "";
-          final sections = marksController.marksEntryClasses.where((s) => s.classId == classId).toList();
-          final className = classData.className ?? "N/A";
-          
-          int totalSections = sections.length;
-          int addedSections = sections.where((s) => s.isLocked == true).length;
-          int pendingSections = totalSections - addedSections;
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final classData = classes[index];
+            final classId = classData.classId ?? "";
+            final sections = marksController.marksEntryClasses.where((s) => s.classId == classId).toList();
+            final className = classData.className ?? "N/A";
+            
+            int totalSections = sections.length;
+            int addedSections = sections.where((s) => s.isLocked == true).length;
+            int pendingSections = totalSections - addedSections;
 
-          int totalStudents = 0;
-          int markedStudents = 0;
-          for (var s in sections) {
-            markedStudents += s.added ?? 0;
-            totalStudents += s.totalStudents ?? 0;
-          }
+            int totalStudents = 0;
+            int markedStudents = 0;
+            for (var s in sections) {
+              markedStudents += s.added ?? 0;
+              totalStudents += s.totalStudents ?? 0;
+            }
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
-              border: Border.all(color: const Color(0xFFE0E4EC)),
-            ),
-            child: InkWell(
-              onTap: () {
-                marksController.selectedClassId.value = classId;
-                Get.toNamed('/marksEntry');
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Class: $className",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A237E),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F2F8),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            "Total Section: $totalSections",
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+                border: Border.all(color: const Color(0xFFE0E4EC)),
+              ),
+              child: InkWell(
+                onTap: () {
+                  marksController.selectedClassId.value = classId;
+                  Get.toNamed('/marksEntry');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Class: $className",
                             style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF5C6BC0),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1A237E),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem("Added", addedSections.toString(), const Color(0xFF4CAF50)),
-                        _buildStatItem("Pending", pendingSections.toString(), const Color(0xFFE53935)),
-                        _buildStatItem("Total", totalSections.toString(), const Color(0xFFFFA000)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            style: const TextStyle(fontSize: 13, color: Colors.black87),
-                            children: [
-                              const TextSpan(text: "Marked: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                              TextSpan(text: "$markedStudents/$totalStudents"),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: (addedSections == totalSections && totalSections > 0) ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            addedSections == totalSections && totalSections > 0 ? 'Completed' : 'In Progress',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: (addedSections == totalSections && totalSections > 0) ? Colors.green : Colors.blue,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F2F8),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              "Total Section: $totalSections",
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF5C6BC0),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem("Added", addedSections.toString(), const Color(0xFF4CAF50)),
+                          _buildStatItem("Pending", pendingSections.toString(), const Color(0xFFE53935)),
+                          _buildStatItem("Total", totalSections.toString(), const Color(0xFFFFA000)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 12, color: Colors.black87),
+                              children: [
+                                const TextSpan(text: "Marked: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                TextSpan(text: "$markedStudents/$totalStudents"),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: (addedSections == totalSections && totalSections > 0) ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              addedSections == totalSections && totalSections > 0 ? 'Completed' : 'In Progress',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: (addedSections == totalSections && totalSections > 0) ? Colors.green : Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+          childCount: classes.length,
+        ),
       ),
     );
   }
@@ -264,16 +281,16 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
         Text(
           value,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w800,
             color: color,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             color: Colors.grey.shade600,
             fontWeight: FontWeight.w500,
           ),

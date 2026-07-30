@@ -40,9 +40,9 @@ class BannerController extends GetxController {
     });
   }
 
-  Future<void> fetchBanners() async {
+  Future<void> fetchBanners({bool showLoading = true}) async {
     try {
-      isLoading.value = true;
+      if (showLoading) isLoading.value = true;
       final result = await _bannerServices.getBanners();
       
       if (result.banners != null) {

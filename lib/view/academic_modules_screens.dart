@@ -17,7 +17,7 @@ class AcademicModuleGrid extends StatelessWidget {
       ModuleItem(
           title: "Attendance",
           icon: Icons.assignment_turned_in_rounded,
-          color: AppColors.primary,
+          color: const Color(0xFF6366F1), // Indigo
           isEnabled: true,
           onTap: () {
             Get.toNamed('/classList');
@@ -25,7 +25,7 @@ class AcademicModuleGrid extends StatelessWidget {
       ModuleItem(
           title: "Homework",
           icon: Icons.menu_book_rounded,
-          color: AppColors.primary,
+          color: const Color(0xFFF59E0B), // Amber
           isEnabled: true,
           onTap: () {
             mainController.changeIndex(1);
@@ -33,15 +33,15 @@ class AcademicModuleGrid extends StatelessWidget {
       ModuleItem(
           title: "Marks Entry",
           icon: Icons.edit_note_rounded,
-          color: AppColors.primary,
+          color: const Color(0xFF10B981), // Emerald
           isEnabled: true,
           onTap: () {
-            Get.toNamed('/viewMarks');
+            mainController.changeIndex(2);
           }),
       ModuleItem(
           title: "Banners",
           icon: Icons.image_rounded,
-          color: AppColors.primary,
+          color: const Color(0xFFEC4899), // Pink
           isEnabled: true,
           onTap: () {
             if (Get.isRegistered<BannerController>()) {
@@ -49,12 +49,6 @@ class AcademicModuleGrid extends StatelessWidget {
             }
             Get.toNamed('/banners');
           }),
-      ModuleItem(
-          title: "Performance",
-          icon: Icons.analytics_rounded,
-          color: AppColors.primary.withValues(alpha: 0.08),
-          isEnabled: false,
-          onTap: () {}),
     ];
 
     return GridView.builder(
@@ -63,9 +57,9 @@ class AcademicModuleGrid extends StatelessWidget {
       itemCount: modules.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        mainAxisSpacing: 0,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.15,
+        mainAxisSpacing: 15,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.85,
       ),
       itemBuilder: (context, index) {
         final item = modules[index];
@@ -74,38 +68,51 @@ class AcademicModuleGrid extends StatelessWidget {
           children: [
             InkWell(
               onTap: item.onTap,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(22),
               child: Container(
-                height: 60,
-                width: 60,
+                height: 65,
+                width: 65,
                 decoration: BoxDecoration(
                   color: AppColors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: item.color.withValues(alpha: 0.15),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     )
-                  ]
+                  ],
+                  border: Border.all(
+                    color: item.color.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
                 ),
-                child: Icon(
-                  item.icon,
-                  color: item.color,
-                  size: 28,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: item.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      item.icon,
+                      color: item.color,
+                      size: 26,
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               item.title,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.body.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: item.color,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.black.withValues(alpha: 0.7),
               ),
             ),
           ],

@@ -19,247 +19,253 @@ class ProfileScreen extends StatelessWidget {
     final profileController = Get.put(ProfileController());
     final authController = Get.find<AuthController>();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppTopBar(
-        title: "Profile",
-        showBack: false,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        showDivider: false,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, color: AppColors.primary),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        appBar: AppTopBar(
+          title: "Profile",
+          showBack: false,
+          backgroundColor: Colors.transparent,
+          leadingWidgets: PopupMenuButton<String>(
+            offset: const Offset(0, 55),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (value) {
-              if (value == 'setting') {
-                // Navigate to setting index in main screen or setting screen
-              } else if (value == 'logout') {
+              if (value == 'logout') {
                 _showLogoutDialog(context, authController);
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
-                value: 'setting',
+                value: 'settings',
                 child: Row(
                   children: [
-                    Icon(Icons.settings_outlined, size: 20, color: AppColors.black),
-
-
-
-
-
+                    Icon(Icons.settings_rounded, size: 18, color: AppColors.primary),
                     SizedBox(width: 12),
-                    Text("Settings", style: TextStyle(fontSize: 14)),
+                    Text("Settings", style: TextStyle(fontSize: 14, color: AppColors.black, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
+              const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout_rounded, size: 20, color: AppColors.red),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.red.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.logout_rounded, size: 16, color: AppColors.red),
+                    ),
                     const SizedBox(width: 12),
-                    Text("Logout", style: TextStyle(fontSize: 14, color: AppColors.red, fontWeight: FontWeight.w600)),
+                    const Text("Logout", style: TextStyle(fontSize: 15, color: AppColors.red, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
             ],
+            child: const Icon(Icons.menu_rounded, color: AppColors.primary, size: 24),
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      extendBodyBehindAppBar: true,
-      body: Obx(() {
-        final teacher = dashboardController.dashboard.value?.data?.teacher;
+          actions: [
+            IconButton(
+              onPressed: () {
+                final teacher = dashboardController.dashboard.value?.data?.teacher;
+                if (teacher != null) {
+                  _showMyQRCode(context, teacher);
+                }
+              },
+              icon: const Icon(Icons.qr_code_rounded, color: AppColors.primary, size: 20),
+            ),
+          ],
+        ),
+        body: Obx(() {
+          final teacher = dashboardController.dashboard.value?.data?.teacher;
 
-        if (teacher == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+          if (teacher == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              // Header Section with Gradient
-              Stack(
+          return RefreshIndicator(
+            onRefresh: () => dashboardController.fetchDashboard(),
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
                 children: [
-                  Container(
-                    height: 220,
-                    decoration: BoxDecoration(
-                      gradient: AppGradients.primary(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(40),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 100),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          // Profile Image with Edit option
-                          Stack(
-                            children: [
-                              Obx(() => Container(
-                                width: 140,
-                                height: 140,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.white, width: 5),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
+                  const SizedBox(height: 20),
+                  // Profile Section (Header)
+                  Center(
+                    child: Column(
+                      children: [
+                        // Profile Image with Edit option
+                        Stack(
+                          children: [
+                            Obx(() => Container(
+                              width: 110,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                border: Border.all(color: Colors.white, width: 4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: profileController.isImageUpdating.value
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : ClipOval(
+                                      child: (profileController.selectedImagePath.isNotEmpty)
+                                          ? Image.file(
+                                              File(profileController.selectedImagePath.value),
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                            )
+                                          : (teacher.image != null && teacher.image!.isNotEmpty)
+                                              ? CachedNetworkImage(
+                                                  imageUrl: teacher.image!,
+                                                  fit: BoxFit.cover,
+                                                  width: double.infinity,
+                                                  height: double.infinity,
+                                                  placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 60),
+                                                  errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 60),
+                                                )
+                                              : const Icon(Icons.person, color: AppColors.primary, size: 60),
                                     ),
-                                  ],
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: profileController.isImageUpdating.value
-                                    ? const Center(child: CircularProgressIndicator())
-                                    : (profileController.selectedImagePath.isNotEmpty)
-                                        ? Image.file(File(profileController.selectedImagePath.value), fit: BoxFit.cover)
-                                        : (teacher.image != null && teacher.image!.isNotEmpty)
-                                            ? CachedNetworkImage(
-                                                imageUrl: teacher.image!,
-                                                fit: BoxFit.cover,
-                                                placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 80),
-                                                errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 80),
-                                              )
-                                            : const Icon(Icons.person, color: AppColors.primary, size: 80),
-                              )),
-                              Positioned(
-                                bottom: 5,
-                                right: 5,
-                                child: GestureDetector(
-                                  onTap: () => _showImageSourceDialog(context, profileController),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 3),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                            )),
+                            Positioned(
+                              bottom: 0,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () => _showImageSourceDialog(context, profileController),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit_rounded,
+                                    color: AppColors.primary,
+                                    size: 16,
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-                          Text(
-                            teacher.name ?? "No Name",
-                            style: AppTextStyles.body.copyWith(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.black,
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          teacher.name ?? "No Name",
+                          style: AppTextStyles.body.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.black,
                           ),
-                          const SizedBox(height: 5),
-                          Text(
-                            teacher.staffType ?? "Teacher",
-                            style: AppTextStyles.body.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.black.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
+                  
+                  const SizedBox(height: 30),
+                  
+                  // Info Section
+                  _buildInfoSection(teacher),
+                  
+                  const SizedBox(height: 50),
                 ],
               ),
-              
-              const SizedBox(height: 30),
-              
-              // Info Section
-              _buildInfoSection(teacher),
-              
-              const SizedBox(height: 50),
-            ],
-          ),
-        );
-      }),
+            ),
+          );
+        }),
+      ),
     );
   }
 
   Widget _buildInfoSection(var teacher) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          _buildInfoTile(Icons.email_rounded, "Email Address", teacher.email ?? "Not Available"),
-          _divider(),
-          _buildInfoTile(Icons.phone_android_rounded, "Phone Number", teacher.phone ?? "Not Available"),
-          _divider(),
-          _buildInfoTile(Icons.badge_rounded, "Designation", teacher.staffType ?? "Not Available"),
-          _divider(),
-          _buildInfoTile(Icons.school_rounded, "School ID", teacher.schoolId?.toString() ?? "Not Available"),
-          _divider(),
-          _buildInfoTile(Icons.fingerprint_rounded, "Teacher ID", teacher.teacherUniqueId?.toString() ?? "Not Available"),
-          _divider(),
-          _buildInfoTile(Icons.person_outline_rounded, "Employee ID", teacher.id?.toString() ?? "Not Available"),
+          _buildInfoCard(Icons.email_outlined, "Email Address", teacher.email ?? "Not Available"),
+          const SizedBox(height: 5),
+          _buildInfoCard(Icons.phone_iphone_rounded, "Phone Number", teacher.phone ?? "Not Available"),
+          const SizedBox(height: 5),
+          _buildInfoCard(Icons.assignment_ind_outlined, "Designation", teacher.staffType ?? "Not Available"),
+          const SizedBox(height: 5),
+          _buildInfoCard(Icons.account_balance_outlined, "School ID", teacher.schoolId?.toString() ?? "Not Available"),
+          const SizedBox(height: 5),
+          _buildInfoCard(Icons.tag_rounded, "Teacher ID", teacher.teacherUniqueId?.toString() ?? "Not Available"),
+          const SizedBox(height: 5),
+          _buildInfoCard(Icons.badge_outlined, "Employee ID", teacher.id?.toString() ?? "Not Available"),
         ],
       ),
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+  Widget _buildInfoCard(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(15),
+              color: AppColors.primary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 22),
+            child: Icon(icon, color: AppColors.primary, size: 20),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  label.toUpperCase(),
                   style: TextStyle(
-                    color: AppColors.black.withValues(alpha: 0.4),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[400],
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: TextStyle(
-                    color: AppColors.black.withValues(alpha: 0.9),
-                    fontSize: 16,
+                  style: const TextStyle(
+                    color: AppColors.black,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -272,40 +278,34 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _divider() {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      color: AppColors.grey.withValues(alpha: 0.03),
-      indent: 75,
-      endIndent: 20,
-    );
+    return const SizedBox.shrink();
   }
 
   void _showImageSourceDialog(BuildContext context, ProfileController controller) {
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(35)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 50,
-              height: 5,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 15),
             const Text(
               "Update Profile Photo",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -327,7 +327,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -343,7 +343,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(25),
+              shape: BoxShape.circle,
             ),
             child: Icon(icon, color: AppColors.primary, size: 32),
           ),
@@ -353,6 +353,163 @@ class ProfileScreen extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showMyQRCode(BuildContext context, var teacher) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top Header with Gradient
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, Color(0xFF3D4E81)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Teacher ID Pass",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Get.back(),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(30),
+                child: Column(
+                  children: [
+                    // QR Code Area
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.08), width: 1.5),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.qr_code_2_rounded,
+                            size: 180,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              teacher.teacherUniqueId ?? "ID-N/A",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Teacher Info
+                    Text(
+                      teacher.name?.toUpperCase() ?? "TEACHER NAME",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      teacher.staffType ?? "Department",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Footer Tip
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.green.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.green),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "Scan for Daily Attendance",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

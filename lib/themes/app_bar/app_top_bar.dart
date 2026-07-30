@@ -14,6 +14,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leadingWidgets;
   final bool showDivider;
   final Color? backgroundColor;
+  final bool? centerTitle;
 
   const AppTopBar({
     super.key,
@@ -24,6 +25,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingWidgets,
     this.showDivider= true,
     this.backgroundColor,
+    this.centerTitle,
   });
 
   @override
@@ -33,6 +35,10 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: backgroundColor ?? AppColors.neutral,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      centerTitle: centerTitle,
 
       leading: showBack || leadingWidgets != null
           ? Padding(
