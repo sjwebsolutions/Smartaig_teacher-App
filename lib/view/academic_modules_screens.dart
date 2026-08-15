@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../themes/appColors_&_styles/text_styles.dart';
-import 'grid_module_item.dart';
 import 'package:get/get.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../controller/main_controller.dart';
 import '../controller/banner_controller.dart';
+import 'grid_module_item.dart';
+import 'syllabus_screen.dart';
 
 class AcademicModuleGrid extends StatelessWidget {
   const AcademicModuleGrid({super.key});
@@ -49,17 +49,44 @@ class AcademicModuleGrid extends StatelessWidget {
             }
             Get.toNamed('/banners');
           }),
+      ModuleItem(
+          title: "Syllabus",
+          icon: Icons.library_books_rounded,
+          color: const Color(0xFF8B5CF6), // Violet
+          isEnabled: true,
+          onTap: () {
+            Get.to(() => const SyllabusScreen());
+          }),
+      ModuleItem(
+          title: "Upload Image",
+          icon: Icons.camera_alt_rounded,
+          color: const Color(0xFFF43F5E), // Rose
+          isEnabled: true,
+          onTap: () {
+            Get.toNamed('/studentImageUpdate');
+          }),
+      ModuleItem(
+          title: "Date Sheet",
+          icon: Icons.calendar_month_rounded,
+          color: const Color(0xFF0EA5E9), // Sky Blue
+          isEnabled: true,
+          onTap: () {
+            Get.toNamed('/dateSheet');
+          }),
     ];
+
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: modules.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isTablet ? 6 : 3,
         mainAxisSpacing: 15,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.85,
+        childAspectRatio: isTablet ? 1.1 : 0.85,
       ),
       itemBuilder: (context, index) {
         final item = modules[index];
@@ -68,36 +95,36 @@ class AcademicModuleGrid extends StatelessWidget {
           children: [
             InkWell(
               onTap: item.onTap,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(10),
               child: Container(
-                height: 65,
-                width: 65,
+                height: 58,
+                width: 58,
                 decoration: BoxDecoration(
                   color: AppColors.white,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: item.color.withValues(alpha: 0.15),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+                      color: item.color.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     )
                   ],
                   border: Border.all(
-                    color: item.color.withValues(alpha: 0.05),
+                    color: item.color.withValues(alpha: 0.04),
                     width: 1,
                   ),
                 ),
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: item.color.withValues(alpha: 0.1),
+                      color: item.color.withValues(alpha: 0.06),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       item.icon,
                       color: item.color,
-                      size: 26,
+                      size: 22,
                     ),
                   ),
                 ),

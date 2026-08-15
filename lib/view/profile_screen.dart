@@ -30,48 +30,8 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         appBar: AppTopBar(
           title: "Profile",
-          showBack: false,
+          showBack: true,
           backgroundColor: Colors.transparent,
-          leadingWidgets: PopupMenuButton<String>(
-            offset: const Offset(0, 55),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onSelected: (value) {
-              if (value == 'logout') {
-                _showLogoutDialog(context, authController);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings_rounded, size: 18, color: AppColors.primary),
-                    SizedBox(width: 12),
-                    Text("Settings", style: TextStyle(fontSize: 14, color: AppColors.black, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppColors.red.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.logout_rounded, size: 16, color: AppColors.red),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text("Logout", style: TextStyle(fontSize: 15, color: AppColors.red, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ],
-            child: const Icon(Icons.menu_rounded, color: AppColors.primary, size: 24),
-          ),
           actions: [
             IconButton(
               onPressed: () {
@@ -226,7 +186,7 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
         boxShadow: [
           BoxShadow(

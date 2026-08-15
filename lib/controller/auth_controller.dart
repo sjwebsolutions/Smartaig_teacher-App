@@ -17,8 +17,9 @@ class AuthController extends GetxController {
 
   final mobileController = TextEditingController();
   final manualOtpController = TextEditingController();
-
-  final otpController = List.generate(6, (_) => TextEditingController());
+  final otpController = TextEditingController();
+  
+  final FocusNode mobileFocusNode = FocusNode();
 
   RxBool isLoading = false.obs;
 
@@ -59,10 +60,11 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      String otp = otpController.map((e) => e.text.trim()).join();
+      String otp = otpController.text.trim();
 
+      print("--- START OTP VERIFICATION ---");
       print("MOBILE: ${mobileNumber.value}");
-      print("OTP: $otp");
+      print("OTP ENTERED: $otp");
 
       if (otp.length != 6) {
         AppSnackBar.error( "Enter complete OTP");
@@ -74,16 +76,33 @@ class AuthController extends GetxController {
         otp: otp,
       );
 
+      print("AUTH CONTROLLER: VERIFY SUCCESS = ${response.success}");
+
       if (response.success == true) {
+        print("SAVING TOKEN: ${response.data?.token}");
         await StorageService.saveToken(response.data?.token ?? "");
-        await FcmService.registerFcmToken();
+        
+        print("REGISTERING FCM TOKEN...");
+        try {
+          await FcmService.registerFcmToken();
+        } catch (e) {
+          print("FCM REGISTRATION ERROR (Non-blocking): $e");
+          // On iOS, this often happens if APNS token is not ready yet
+          // We don't want to block login because of this.
+        }
+        
+        print("NAVIGATING TO DASHBOARD");
         Get.offAllNamed("/dashboard");
+      } else {
+        print("VERIFY FAILED: ${response.message}");
+        AppSnackBar.error(response.message ?? "Verification failed");
       }
     } catch (e) {
       AppSnackBar.error( e.toString());
-      print("VERIFY OTP ERROR: $e");
+      print("VERIFY OTP EXCEPTION: $e");
     } finally {
       isLoading.value = false;
+      print("--- END OTP VERIFICATION ---");
     }
   }
 
@@ -99,22 +118,36 @@ class AuthController extends GetxController {
 
     try {
       isLoading.value = true;
+      print("--- START MANUAL OTP LOGIN ---");
+      print("MOBILE: ${mobileController.text.trim()}");
+      print("OTP: ${manualOtpController.text.trim()}");
 
       final response = await _authService.verifyOtp(
         mobile: mobileController.text.trim(),
         otp: manualOtpController.text.trim(),
       );
 
+      print("AUTH CONTROLLER: MANUAL SUCCESS = ${response.success}");
+
       if (response.success == true) {
         await StorageService.saveToken(response.data?.token ?? "");
-        await FcmService.registerFcmToken();
+        try {
+          await FcmService.registerFcmToken();
+        } catch (e) {
+          print("FCM REGISTRATION ERROR (Non-blocking): $e");
+        }
         Get.offAllNamed("/dashboard");
         AppSnackBar.success("Logged in successfully");
+      } else {
+        print("MANUAL LOGIN FAILED: ${response.message}");
+        AppSnackBar.error(response.message ?? "Login failed");
       }
     } catch (e) {
+      print("MANUAL LOGIN EXCEPTION: $e");
       AppSnackBar.error(e.toString());
     } finally {
       isLoading.value = false;
+      print("--- END MANUAL OTP LOGIN ---");
     }
   }
 

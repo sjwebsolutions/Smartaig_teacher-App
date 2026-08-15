@@ -7,7 +7,8 @@ import '../models/marks_entry_classes_model.dart';
 import '../themes/app_bar/app_top_bar.dart';
 
 class ViewMarksScreen extends StatefulWidget {
-  const ViewMarksScreen({super.key});
+  final VoidCallback? onBack;
+  const ViewMarksScreen({super.key, this.onBack});
 
   @override
   State<ViewMarksScreen> createState() => _ViewMarksScreenState();
@@ -29,8 +30,9 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
         backgroundColor: Colors.transparent, // Light greyish background for the screen
         appBar: AppTopBar(
           backgroundColor: Colors.transparent,
-          showBack: false,
-          showDivider: true,
+          showBack: true,
+          onBack: widget.onBack,
+          showDivider: false,
           customTitle: Text("Marks Screen", style: AppTextStyles.appbarh4),
         ),
       body: Obx(() {
@@ -45,7 +47,7 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 5),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 5),
                   child: _buildExamCategoryDropdown(),
                 ),
               ),
@@ -149,7 +151,7 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
     }
 
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -170,10 +172,10 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
             }
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.03),

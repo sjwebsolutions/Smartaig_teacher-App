@@ -9,29 +9,34 @@ class AttendanceController extends GetxController {
   
   var isLoading = false.obs;
   var students = <model.Student>[].obs;
-  var studentStatuses = <int, String>{}.obs; // Changed to RxMap<int, String>
+  var studentStatuses = <int, String>{}.obs; 
   var errorMessage = "".obs;
 
+  String? _currentStreamId;
   String? _currentClassId;
   String? _currentSectionId;
 
-  void setIds(String cId, String sId) {
-    if (_currentClassId == cId && _currentSectionId == sId) return;
+  void setIds(String? sId, String cId, String secId) {
+    if (_currentStreamId == sId && _currentClassId == cId && _currentSectionId == secId) return;
     
+    _currentStreamId = sId;
     _currentClassId = cId;
-    _currentSectionId = sId;
-    fetchStudents(cId, sId);
+    _currentSectionId = secId;
+    fetchStudents(sId, cId, secId);
   }
 
-  Future<void> fetchStudents(String classId, String sectionId) async {
+  Future<void> fetchStudents(String? streamId, String classId, String sectionId) async {
     try {
       isLoading(true);
       errorMessage("");
-      final response = await _service.getStudentList(classId, sectionId);
+      final response = await _service.getStudentList(
+        streamId: streamId,
+        classId: classId,
+        sectionId: sectionId,
+      );
       if (response.success == true) {
         students.value = response.data?.students ?? [];
         
-        // Initialize statuses from existing attendance
         studentStatuses.clear();
         for (var student in students) {
           if (student.id != null) {
@@ -52,112 +57,44 @@ class AttendanceController extends GetxController {
     } else {
       studentStatuses[studentId] = status;
     }
-    studentStatuses.refresh(); // Ensure UI updates
+    studentStatuses.refresh();
   }
 
   int get totalMarked => studentStatuses.values.where((s) => s.isNotEmpty).length;
-  double get progress => students.isEmpty ? 0 : totalMarked / students.length;
 
   Future<void> submitAttendance() async {
     if (totalMarked == 0) {
-      Get.snackbar(
-        "Selection Required",
-        "Please mark attendance for at least one student",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar("Error", "Please mark attendance", backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    // Modern Custom Confirmation Dialog (Matches Screenshot)
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Question Mark Icon in Circle
               Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF233263), width: 4),
-                ),
-                child: const Icon(
-                  Icons.question_mark_rounded,
-                  size: 50,
-                  color: Color(0xFF233263),
-                ),
+                width: 80, height: 80,
+                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF233263), width: 4)),
+                child: const Icon(Icons.question_mark_rounded, size: 50, color: Color(0xFF233263)),
               ),
               const SizedBox(height: 24),
-              const Text(
-                "Confirm Submission",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF233263),
-                ),
-              ),
+              const Text("Confirm Submission", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF233263))),
               const SizedBox(height: 12),
-              Text(
-                "Are you sure you want to submit attendance for $totalMarked students?",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  height: 1.4,
-                ),
-              ),
+              Text("Submit attendance for $totalMarked students?", textAlign: TextAlign.center),
               const SizedBox(height: 32),
               Row(
                 children: [
-                  // NO Button
-                  Expanded(
-                    child: SizedBox(
-                      height: 50,
-                      child: OutlinedButton(
-                        onPressed: () => Get.back(),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: const BorderSide(color: Colors.black45, width: 1.5),
-                        ),
-                        child: const Text(
-                          "NO",
-                          style: TextStyle(color: Color(0xFF233263), fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ),
+                  Expanded(child: OutlinedButton(onPressed: () => Get.back(), child: const Text("NO"))),
                   const SizedBox(width: 16),
-                  // YES Button
-                  Expanded(
-                    child: SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Get.back(); // Close dialog
-                          await _performSubmission();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF233263),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "YES",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ),
+                  Expanded(child: ElevatedButton(
+                    onPressed: () async { Get.back(); await _performSubmission(); },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF233263)),
+                    child: const Text("YES", style: TextStyle(color: Colors.white)),
+                  )),
                 ],
               ),
             ],
@@ -169,12 +106,9 @@ class AttendanceController extends GetxController {
 
   Future<void> _performSubmission() async {
     try {
-      // Show transparent loading overlay
-      Get.dialog(
-        const Center(child: CircularProgressIndicator(color: Colors.white)),
-        barrierDismissible: false,
-      );
+      Get.dialog(const Center(child: CircularProgressIndicator(color: Colors.white)), barrierDismissible: false);
       
+      // Returning to Map format as most Laravel backends use ID as key for such requests
       Map<String, dynamic> attendanceData = {};
       studentStatuses.forEach((studentId, status) {
         if (status.isNotEmpty) {
@@ -185,45 +119,32 @@ class AttendanceController extends GetxController {
         }
       });
 
+      print("Final Data for Submission: class_id: $_currentClassId, section_id: $_currentSectionId, data: $attendanceData");
+
       final success = await _service.submitAttendance(
+        streamId: _currentStreamId,
         classId: _currentClassId!,
         sectionId: _currentSectionId!,
         attendance: attendanceData,
       );
 
-      // Close loading overlay
       if (Get.isDialogOpen ?? false) Get.back();
 
       if (success) {
-        Get.back(); // Return to class list
+        Get.back(result: true); 
         
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Get.snackbar(
-            "Success",
-            "Today Attendance Successfully.",
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-            margin: const EdgeInsets.all(15),
-            duration: const Duration(seconds: 3),
-          );
-        });
+        Get.snackbar("Success", "Attendance Submitted Successfully", backgroundColor: Colors.green, colorText: Colors.white);
         
         if (Get.isRegistered<ClassListController>()) {
-          Get.find<ClassListController>().fetchClasses();
+          // Increased delay to 1.5s to give server time to update stats
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            Get.find<ClassListController>().fetchClasses();
+          });
         }
       }
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar(
-        "Error",
-        "Something went wrong.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
+      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 }

@@ -10,15 +10,21 @@ class SyllabusTrackerScreen extends GetView<SyllabusController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      appBar: AppTopBar(
-        backgroundColor: AppColors.bgColor,
-        showBack: true,
-        showDivider: true,
-        customTitle: Text("Syllabus", style: AppTextStyles.appbarh4),
-
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppTopBar(
+          backgroundColor: Colors.transparent,
+          showBack: true,
+          showDivider: false,
+          customTitle: Text("Syllabus", style: AppTextStyles.appbarh4),
+        ),
       body: SafeArea(
         child: Obx(() {
           if (controller.isLoading.value) {
@@ -75,8 +81,9 @@ class SyllabusTrackerScreen extends GetView<SyllabusController> {
         },
         child: const Icon(Icons.add, color: AppColors.white),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSubjectList() {
     return SizedBox(

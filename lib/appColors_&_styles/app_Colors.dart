@@ -7,12 +7,7 @@ class AppGradients {
     Alignment end = Alignment.bottomCenter,
   }) {
     return LinearGradient(
-      colors: const [
-
-        Color(0xFFE3E9FF),
-        Color(0xFFF9FAFD),
-        Color(0xFFE8E3E3),
-      ],
+      colors: const [Color(0xFFE3E9FF), Colors.white],
       begin: begin,
       end: end,
     );

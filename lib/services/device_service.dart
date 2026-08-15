@@ -20,11 +20,13 @@ class DeviceService {
     } else if (Platform.isIOS) {
       final ios = await deviceInfo.iosInfo;
       // iOS identifierForVendor has hyphens and is 36 chars.
-      // Many backends only support 16-char alphanumeric UUIDs (Android format).
-      // We clean it by removing hyphens, lowercasing, and taking the first 16 chars.
       final rawUuid = ios.identifierForVendor ?? "";
+      // Clean UUID by removing hyphens and lowercasing
       final cleanUuid = rawUuid.replaceAll('-', '').toLowerCase();
-      final formattedUuid = cleanUuid.length > 16 ? cleanUuid.substring(0, 16) : cleanUuid;
+      
+      // We'll use the full cleaned UUID (32 chars) instead of truncating to 16.
+      // Truncating might cause collisions or backend validation failures on iOS.
+      final formattedUuid = cleanUuid;
 
       info = {
         "device_name": ios.name,

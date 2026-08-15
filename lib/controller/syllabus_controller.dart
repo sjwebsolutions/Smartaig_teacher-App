@@ -1,41 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../api_service/homework_service.dart';
+import '../api_service/syllabus_service.dart';
 import '../models/homework_form_data_model.dart';
+import '../models/syllabus_model.dart';
 
 class SyllabusController extends GetxController {
   final HomeworkService _homeworkService = HomeworkService();
+  final SyllabusService _syllabusService = SyllabusService();
   
   final isLoading = false.obs;
-  final homeworkFormData = Rxn<HomeworkFormDataModel>();
+  final errorMessage = "".obs;
+  final hasFetched = false.obs;
   
+  // For Syllabus Tracker
+  final homeworkFormData = Rxn<HomeworkFormDataModel>();
   final selectedClassId = Rxn<String>();
   final selectedSectionId = Rxn<String>();
-  
-  // Hardcoded data as requested initially
   final subjects = ["English", "Maths", "Science", "History", "Physics"].obs;
   final selectedSubject = "English".obs;
-
   final syllabusList = <Map<String, dynamic>>[].obs;
-
   final chapterController = TextEditingController();
   final topicController = TextEditingController();
+
+  // For Teacher Syllabus
+  final teacherSyllabusList = <SyllabusData>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchFormData();
+    fetchTeacherSyllabus();
+    _fetchFormDataInternal();
   }
 
-  Future<void> fetchFormData() async {
+  Future<void> fetchTeacherSyllabus() async {
     try {
       isLoading.value = true;
+      errorMessage.value = "";
+      final result = await _syllabusService.getTeacherSyllabus();
+      if (result.success == true) {
+        teacherSyllabusList.assignAll(result.data ?? []);
+        hasFetched.value = true;
+      } else {
+        errorMessage.value = "Failed to load syllabus data";
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+      debugPrint("Error fetching teacher syllabus: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> _fetchFormDataInternal() async {
+    try {
       final result = await _homeworkService.getHomeworkFormData();
       homeworkFormData.value = result;
     } catch (e) {
-      print("Error fetching syllabus form data: $e");
-    } finally {
-      isLoading.value = false;
+      debugPrint("Error fetching syllabus form data: $e");
     }
   }
 

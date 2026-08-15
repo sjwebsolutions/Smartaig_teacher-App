@@ -18,8 +18,13 @@ class ApiUrls {
   static const String saveMarks = "$baseUrl/marks-entries/save";
   static const String submitMarks = "$baseUrl/marks-entries/submit";
   static const String banners = "$baseUrl/banners";
+  static const String announcements = "$baseUrl/announcements";
+  static const String teacherSyllabus = "$baseUrl/syllabus";
+  static const String studentImageUpdateClasses = "$baseUrl/student-image-update-requests/classes";
+  static const String studentImageUpdateStudents = "$baseUrl/student-image-update-requests/students";
+  static const String studentImageUpdateStore = "$baseUrl/student-image-update-requests/store";
+  static const String dateSheets = "$baseUrl/datesheets";
+  static String dateSheetDetails(int id) => "$dateSheets/$id";
 
-
-
-
+  static String syllabus(int studentId) => "https://smartaig.com/api/v1/students/$studentId/syllabus";
 }

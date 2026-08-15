@@ -143,15 +143,22 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      appBar: AppTopBar(
-        backgroundColor: AppColors.bgColor,
-        showBack: true,
-        showDivider: true,
-        customTitle: Text("Marks Entry", style: AppTextStyles.appbarh4),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
       ),
-      body: Obx(() {
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppTopBar(
+          backgroundColor: Colors.transparent,
+          showBack: true,
+          showDivider: false,
+          customTitle: Text("Marks Entry", style: AppTextStyles.appbarh4),
+        ),
+        body: Obx(() {
         if (marksController.isLoading.value || 
             marksController.isClassesLoading.value || 
             marksController.isStudentsLoading.value) {
@@ -159,14 +166,14 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
         }
         return SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(10.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionDropdown(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 _buildSubjectDropdown(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 Obx(() {
                   final isAllSelected = marksController.selectedClassId.value != null &&
                       marksController.selectedSectionId.value != null &&
@@ -246,8 +253,9 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
           ),
         );
       }),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSaveButton() {
     return Obx(() {
@@ -294,7 +302,7 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: marksController.studentsList.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
+        separatorBuilder: (context, index) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
           final student = marksController.studentsList[index];
           final studentId = student.studentId!;
@@ -375,7 +383,7 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
           return Container(
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.08), width: 1),
               boxShadow: [
                 BoxShadow(

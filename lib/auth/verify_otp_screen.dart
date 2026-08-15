@@ -1,3 +1,4 @@
+import 'package:pinput/pinput.dart';
 import '../controller/auth_controller.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
@@ -11,23 +12,25 @@ class OtpVerify extends StatelessWidget {
   OtpVerify({super.key});
 
   final AuthController verifyController = Get.find<AuthController>();
+  final FocusNode otpFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-
-        decoration: BoxDecoration(gradient: AppGradients.primary()),
-
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: size.height * 0.08),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(gradient: AppGradients.primary()),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(height: size.height * 0.08),
+                  // ... rest of the code
 
                 Container(
                   width: double.infinity,
@@ -86,78 +89,45 @@ class OtpVerify extends StatelessWidget {
                       ),
                       const SizedBox(height: 30),
 
-                      /// OTP BOXES
-                      Row(
-                        // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(6, (index) {
-                          return Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 3,
-                              ),
-                              child: SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.width * 0.15,
-
-                                child: TextField(
-                                  controller:
-                                      verifyController.otpController[index],
-                                  keyboardType: TextInputType.number,
-
-                                  textAlign: TextAlign.center,
-
-                                  maxLength: 1,
-
-                                  onChanged: (value) {
-                                    /// MOVE TO NEXT
-                                    if (value.isNotEmpty && index < 5) {
-                                      FocusScope.of(context).nextFocus();
-                                    }
-
-                                    /// MOVE TO PREVIOUS
-                                    if (value.isEmpty && index > 0) {
-                                      FocusScope.of(context).previousFocus();
-                                    }
-                                  },
-
-                                  decoration: InputDecoration(
-                                    counterText: "",
-
-                                    filled: true,
-                                    fillColor: AppColors.grey,
-                                    //isDense: true,
-                                    contentPadding: EdgeInsets.zero,
-
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-
-                                      borderSide: BorderSide(
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-
-                                      borderSide: BorderSide(
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-
-                                      borderSide: BorderSide(
-                                        color: AppColors.primary,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                      /// OTP BOXES (Pinput for Autofill)
+                      Pinput(
+                        length: 6,
+                        controller: verifyController.otpController,
+                        focusNode: otpFocusNode,
+                        autofocus: true,
+                        keyboardType: TextInputType.number,
+                        hapticFeedbackType: HapticFeedbackType.lightImpact,
+                        onTap: () {
+                          otpFocusNode.requestFocus();
+                        },
+                        defaultPinTheme: PinTheme(
+                          width: 50,
+                          height: 55,
+                          textStyle: AppTextStyles.h2.copyWith(
+                            fontSize: 20,
+                            color: AppColors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.grey,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.grey),
+                          ),
+                        ),
+                        focusedPinTheme: PinTheme(
+                          width: 50,
+                          height: 55,
+                          textStyle: AppTextStyles.h2.copyWith(
+                            fontSize: 20,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.primary, width: 1.5),
+                          ),
+                        ),
                       ),
 
                       const SizedBox(height: 20),
@@ -273,6 +243,7 @@ class OtpVerify extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

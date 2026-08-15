@@ -6,9 +6,11 @@ class BannerModel {
 
   BannerModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    if (json['banners'] != null) {
+    // Handling both 'banners' and 'teacher_banners' keys for flexibility
+    var bannerList = json['teacher_banners'] ?? json['banners'];
+    if (bannerList != null) {
       banners = <BannerData>[];
-      json['banners'].forEach((v) {
+      bannerList.forEach((v) {
         banners!.add(BannerData.fromJson(v));
       });
     }
@@ -18,7 +20,7 @@ class BannerModel {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
     if (banners != null) {
-      data['banners'] = banners!.map((v) => v.toJson()).toList();
+      data['teacher_banners'] = banners!.map((v) => v.toJson()).toList();
     }
     return data;
   }

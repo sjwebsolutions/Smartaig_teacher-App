@@ -19,13 +19,17 @@ class ClassListController extends GetxController {
     try {
       isLoading(true);
       errorMessage("");
-      print("Fetching classes...");
+      print("Fetching classes... Time: ${DateTime.now()}");
       final response = await _service.getInchargeClasses();
       print("Response success: ${response.success}");
-      print("Response Data Length: ${response.data?.length ?? 0}");
       
       if (response.success == true) {
         classList.value = response.data ?? [];
+        print("Data updated. Class count: ${classList.length}");
+        if (classList.isNotEmpty) {
+          final firstClass = classList.first;
+          print("First class details -> P: ${firstClass.present}, A: ${firstClass.absent}, L: ${firstClass.leave}, Pending: ${firstClass.pending}");
+        }
         if (classList.isEmpty) {
           errorMessage.value = "No classes assigned to you.";
         }

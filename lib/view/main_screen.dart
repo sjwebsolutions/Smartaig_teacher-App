@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:teacher_app_attendance/themes/app_bar/app_top_bar.dart';
 import 'package:teacher_app_attendance/view/app_blocked_screen.dart';
 import 'package:teacher_app_attendance/view/profile_screen.dart';
+import 'package:teacher_app_attendance/view/screens/setting_screen.dart';
 import 'package:teacher_app_attendance/view/upload_homework_screen.dart';
 import 'package:teacher_app_attendance/view/view_marks_screen.dart';
 import '../controller/main_controller.dart';
@@ -19,9 +20,9 @@ class MainScreen extends StatelessWidget {
 
     final List<Widget> screens = [
       const NewTeacherDashboardScreen(),
-      const UploadHomeworkScreen(),
-      const ViewMarksScreen(),
-      const ProfileScreen(),
+      UploadHomeworkScreen(onBack: () => controller.changeIndex(0)),
+      ViewMarksScreen(onBack: () => controller.changeIndex(0)),
+      const SettingScreen()
     ];
 
     return Obx(() => PopScope(
@@ -74,7 +75,8 @@ class MainScreen extends StatelessWidget {
             _buildNavItem(controller, 0, Icons.home_rounded, Icons.home_outlined, "Home"),
             _buildNavItem(controller, 1, Icons.menu_book_rounded, Icons.menu_book_outlined, "Homework"),
             _buildNavItem(controller, 2, Icons.assignment_rounded, Icons.assignment_outlined, "Marks"),
-            _buildNavItem(controller, 3, Icons.person_rounded, Icons.person_outline_rounded, "Profile"),
+            // _buildNavItem(controller, 3, Icons.person_rounded, Icons.person_outline_rounded, "Setting"),
+            _buildNavItem(controller, 3, Icons.settings, Icons.settings, "Setting"),
           ],
         ),
       ),

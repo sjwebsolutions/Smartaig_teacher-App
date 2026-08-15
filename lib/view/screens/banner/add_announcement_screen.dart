@@ -7,6 +7,7 @@ import '../../../controller/announcement_controller.dart';
 import '../../../themes/appColors_&_styles/app_Colors.dart';
 import '../../../themes/appColors_&_styles/text_styles.dart';
 import '../../../themes/app_bar/app_top_bar.dart';
+import '../../widgets/custom_camera_screen.dart';
 
 class AddAnnouncementScreen extends StatefulWidget {
   const AddAnnouncementScreen({super.key});
@@ -39,11 +40,10 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    final result = await Get.to(() => const CustomCameraScreen());
+    if (result != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImage = File(result);
       });
     }
   }
@@ -194,7 +194,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                             selected ? _selectedClassIds.add(id) : _selectedClassIds.remove(id);
                           });
                         },
-                        selectedColor: AppColors.primary.withOpacity(0.2),
+                        selectedColor: AppColors.primary.withValues(alpha: 0.2),
                         checkmarkColor: AppColors.primary,
                       );
                     }).toList(),
@@ -212,7 +212,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
                   ),
                   child: _selectedImage != null 
                     ? ClipRRect(
@@ -222,7 +222,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 40),
+                          const Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 40),
                           const SizedBox(height: 8),
                           Text("Click to upload image", style: TextStyle(color: Colors.grey[600])),
                         ],
@@ -283,7 +283,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
@@ -321,7 +321,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: TextField(
         controller: controller,
@@ -342,7 +342,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [

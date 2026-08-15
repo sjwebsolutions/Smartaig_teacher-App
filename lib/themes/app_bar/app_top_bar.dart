@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 import '../appColors_&_styles/app_Colors.dart';
 import '../appColors_&_styles/text_styles.dart';
@@ -10,28 +9,30 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final Widget? customTitle;
   final bool showBack;
+  final VoidCallback? onBack;
   final List<Widget>? actions;
   final Widget? leadingWidgets;
   final bool showDivider;
   final Color? backgroundColor;
   final bool? centerTitle;
+  final PreferredSizeWidget? bottom;
 
   const AppTopBar({
     super.key,
     this.title,
     this.customTitle,
     this.showBack = true,
+    this.onBack,
     this.actions,
     this.leadingWidgets,
-    this.showDivider= true,
+    this.showDivider = false,
     this.backgroundColor,
     this.centerTitle,
+    this.bottom,
   });
 
   @override
   Widget build(BuildContext context) {
-   // final bottomController = Get.find<BottomNavController>();
-
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: backgroundColor ?? AppColors.neutral,
@@ -39,34 +40,24 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: centerTitle,
-
       leading: showBack || leadingWidgets != null
-          ? Padding(
-        padding: const EdgeInsets.all(12),
-        child: leadingWidgets ??
-            IconButton(
-              icon: const Icon(Icons.arrow_back_outlined),
-              onPressed: () {
-                Get.back();
-             //   bottomController.changeTab(0);
-              },
-            ),
-      )
+          ? (leadingWidgets ??
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_outlined),
+                    onPressed: onBack ?? () => Get.back(),
+                  ))
           : null,
-
       title: customTitle ??
           Text(
             title ?? "",
             style: AppTextStyles.appbarh4,
           ),
-
       actions: actions,
-
-      bottom: showDivider ? AppBarDivider() : null,
+      bottom: bottom ?? (showDivider ? const AppBarDivider() : null),
     );
   }
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(kToolbarHeight + 1);
+  Size get preferredSize => Size.fromHeight(
+      kToolbarHeight + (bottom?.preferredSize.height ?? (showDivider ? 1 : 0)));
 }

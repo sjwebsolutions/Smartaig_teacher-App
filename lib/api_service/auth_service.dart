@@ -13,26 +13,31 @@ class AuthService {
   Future<bool> sendOtp({required String mobile}) async {
     try {
       final url = ApiUrls.otpRequest;
-
       final device = await DeviceService.getDeviceInfo();
 
-      print("REQUEST OTP API HIT");
-      print("URL: $url");
-      print("MOBILE: $mobile");
+      final requestData = {
+        "whatsapp_number": mobile,
+        "device_uuid": device["device_uuid"],
+        "device_name": device["device_name"],
+        "device_os": device["device_os"],
+      };
+
+      print("SEND OTP REQUEST: $url");
+      print("PAYLOAD: $requestData");
 
       final response = await DioClient.dio.post(
         url,
-        data: {
-          "whatsapp_number": mobile,
-          "device_uuid": device["device_uuid"],
-          "device_name": device["device_name"],
-          "device_os": device["device_os"],
-        },
+        data: requestData,
       );
 
+      print("SEND OTP RESPONSE: ${response.data}");
       return response.data["success"] == true;
     } on DioException catch (e) {
+      print("SEND OTP DIO ERROR: ${e.response?.data}");
       throw e.response?.data["message"] ?? "Failed to send OTP";
+    } catch (e) {
+      print("SEND OTP GENERAL ERROR: $e");
+      throw "Failed to send OTP";
     }
   }
 
@@ -42,23 +47,32 @@ class AuthService {
   }) async {
     try {
       final url = ApiUrls.verifyOtp;
-
       final device = await DeviceService.getDeviceInfo();
+
+      final requestData = {
+        "whatsapp_number": mobile,
+        "otp_code": otp,
+        "device_uuid": device["device_uuid"],
+        "device_name": device["device_name"],
+        "device_os": device["device_os"],
+      };
+
+      print("VERIFY OTP REQUEST: $url");
+      print("PAYLOAD: $requestData");
 
       final response = await DioClient.dio.post(
         url,
-        data: {
-          "whatsapp_number": mobile,
-          "otp_code": otp,
-          "device_uuid": device["device_uuid"],
-          "device_name": device["device_name"],
-          "device_os": device["device_os"],
-        },
+        data: requestData,
       );
 
+      print("VERIFY OTP RESPONSE: ${response.data}");
       return LoginModel.fromJson(response.data);
     } on DioException catch (e) {
+      print("VERIFY OTP DIO ERROR: ${e.response?.data}");
       throw e.response?.data["message"] ?? "OTP verification failed";
+    } catch (e) {
+      print("VERIFY OTP GENERAL ERROR: $e");
+      throw "An unexpected error occurred during verification";
     }
   }
 

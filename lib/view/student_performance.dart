@@ -31,7 +31,7 @@ class StudentPerformanceScreen extends StatelessWidget {
         backgroundColor: AppColors.bgColor,
 
         showBack: true,
-        showDivider: true,
+        showDivider: false,
         customTitle: Row(
           children: [
             Expanded(

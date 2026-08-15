@@ -8,9 +8,13 @@ class SyllabusModel {
     success = json['success'];
     if (json['data'] != null) {
       data = <SyllabusData>[];
-      json['data'].forEach((v) {
-        data!.add(SyllabusData.fromJson(v));
-      });
+      if (json['data'] is List) {
+        for (var v in json['data']) {
+          data!.add(SyllabusData.fromJson(v));
+        }
+      } else if (json['data'] is Map<String, dynamic>) {
+        data!.add(SyllabusData.fromJson(json['data']));
+      }
     }
   }
 

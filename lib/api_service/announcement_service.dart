@@ -12,4 +12,19 @@ class AnnouncementService {
       throw e.response?.data["message"] ?? "Failed to fetch announcements";
     }
   }
+
+  Future<void> createAnnouncement(Map<String, dynamic> data, {String? imagePath}) async {
+    try {
+      FormData formData = FormData.fromMap(data);
+      if (imagePath != null) {
+        formData.files.add(MapEntry(
+          "image",
+          await MultipartFile.fromFile(imagePath),
+        ));
+      }
+      await DioClient.dio.post(ApiUrls.announcements, data: formData);
+    } on DioException catch (e) {
+      throw e.response?.data["message"] ?? "Failed to create announcement";
+    }
+  }
 }

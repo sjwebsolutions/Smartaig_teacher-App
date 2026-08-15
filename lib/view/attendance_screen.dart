@@ -15,29 +15,40 @@ class AttendanceScreen extends StatelessWidget {
     // Get arguments from ClassListScreen
     final dynamic args = Get.arguments;
     if (args != null) {
-      controller.setIds(args.classId.toString(), args.sectionId.toString());
+      controller.setIds(
+        args.streamId?.toString(),
+        args.classId.toString(),
+        args.sectionId.toString(),
+      );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      appBar: AppTopBar(
-        backgroundColor: AppColors.bgColor,
-        showBack: true,
-        showDivider: true,
-        customTitle: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Class Attendance", style: AppTextStyles.appbarh4),
-                ],
-              ),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
         ),
       ),
-      body: Obx(() {
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppTopBar(
+          backgroundColor: Colors.transparent,
+          showBack: true,
+          showDivider: false,
+          customTitle: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Class Attendance", style: AppTextStyles.appbarh4),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -187,8 +198,9 @@ class AttendanceScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _attendanceButton(String text, Color color, bool isSelected, VoidCallback onTap) {
     return GestureDetector(

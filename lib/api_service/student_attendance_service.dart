@@ -14,14 +14,23 @@ class StudentAttendanceService {
     }
   }
 
-  Future<StudentListModel> getStudentList(String classId, String sectionId) async {
+  Future<StudentListModel> getStudentList({
+    String? streamId,
+    required String classId,
+    required String sectionId,
+  }) async {
     try {
+      final Map<String, dynamic> queryParams = {
+        'class_id': classId,
+        'section_id': sectionId,
+      };
+      if (streamId != null && streamId.isNotEmpty && streamId != "null") {
+        queryParams['stream_id'] = streamId;
+      }
+
       final response = await DioClient.dio.get(
         ApiUrls.studentList,
-        queryParameters: {
-          'class_id': classId,
-          'section_id': sectionId,
-        },
+        queryParameters: queryParams,
       );
       return StudentListModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -30,18 +39,25 @@ class StudentAttendanceService {
   }
 
   Future<bool> submitAttendance({
+    String? streamId,
     required String classId,
     required String sectionId,
     required Map<String, dynamic> attendance,
   }) async {
     try {
+      final Map<String, dynamic> bodyData = {
+        'class_id': classId,
+        'section_id': sectionId,
+        'attendance': attendance,
+      };
+
+      if (streamId != null && streamId.isNotEmpty && streamId != "null") {
+        bodyData['stream_id'] = streamId;
+      }
+
       final response = await DioClient.dio.post(
         ApiUrls.storeAttendance,
-        data: {
-          'class_id': classId,
-          'section_id': sectionId,
-          'attendance': attendance,
-        },
+        data: bodyData,
       );
       return response.data['success'] == true;
     } on DioException catch (e) {
@@ -49,4 +65,3 @@ class StudentAttendanceService {
     }
   }
 }
-

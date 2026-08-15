@@ -34,7 +34,7 @@ class TeacherDashboardScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
 
           showBack: false,
-          showDivider: true,
+          showDivider: false,
           customTitle: Row(
             children: [
               Expanded(

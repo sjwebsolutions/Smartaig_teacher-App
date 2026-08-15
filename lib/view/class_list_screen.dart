@@ -12,15 +12,22 @@ class ClassListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(ClassListController());
 
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      appBar: AppTopBar(
-        backgroundColor: Colors.transparent,
-        showBack: true,
-        showDivider: true,
-        customTitle: Text("Incharge Classes", style: AppTextStyles.appbarh4),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
       ),
-      body: Obx(() {
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppTopBar(
+          backgroundColor: Colors.transparent,
+          showBack: true,
+          showDivider: false,
+          customTitle: Text("Incharge Classes", style: AppTextStyles.appbarh4),
+        ),
+        body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -56,18 +63,26 @@ class ClassListScreen extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildClassCard(dynamic classData) {
+    final controller = Get.find<ClassListController>();
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
-          // Navigate to Attendance Screen with class details
-          Get.toNamed('/attendance', arguments: classData);
+        onTap: () async {
+          print("Navigating to Attendance screen for class: ${classData.className}");
+          // Navigate to Attendance Screen with class details and wait for result
+          var result = await Get.toNamed('/attendance', arguments: classData);
+          print("Back from Attendance screen. Result: $result");
+          
+          // Refresh data when returning from attendance screen
+          print("Manual refresh triggered from UI...");
+          controller.fetchClasses();
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -119,9 +134,9 @@ class ClassListScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _statusItem("Present", classData.present ?? "0", AppColors.green),
-                  _statusItem("Absent", classData.absent ?? "0", AppColors.red),
-                  _statusItem("Leave", classData.leave ?? "0", Colors.orange),
+                  _statusItem("Present", (classData.present == null || classData.present == "") ? "0" : classData.present!, AppColors.green),
+                  _statusItem("Absent", (classData.absent == null || classData.absent == "") ? "0" : classData.absent!, AppColors.red),
+                  _statusItem("Leave", (classData.leave == null || classData.leave == "") ? "0" : classData.leave!, Colors.orange),
                   _statusItem("Pending", classData.pending?.toString() ?? "0", Colors.grey),
                 ],
               ),

@@ -20,18 +20,23 @@ class LoginScreen extends StatelessWidget {
     //final FocusNode _focusNode = FocusNode();
     final fieldHeight = Get.height * 0.065;
     final countryCodeWidth = Get.width * 0.16;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-
-        decoration: BoxDecoration(gradient: AppGradients.primary()),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                SizedBox(height: size.height * 0.08),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(gradient: AppGradients.primary()),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  SizedBox(height: size.height * 0.08),
 
                 Center(
                   child: ClipRRect(
@@ -107,11 +112,14 @@ class LoginScreen extends StatelessWidget {
                             child: SizedBox(
                               height: fieldHeight,
                               child: TextFormField(
-                               // focusNode: _focusNode,
-
+                                autofocus: true,
+                                focusNode: authController.mobileFocusNode,
                                 controller: authController.mobileController,
                                 keyboardType: TextInputType.phone,
                                 maxLength: 10,
+                                onTap: () {
+                                  authController.mobileFocusNode.requestFocus();
+                                },
                                 decoration: InputDecoration(
                                   counterText: "",
                                   hintText: "Enter Mobile number",
@@ -161,9 +169,9 @@ class LoginScreen extends StatelessWidget {
 
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.green,
+                            backgroundColor: AppColors.primary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadiusGeometry.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: Row(
@@ -301,6 +309,6 @@ class LoginScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+      ));
   }
 }

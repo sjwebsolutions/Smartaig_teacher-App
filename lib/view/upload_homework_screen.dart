@@ -7,7 +7,8 @@ import '../themes/app_bar/app_top_bar.dart';
 import 'add_homework_screen_v2.dart';
 
 class UploadHomeworkScreen extends GetView<HomeworkController> {
-  const UploadHomeworkScreen({super.key});
+  final VoidCallback? onBack;
+  const UploadHomeworkScreen({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +21,10 @@ class UploadHomeworkScreen extends GetView<HomeworkController> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: const AppTopBar(
+        appBar: AppTopBar(
           title: "Homework List",
-          showBack: false,
+          showBack: true,
+          onBack: onBack,
           backgroundColor: Colors.transparent,
         ),
         body: Obx(() {
@@ -56,16 +58,16 @@ class UploadHomeworkScreen extends GetView<HomeworkController> {
           return RefreshIndicator(
             onRefresh: () => controller.fetchHomeworkList(),
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               itemCount: controller.homeworkList.length,
               itemBuilder: (context, index) {
                 final homework = controller.homeworkList[index];
                 return GestureDetector(
                   onTap: () => Get.toNamed('/homeworkDetail', arguments: homework.id),
                   child: Card(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 10),
                     elevation: 3,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(

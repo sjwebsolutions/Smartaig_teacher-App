@@ -1,11 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../controller/dashboard_controller_v2.dart';
 import '../../../controller/banner_controller.dart';
+import '../../../controller/announcement_controller.dart';
+import '../../../models/announcement_model.dart';
 import '../../../themes/appColors_&_styles/app_Colors.dart';
 import '../../../themes/appColors_&_styles/text_styles.dart';
 import '../../../themes/app_bar/app_top_bar.dart';
@@ -18,19 +24,30 @@ class NewTeacherDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final NewDashboardController dashboardController = Get.find<NewDashboardController>();
+    final AnnouncementController announcementController = Get.put(AnnouncementController());
 
     const EdgeInsets kCardMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 1);
     const EdgeInsets kCardPadding = EdgeInsets.all(14);
     
     return Obx(() {
       if (dashboardController.isInitialLoading.value) {
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: const AppTopBar(
-            title: "Dashboard",
-            showBack: false,
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppGradients.primary(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomCenter,
+            ),
           ),
-          body: _buildShimmerDashboard(),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: const AppTopBar(
+              backgroundColor: Colors.transparent,
+              title: "Dashboard",
+              showBack: false,
+              showDivider: false,
+            ),
+            body: _buildShimmerDashboard(),
+          ),
         );
       }
 
@@ -46,7 +63,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
           appBar: AppTopBar(
             backgroundColor: Colors.transparent,
             showBack: false,
-            showDivider: true,
+            showDivider: false,
             customTitle: Row(
               children: [
                 Expanded(
@@ -67,6 +84,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                 if (Get.isRegistered<BannerController>()) {
                   await Get.find<BannerController>().fetchBanners(showLoading: false);
                 }
+                await announcementController.fetchAnnouncements();
               },
               color: AppColors.primary,
               child: SingleChildScrollView(
@@ -79,8 +97,10 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                       const SizedBox(height: 15),
                       _buildTeacherInfoCard(dashboardController, kCardMargin, kCardPadding),
                       const SizedBox(height: 9),
-                      const BannerWidget(),
-                      const SizedBox(height: 6),
+                      const BannerWidget(), // Banner moved between Teacher Info and Attendance
+                      const SizedBox(height: 9),
+                      _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
+                      const SizedBox(height: 9),
                       _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
                       _buildAcademicModulesSection(),
                     ],
@@ -106,15 +126,26 @@ class NewTeacherDashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Banner Skeleton (Moved to top)
+              Container(
+                height: 165,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 25),
+
               // Profile Section Skeleton
               Row(
                 children: [
                   Container(
-                    width: 65,
-                    height: 65,
+                    width: 70,
+                    height: 70,
                     decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 20),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -127,23 +158,12 @@ class NewTeacherDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
-              // Banner Skeleton
-              Container(
-                height: 165,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              const SizedBox(height: 25),
-
               // Attendance Card Skeleton (Highly Detailed)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
@@ -183,30 +203,36 @@ class NewTeacherDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 25),
               
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 3,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 25,
-                  crossAxisSpacing: 15,
-                  childAspectRatio: 0.8,
-                ),
-                itemBuilder: (_, __) => Column(
-                  children: [
-                    Container(
-                      height: 65,
-                      width: 65,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
+              Builder(
+                builder: (context) {
+                  final double screenWidth = MediaQuery.of(context).size.width;
+                  final bool isTablet = screenWidth >= 600;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: isTablet ? 6 : 3,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isTablet ? 6 : 3,
+                      mainAxisSpacing: 25,
+                      crossAxisSpacing: 15,
+                      childAspectRatio: isTablet ? 1.0 : 0.8,
                     ),
-                    const SizedBox(height: 12),
-                    Container(height: 12, width: 55, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
-                  ],
-                ),
+                    itemBuilder: (_, __) => Column(
+                      children: [
+                        Container(
+                          height: 65,
+                          width: 65,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(height: 12, width: 55, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -220,7 +246,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),
@@ -237,8 +263,8 @@ class NewTeacherDashboardScreen extends StatelessWidget {
           return Row(
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.primary.withValues(alpha: 0.1),
@@ -262,7 +288,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                         child: Icon(Icons.person, color: AppColors.primary, size: 30),
                       ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +309,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     Text("Emp ID: ${teacher?.id ?? '-'}",
                         style: AppTextStyles.body.copyWith(
                           color: AppColors.black.withValues(alpha: 0.4),
-                          fontSize: 12,
+                          fontSize: 14,
                         )),
                   ],
                 ),
@@ -295,13 +321,223 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAnnouncementDropdownCard(BuildContext context, AnnouncementController controller, EdgeInsets margin) {
+    return Obx(() {
+      final announcementList = controller.announcements.value?.data ?? [];
+      if (announcementList.isEmpty) return const SizedBox.shrink();
+
+      if (controller.selectedAnnouncement.value == null && announcementList.isNotEmpty) {
+        controller.selectedAnnouncement.value = announcementList.first;
+      }
+
+      final selected = controller.selectedAnnouncement.value;
+
+      return Container(
+        margin: margin,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => controller.isExpanded.toggle(),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.campaign_rounded, color: AppColors.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Latest Announcements",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.black.withValues(alpha: 0.8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              controller.isExpanded.value
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: AppColors.primary.withValues(alpha: 0.5),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                ],
+              ),
+            ),
+            if (controller.isExpanded.value && selected != null) ...[
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selected.title ?? "",
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      selected.description ?? "",
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.black.withValues(alpha: 0.6),
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (selected.imageUrl != null && selected.imageUrl!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () => _showFullScreenImage(
+                          context,
+                          selected.imageUrl!,
+                          selected.title ?? "Announcement",
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: selected.imageUrl!,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 150,
+                              color: AppColors.primary.withValues(alpha: 0.05),
+                              child: const Center(child: CircularProgressIndicator()),
+                            ),
+                            errorWidget: (context, url, error) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl, String title) {
+    Get.to(
+      () => Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+            icon: const Icon(Icons.arrow_back_outlined, color: AppColors.primary),
+            onPressed: () => Get.back(),
+          ),
+            title: Text(title, style: AppTextStyles.appbarh4.copyWith(fontSize: 18)),
+          ),
+          body: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 40,
+                left: 20,
+                right: 20,
+                child: Center(
+                  child: InkWell(
+                    onTap: () async {
+                      try {
+                        final tempDir = await getTemporaryDirectory();
+                        final path = '${tempDir.path}/shared_image.png';
+                        await Dio().download(imageUrl, path);
+                        await Share.shareXFiles([XFile(path)]);
+                      } catch (e) {
+                        Get.snackbar("Error", "Could not share image");
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.share, color: Colors.white, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            "Share Image",
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      fullscreenDialog: false,
+    );
+  }
+
   Widget _buildAttendanceCard(NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
     return Container(
       margin: margin,
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),
@@ -518,7 +754,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),

@@ -12,7 +12,7 @@ class BannerController extends GetxController {
   final isLoading = false.obs;
 
   Timer? _bannerTimer;
-  final PageController bannerPageController = PageController(viewportFraction: 0.9);
+  final PageController bannerPageController = PageController(viewportFraction: 1.0);
 
   @override
   void onInit() {
@@ -55,8 +55,6 @@ class BannerController extends GetxController {
               uniqueBanners.add(b);
             }
           } else {
-            // If ID is null, we can't safely use Hero, but we'll include it
-            // for now, maybe use a random ID or just skip deduplication for nulls
             uniqueBanners.add(b);
           }
         }
@@ -68,10 +66,10 @@ class BannerController extends GetxController {
       print("Error fetching banners: $e");
     } finally {
       isLoading.value = false;
-      // Start slider ONLY after loading is finished and we have data
-      if (banners.value?.banners != null && banners.value!.banners!.isNotEmpty) {
-        _startBannerAutoSlider();
-      }
+      // Auto-scrolling disabled as requested
+      // if (banners.value?.banners != null && banners.value!.banners!.isNotEmpty) {
+      //   _startBannerAutoSlider();
+      // }
     }
   }
 
