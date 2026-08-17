@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image/image.dart' as img;
+import '../../themes/appColors_&_styles/app_Colors.dart';
 
 class CustomCameraScreen extends StatefulWidget {
   const CustomCameraScreen({super.key});
@@ -48,10 +50,61 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     if (_controller == null || !_controller!.value.isInitialized) return;
 
     try {
-      final XFile image = await _controller!.takePicture();
-      Get.back(result: image.path);
+      setState(() {
+        _isInitialized = false; // Show loader
+      });
+
+      final XFile imageFile = await _controller!.takePicture();
+      
+      // Load and Crop
+      final bytes = await File(imageFile.path).readAsBytes();
+      img.Image? capturedImage = img.decodeImage(bytes);
+
+      if (capturedImage != null) {
+        capturedImage = img.bakeOrientation(capturedImage);
+
+        final Size screenSize = MediaQuery.of(context).size;
+        double frameSize = screenSize.width * 0.8;
+        
+        double screenAspect = screenSize.width / screenSize.height;
+        double imageAspect = capturedImage.width / capturedImage.height;
+
+        double scale;
+        double offsetX = 0;
+        double offsetY = 0;
+
+        if (imageAspect > screenAspect) {
+          scale = capturedImage.height / screenSize.height;
+          offsetX = (capturedImage.width - screenSize.width * scale) / 2;
+        } else {
+          scale = capturedImage.width / screenSize.width;
+          offsetY = (capturedImage.height - screenSize.height * scale) / 2;
+        }
+
+        int cropSize = (frameSize * scale).toInt();
+        int cropX = (offsetX + (screenSize.width - frameSize) / 2 * scale).toInt();
+        int cropY = (offsetY + (screenSize.height - frameSize) / 2 * scale).toInt();
+
+        img.Image croppedImage = img.copyCrop(
+          capturedImage,
+          x: cropX,
+          y: cropY,
+          width: cropSize,
+          height: cropSize,
+        );
+
+        final String path = imageFile.path.replaceAll('.jpg', '_cropped.jpg');
+        await File(path).writeAsBytes(img.encodeJpg(croppedImage));
+
+        Get.back(result: path);
+      } else {
+        Get.back(result: imageFile.path);
+      }
     } catch (e) {
-      print(e);
+      print("Error: $e");
+      setState(() {
+        _isInitialized = true;
+      });
     }
   }
 
@@ -126,17 +179,17 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
         double width = constraints.maxWidth;
         double height = constraints.maxHeight;
 
-        // Square area in center
-        double size = width * 0.8;
-        double left = (width - size) / 2;
-        double top = (height - size) / 2;
+        // Square frame for Face and Chest (matching the provided grid image)
+        double frameWidth = width * 0.8;
+        double frameHeight = frameWidth; // Square ratio
+        double top = (height - frameHeight) / 2;
 
         return Stack(
           children: [
-            // Semi-transparent background outside the square
+            // Dark overlay with transparent hole
             ColorFiltered(
               colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.5),
+                Colors.black.withOpacity(0.7),
                 BlendMode.srcOut,
               ),
               child: Stack(
@@ -150,11 +203,11 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                   Align(
                     alignment: Alignment.center,
                     child: Container(
-                      width: size,
-                      height: size,
+                      width: frameWidth,
+                      height: frameHeight,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),
@@ -162,45 +215,37 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
               ),
             ),
             
-            // Grid lines inside the square
+            // Frame Border & Outline
             Center(
               child: Container(
-                width: size,
-                height: size,
+                width: frameWidth,
+                height: frameHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Stack(
-                  children: [
-                    // Vertical lines
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(width: 1, color: Colors.white.withOpacity(0.3)),
-                        Container(width: 1, color: Colors.white.withOpacity(0.3)),
-                      ],
-                    ),
-                    // Horizontal lines
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(height: 1, color: Colors.white.withOpacity(0.3)),
-                        Container(height: 1, color: Colors.white.withOpacity(0.3)),
-                      ],
-                    ),
-                  ],
+                child: CustomPaint(
+                  painter: FaceChestOutlinePainter(),
                 ),
               ),
             ),
 
             // Instructional Text
             Positioned(
-              top: top - 40,
+              top: top - 50,
               width: width,
               child: const Center(
-                child: Text(
-                  "Align face within the frame",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                child: Column(
+                  children: [
+                    Text(
+                      "FACE & CHEST ALIGNMENT",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "Please align student's face and upper body",
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -209,4 +254,69 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       },
     );
   }
+}
+
+class FaceChestOutlinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final framePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+
+    final gridPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    // Draw Rounded Frame
+    final RRect frameRRect = RRect.fromLTRBR(
+      0, 0, size.width, size.height,
+      const Radius.circular(30),
+    );
+    canvas.drawRRect(frameRRect, framePaint);
+
+    // Draw Grid Lines (extending slightly outside for the style)
+    double extension = 20.0;
+
+    // Vertical Lines (2 lines for 3 columns)
+    for (int i = 1; i <= 2; i++) {
+      double x = size.width * (i / 3);
+      canvas.drawLine(
+        Offset(x, -extension),
+        Offset(x, size.height + extension),
+        gridPaint,
+      );
+    }
+
+    // Horizontal Lines (3 lines for 4 rows)
+    for (int i = 1; i <= 3; i++) {
+      double y = size.height * (i / 4);
+      canvas.drawLine(
+        Offset(-extension, y),
+        Offset(size.width + extension, y),
+        gridPaint,
+      );
+    }
+
+    // Person Silhouette (Optional but helpful for alignment)
+    final silhouettePaint = Paint()
+      ..color = Colors.white.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    // Simple head & shoulders shape
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(size.width / 2, size.height * 0.35), width: size.width * 0.4, height: size.height * 0.3),
+      silhouettePaint,
+    );
+    
+    Path shoulderPath = Path();
+    shoulderPath.moveTo(size.width * 0.2, size.height * 0.9);
+    shoulderPath.quadraticBezierTo(size.width * 0.5, size.height * 0.5, size.width * 0.8, size.height * 0.9);
+    canvas.drawPath(shoulderPath, silhouettePaint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

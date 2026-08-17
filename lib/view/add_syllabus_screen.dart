@@ -145,32 +145,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
             width: double.infinity,
             height: 55,
             child: ElevatedButton(
-              onPressed: () {
-                if (controller.selectedClassId.value == null || controller.selectedSectionId.value == null) {
-                  Get.snackbar("Error", "Please select Class and Section", backgroundColor: Colors.red, colorText: Colors.white);
-                  return;
-                }
-                if (controller.chapterController.text.isEmpty || controller.topicController.text.isEmpty) {
-                  Get.snackbar("Error", "Please fill all fields", backgroundColor: Colors.red, colorText: Colors.white);
-                  return;
-                }
-
-                controller.syllabusList.insert(0, {
-                  'subject': controller.selectedSubject.value,
-                  'title': controller.chapterController.text,
-                  'subtitle': controller.topicController.text,
-                  'status': 'pending',
-                });
-
-                controller.chapterController.clear();
-                controller.topicController.clear();
-
-                Get.back(); // Go back to tracker immediately
-                
-                Get.snackbar("Success", "Syllabus topic added successfully",
-                    backgroundColor: Colors.green, colorText: Colors.white,
-                    snackPosition: SnackPosition.BOTTOM);
-              },
+              onPressed: () => controller.saveSyllabusTopic(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),

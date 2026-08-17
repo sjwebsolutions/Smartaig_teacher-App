@@ -9,6 +9,8 @@ import 'package:teacher_app_attendance/api_service/attendance_scanner_service.da
 
 import '../view/screens/dashboard/dashboard_screen_v2.dart';
 import '../models/dashboard_model.dart';
+import '../services/fcm_services.dart';
+import 'announcement_controller.dart';
 import 'dashboard_controller_v2.dart';
 class ScannerController extends GetxController with GetTickerProviderStateMixin {
 
@@ -117,6 +119,17 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
 
       if (response.success == true) {
         print("ATTENDANCE SUCCESS");
+
+        // Trigger local notification and sound
+        await FcmService.showLocalNotification(
+          title: "Attendance Marked",
+          body: "Your attendance has been successfully marked via QR scan.",
+        );
+
+        // Update notification dot in app bar
+        if (Get.isRegistered<AnnouncementController>()) {
+          Get.find<AnnouncementController>().hasNewNotifications.value = true;
+        }
 
         final NewDashboardController dash = Get.find();
 

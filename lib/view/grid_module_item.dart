@@ -8,6 +8,7 @@ class ModuleItem {
   final Color color;
   final VoidCallback onTap;
   final bool isEnabled;
+  final int badgeCount;
 
   ModuleItem({
     required this.title,
@@ -15,5 +16,6 @@ class ModuleItem {
     required this.color,
     required this.onTap,
     this.isEnabled = true,
+    this.badgeCount = 0,
   });
 }

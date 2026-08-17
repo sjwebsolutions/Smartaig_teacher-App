@@ -37,6 +37,7 @@ import 'auth/splash_screen.dart';
 import 'auth/verify_otp_screen.dart';
 import 'view/screens/banner/banner_screen.dart';
 import 'view/screens/banner/banner_detail_screen.dart';
+import 'view/screens/banner/announcement_list_screen.dart';
 import 'view/screens/banner/add_announcement_screen.dart';
 import 'view/screens/get_pass/get_pass_screen.dart';
 import 'modules/banner_module.dart';
@@ -45,33 +46,54 @@ import 'modules/date_sheet_module.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure Firebase is initialized
   await Firebase.initializeApp();
+  
+  // If the message contains a notification object, the OS will handle it on Android.
+  // If it is a data-only message, we can show it manually:
+  if (message.notification == null && message.data.isNotEmpty) {
+    await FcmService.showLocalNotification(
+      title: message.data['title'] ?? "New Notification",
+      body: message.data['body'] ?? "You have received a new update.",
+    );
+  }
+
   debugPrint("Handling a background message: ${message.messageId}");
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load app first to avoid white screen
-  runApp(const MyApp());
+  try {
+    await Firebase.initializeApp();
+    
+    // Register background handler BEFORE anything else
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    
+    // Initialize FCM service
+    await FcmService.initialize();
+    
+    // Fetch device info and token
+    _initializeServices();
+  } catch (e) {
+    debugPrint("App Initialization Error: $e");
+  }
 
-  // Initialize services in the background
-  _initializeServices();
+  runApp(const MyApp());
 }
 
 Future<void> _initializeServices() async {
   try {
-    await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    await FcmService.initialize();
-    
     final deviceInfo = await DeviceService.getDeviceInfo();
     debugPrint("DEVICE UUID => ${deviceInfo['device_uuid']}");
     
     final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5));
     debugPrint("FCM token : $token");
+    
+    // Also register token to server
+    await FcmService.registerFcmToken();
   } catch (e) {
-    debugPrint("Initialization Error: $e");
+    debugPrint("Service Initialization Error: $e");
   }
 }
 
@@ -170,6 +192,11 @@ class MyApp extends StatelessWidget {
           name: '/banners',
           page: () => const BannerScreen(),
           binding: BannerBinding(),
+        ),
+        GetPage(
+          name: '/announcements',
+          page: () => const AnnouncementListScreen(),
+          binding: AnnouncementBinding(),
         ),
         GetPage(
           name: '/bannerDetail',

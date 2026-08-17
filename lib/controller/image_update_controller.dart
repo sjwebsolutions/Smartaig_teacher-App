@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import '../api_service/image_update_service.dart';
 import '../models/image_update_classes_model.dart';
 import '../models/image_update_students_model.dart';
+import '../services/fcm_services.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
+import 'announcement_controller.dart';
 
 class ImageUpdateController extends GetxController {
   final ImageUpdateService _service = ImageUpdateService();
@@ -77,6 +79,17 @@ class ImageUpdateController extends GetxController {
       );
 
       if (success) {
+        // Trigger local notification and sound
+        await FcmService.showLocalNotification(
+          title: "Update Request Submitted",
+          body: "The student image update request has been successfully sent for approval.",
+        );
+
+        // Update notification dot in app bar
+        if (Get.isRegistered<AnnouncementController>()) {
+          Get.find<AnnouncementController>().hasNewNotifications.value = true;
+        }
+
         if (onSuccess != null) onSuccess();
         
         Future.delayed(const Duration(milliseconds: 300), () {

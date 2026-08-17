@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:teacher_app_attendance/api_service/student_attendance_service.dart';
 import 'package:teacher_app_attendance/models/student_list_model.dart' as model;
+import '../services/fcm_services.dart';
+import 'announcement_controller.dart';
 import 'class_list_controller.dart';
 
 class AttendanceController extends GetxController {
@@ -132,6 +134,17 @@ class AttendanceController extends GetxController {
 
       if (success) {
         Get.back(result: true); 
+
+        // Trigger local notification and sound
+        await FcmService.showLocalNotification(
+          title: "Attendance Submitted",
+          body: "Attendance for $totalMarked students has been successfully submitted.",
+        );
+
+        // Update notification dot in app bar
+        if (Get.isRegistered<AnnouncementController>()) {
+          Get.find<AnnouncementController>().hasNewNotifications.value = true;
+        }
         
         Get.snackbar("Success", "Attendance Submitted Successfully", backgroundColor: Colors.green, colorText: Colors.white);
         

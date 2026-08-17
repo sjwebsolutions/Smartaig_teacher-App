@@ -7,6 +7,7 @@ import '../api_service/homework_service.dart';
 import '../models/homework_form_data_model.dart';
 import '../models/homework_model.dart';
 import '../services/fcm_services.dart';
+import 'announcement_controller.dart';
 
 class HomeworkController extends GetxController {
   final HomeworkService _homeworkService = HomeworkService();
@@ -250,6 +251,11 @@ class HomeworkController extends GetxController {
               ? "$subjectName has been successfully updated."
               : "$subjectName has been successfully posted to selected sections.",
         );
+
+        // Update notification dot in app bar
+        if (Get.isRegistered<AnnouncementController>()) {
+          Get.find<AnnouncementController>().hasNewNotifications.value = true;
+        }
 
         Get.back(); // Return to list
         Get.snackbar(

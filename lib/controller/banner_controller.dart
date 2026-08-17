@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../api_service/banner_service.dart';
 import '../models/banner_model.dart';
+import '../services/fcm_services.dart';
+import 'announcement_controller.dart';
 
 class BannerController extends GetxController {
   final BannerServices _bannerServices = BannerServices();
@@ -59,6 +61,21 @@ class BannerController extends GetxController {
           }
         }
         result.banners = uniqueBanners;
+      }
+
+      // Check for new banners to show notification dot and trigger sound
+      if (result.banners != null && result.banners!.isNotEmpty) {
+        if (banners.value == null || (result.banners!.length > (banners.value?.banners?.length ?? 0))) {
+          // Trigger local notification and sound
+          await FcmService.showLocalNotification(
+            title: "New Banners Available",
+            body: "Check out the latest school updates in the banners section.",
+          );
+
+          if (Get.isRegistered<AnnouncementController>()) {
+            Get.find<AnnouncementController>().hasNewNotifications.value = true;
+          }
+        }
       }
 
       banners.value = result;

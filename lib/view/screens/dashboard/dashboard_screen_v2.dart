@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
@@ -16,6 +17,7 @@ import '../../../themes/appColors_&_styles/app_Colors.dart';
 import '../../../themes/appColors_&_styles/text_styles.dart';
 import '../../../themes/app_bar/app_top_bar.dart';
 import '../../academic_modules_screens.dart';
+import '../../widgets/notification_action.dart';
 import '../banner/banner_widget.dart';
 
 class NewTeacherDashboardScreen extends StatelessWidget {
@@ -25,6 +27,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final NewDashboardController dashboardController = Get.find<NewDashboardController>();
     final AnnouncementController announcementController = Get.put(AnnouncementController());
+    final BannerController bannerController = Get.find<BannerController>();
 
     const EdgeInsets kCardMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 1);
     const EdgeInsets kCardPadding = EdgeInsets.all(14);
@@ -64,6 +67,10 @@ class NewTeacherDashboardScreen extends StatelessWidget {
             backgroundColor: Colors.transparent,
             showBack: false,
             showDivider: false,
+            actions: const [
+              NotificationAction(),
+              SizedBox(width: 8),
+            ],
             customTitle: Row(
               children: [
                 Expanded(
@@ -96,8 +103,19 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     children: [
                       const SizedBox(height: 15),
                       _buildTeacherInfoCard(dashboardController, kCardMargin, kCardPadding),
-                      const SizedBox(height: 9),
-                      const BannerWidget(), // Banner moved between Teacher Info and Attendance
+                      Obx(() {
+                        final banners = bannerController.banners.value?.banners ?? [];
+                        final isLoading = bannerController.isLoading.value;
+                        if (banners.isEmpty && !isLoading) {
+                          return const SizedBox.shrink();
+                        }
+                        return const Column(
+                          children: [
+                            SizedBox(height: 9),
+                            BannerWidget(),
+                          ],
+                        );
+                      }),
                       const SizedBox(height: 9),
                       _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
                       const SizedBox(height: 9),
@@ -358,11 +376,22 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                       onTap: () => controller.isExpanded.toggle(),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 9),
                         child: Row(
                           children: [
-                            const Icon(Icons.campaign_rounded, color: AppColors.primary, size: 20),
-                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.campaign_rounded,
+                                color: Colors.blue,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 "Latest Announcements",
@@ -378,7 +407,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                                   ? Icons.keyboard_arrow_up
                                   : Icons.keyboard_arrow_down,
                               color: AppColors.primary.withValues(alpha: 0.5),
-                              size: 20,
+                              size: 24,
                             ),
                           ],
                         ),
@@ -392,7 +421,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
             if (controller.isExpanded.value && selected != null) ...[
               const Divider(height: 1),
               Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -400,15 +429,16 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                       selected.title ?? "",
                       style: AppTextStyles.body.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontSize: 17,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
                     Text(
                       selected.description ?? "",
                       style: AppTextStyles.body.copyWith(
                         color: AppColors.black.withValues(alpha: 0.6),
-                        fontSize: 13,
+                        fontSize: 14,
+                        height: 1.4,
                       ),
                     ),
                     if (selected.imageUrl != null && selected.imageUrl!.isNotEmpty) ...[
@@ -498,11 +528,11 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: Colors.blue,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
+                            color: Colors.blue.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),

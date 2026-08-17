@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../api_service/announcement_service.dart';
 import '../models/announcement_model.dart';
+import '../services/fcm_services.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 
 class AnnouncementController extends GetxController {
@@ -72,6 +73,16 @@ class AnnouncementController extends GetxController {
       isCreating.value = true;
       await _service.createAnnouncement(data, imagePath: imagePath);
       await fetchAnnouncements();
+
+      // Trigger local notification and sound
+      await FcmService.showLocalNotification(
+        title: "Announcement Created",
+        body: "The new announcement has been successfully posted.",
+      );
+
+      // Update notification dot in app bar
+      hasNewNotifications.value = true;
+
       Get.snackbar("Success", "Announcement created successfully", 
           backgroundColor: AppColors.green, colorText: Colors.white);
       return true;

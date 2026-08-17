@@ -75,6 +75,7 @@ class FcmService {
       playSound: true,
       enableVibration: true,
       showBadge: true,
+      audioAttributesUsage: AudioAttributesUsage.notification,
     );
 
     await _localNotificationsPlugin
@@ -104,6 +105,8 @@ class FcmService {
                 icon: android?.smallIcon ?? '@mipmap/ic_launcher',
                 importance: Importance.max,
                 priority: Priority.high,
+                playSound: true,
+                enableVibration: true,
               ),
             ),
           );
@@ -132,9 +135,12 @@ class FcmService {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'high_importance_channel',
       'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
+      playSound: true,
+      enableVibration: true,
     );
 
     const NotificationDetails platformDetails = NotificationDetails(

@@ -7,6 +7,7 @@ import '../models/marks_save_model.dart';
 import '../models/marks_student_model.dart';
 import '../api_service/marks_service.dart';
 import '../services/fcm_services.dart';
+import 'announcement_controller.dart';
 
 class MarksController extends GetxController {
   final MarksService _marksService = MarksService();
@@ -279,6 +280,11 @@ class MarksController extends GetxController {
           title: "Marks Submitted",
           body: "$examName has been successfully submitted and locked.",
         );
+
+        // Update notification dot in app bar
+        if (Get.isRegistered<AnnouncementController>()) {
+          Get.find<AnnouncementController>().hasNewNotifications.value = true;
+        }
 
         Get.snackbar("Success", "Marks submitted successfully", backgroundColor: Colors.green, colorText: Colors.white);
         return true;
