@@ -12,8 +12,8 @@ class DioClient {
         "Accept": "application/json",
         "Content-Type": "application/json",
       },
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
     ),
   )..interceptors.add(
     InterceptorsWrapper(
@@ -52,4 +52,31 @@ class DioClient {
       },
     ),
   );
+
+  static String getErrorMessage(DioException e, String defaultMessage) {
+    try {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return "Connection timed out. Please try again.";
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        return "No internet connection. Please check your network.";
+      }
+
+      final response = e.response;
+      if (response != null && response.data != null) {
+        final data = response.data;
+        if (data is Map && data["message"] != null) {
+          return data["message"].toString();
+        } else if (data is String && data.isNotEmpty) {
+          if (data.contains("<html>") || data.contains("<html")) {
+            return defaultMessage;
+          }
+          return data;
+        }
+      }
+    } catch (_) {}
+    return defaultMessage;
+  }
 }

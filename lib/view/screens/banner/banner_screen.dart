@@ -58,7 +58,7 @@ class BannerScreen extends GetView<BannerController> {
               itemCount: bannerList.length,
               itemBuilder: (context, index) {
                 final banner = bannerList[index];
-                final String heroTag = 'banner_list_${banner.id ?? index}';
+                final String heroTag = 'banner_list_${banner.id ?? index}_$index';
                 return _buildBannerCard(banner, heroTag);
               },
             );

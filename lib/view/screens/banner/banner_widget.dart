@@ -31,7 +31,7 @@ class BannerWidget extends StatelessWidget {
       if (bannerList.isEmpty) return const SizedBox.shrink();
 
       return SizedBox(
-        height: 160,
+        height: 90,
         child: ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
@@ -41,11 +41,9 @@ class BannerWidget extends StatelessWidget {
             return GestureDetector(
               onTap: () => _showBannerDetail(banner, index),
               child: Container(
-                width: 115,
-                margin: const EdgeInsets.only(right: 12),
+                margin: const EdgeInsets.only(right: 12, bottom: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
@@ -54,15 +52,20 @@ class BannerWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: banner.imageUrl ?? "",
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const Center(
-                      child: SpinKitFadingCircle(color: AppColors.primary, size: 20),
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.white,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: banner.imageUrl ?? "",
+                      fit: BoxFit.cover,
+                      width:75,
+                      height: 75,
+                      placeholder: (context, url) => const Center(
+                        child: SpinKitFadingCircle(color: AppColors.primary, size: 20),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
                     ),
-                    errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
                   ),
                 ),
               ),
@@ -76,15 +79,17 @@ class BannerWidget extends StatelessWidget {
   void _showBannerDetail(dynamic banner, int index) {
     // Local variable to track sharing state within the dialog context
     final RxBool isSharing = false.obs;
+    final String? imageUrl = banner.imageUrl;
+    final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
     Future<void> shareImage() async {
-      if (banner.imageUrl == null) return;
+      if (!hasImage) return;
       try {
         isSharing.value = true;
         final directory = await getTemporaryDirectory();
         final filePath = "${directory.path}/banner_${banner.id ?? index}.png";
         
-        await Dio().download(banner.imageUrl!, filePath);
+        await Dio().download(imageUrl!, filePath);
         
         await Share.shareXFiles([XFile(filePath)], text: banner.name ?? "");
       } catch (e) {
@@ -104,14 +109,38 @@ class BannerWidget extends StatelessWidget {
               child: InteractiveViewer(
                 minScale: 0.5,
                 maxScale: 4.0,
-                child: CachedNetworkImage(
-                  imageUrl: banner.imageUrl!,
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                  placeholder: (context, url) => const Center(
-                    child: SpinKitFadingCircle(color: Colors.white, size: 40),
-                  ),
-                ),
+                child: hasImage 
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      placeholder: (context, url) => const Center(
+                        child: SpinKitFadingCircle(color: Colors.white, size: 40),
+                      ),
+                      errorWidget: (context, url, error) => const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.broken_image, color: Colors.white, size: 50),
+                          SizedBox(height: 10),
+                          Text("No Image Available", style: TextStyle(color: Colors.white, fontSize: 16)),
+                        ],
+                      ),
+                    )
+                  : const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image_not_supported_outlined, color: Colors.white, size: 60),
+                        SizedBox(height: 16),
+                        Text(
+                          "No Image",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
               ),
             ),
             
@@ -133,50 +162,51 @@ class BannerWidget extends StatelessWidget {
             ),
 
             // Share Button
-            Positioned(
-              bottom: 40,
-              left: 40,
-              right: 40,
-              child: Obx(() => GestureDetector(
-                onTap: isSharing.value ? null : shareImage,
-                child: Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      isSharing.value 
-                        ? const SizedBox(
-                            width: 20, 
-                            height: 20, 
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                          )
-                        : const Icon(Icons.share_rounded, color: Colors.white, size: 20),
-                      const SizedBox(width: 12),
-                      Text(
-                        isSharing.value ? "PREPARING..." : "SHARE BANNER",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          letterSpacing: 1,
+            if (hasImage)
+              Positioned(
+                bottom: 40,
+                left: 40,
+                right: 40,
+                child: Obx(() => GestureDetector(
+                  onTap: isSharing.value ? null : shareImage,
+                  child: Container(
+                    height: 55,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        isSharing.value 
+                          ? const SizedBox(
+                              width: 20, 
+                              height: 20, 
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                            )
+                          : const Icon(Icons.share_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          isSharing.value ? "PREPARING..." : "SHARE BANNER",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              )),
-            ),
+                )),
+              ),
           ],
         ),
       ),

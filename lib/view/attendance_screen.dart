@@ -141,6 +141,16 @@ class AttendanceScreen extends StatelessWidget {
                                       color: AppColors.grey,
                                     ),
                                   ),
+                                  if (student.fatherName != null && student.fatherName!.isNotEmpty) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      "Father: ${student.fatherName}",
+                                      style: AppTextStyles.body.copyWith(
+                                        fontSize: 12,
+                                        color: AppColors.grey,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

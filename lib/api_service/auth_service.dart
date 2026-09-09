@@ -34,7 +34,7 @@ class AuthService {
       return response.data["success"] == true;
     } on DioException catch (e) {
       print("SEND OTP DIO ERROR: ${e.response?.data}");
-      throw e.response?.data["message"] ?? "Failed to send OTP";
+      throw DioClient.getErrorMessage(e, "Failed to send OTP");
     } catch (e) {
       print("SEND OTP GENERAL ERROR: $e");
       throw "Failed to send OTP";
@@ -69,7 +69,7 @@ class AuthService {
       return LoginModel.fromJson(response.data);
     } on DioException catch (e) {
       print("VERIFY OTP DIO ERROR: ${e.response?.data}");
-      throw e.response?.data["message"] ?? "OTP verification failed";
+      throw DioClient.getErrorMessage(e, "OTP verification failed");
     } catch (e) {
       print("VERIFY OTP GENERAL ERROR: $e");
       throw "An unexpected error occurred during verification";

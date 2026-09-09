@@ -72,7 +72,8 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
   void _updateEnteredCount() {
     int count = 0;
-    final studentIds = marksController.studentsList.map((s) => s.studentId).whereType<int>().toSet();
+    final relevantStudents = marksController.studentsForSelectedSubject;
+    final studentIds = relevantStudents.map((s) => s.studentId).whereType<int>().toSet();
 
     for (var studentId in studentIds) {
       String att = _attendanceMap[studentId] ?? "P";
@@ -170,20 +171,24 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildClassDropdown(),
+                _buildStreamDropdown(),
+                const SizedBox(height: 10),
                 _buildSectionDropdown(),
                 const SizedBox(height: 10),
                 _buildSubjectDropdown(),
                 const SizedBox(height: 15),
                 Obx(() {
+                  bool needsStream = marksController.uniqueStreamsForSelectedClass.isNotEmpty;
                   final isAllSelected = marksController.selectedClassId.value != null &&
                       marksController.selectedSectionId.value != null &&
+                      (!needsStream || marksController.selectedStreamId.value != null) &&
                       marksController.selectedSubjectId.value != null;
 
                   final selectedSubject = marksController.subjectList.firstWhereOrNull(
                       (s) => s.subjectId == marksController.selectedSubjectId.value
                   );
-                  final bool isGrading = selectedSubject?.gradingType?.toLowerCase().contains('grade') == true ||
-                      selectedSubject?.name?.toLowerCase().contains('computer') == true;
+                  final bool isGrading = selectedSubject?.gradingType?.toLowerCase().contains('grade') == true;
 
                   if (!isAllSelected) {
                     return Center(
@@ -279,36 +284,73 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
   Widget _buildStudentList() {
     return Obx(() {
-      if (marksController.studentsList.isEmpty) {
+      final relevantStudents = marksController.studentsForSelectedSubject;
+      final totalStudents = marksController.studentsList.length;
+
+      final selectedSubject = marksController.subjectList.firstWhereOrNull(
+          (s) => s.subjectId == marksController.selectedSubjectId.value
+      );
+      final bool isGrading = selectedSubject?.gradingType?.toLowerCase().contains('grade') == true;
+
+      if (relevantStudents.isEmpty) {
         return Center(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              "No students found in this section",
-              style: TextStyle(color: Colors.grey.shade600),
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                Icon(Icons.person_off_outlined, size: 40, color: AppColors.primary.withValues(alpha: 0.3)),
+                const SizedBox(height: 10),
+                Text(
+                  "No students enrolled in ${selectedSubject?.name ?? 'this subject'}",
+                  style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         );
       }
 
-      final selectedSubject = marksController.subjectList.firstWhereOrNull(
-          (s) => s.subjectId == marksController.selectedSubjectId.value
-      );
-      final bool isGrading = selectedSubject?.gradingType?.toLowerCase().contains('grade') == true ||
-          selectedSubject?.name?.toLowerCase().contains('computer') == true;
+      final bool isFiltered = relevantStudents.length < totalStudents;
 
-      return ListView.separated(
-        key: ValueKey("list_${marksController.selectedSubjectId.value}_${marksController.selectedSectionId.value}"),
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: marksController.studentsList.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final student = marksController.studentsList[index];
-          final studentId = student.studentId!;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isFiltered)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: AppColors.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Showing ${relevantStudents.length} of $totalStudents students enrolled in ${selectedSubject?.name ?? 'this subject'}",
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ListView.separated(
+            key: ValueKey("list_${marksController.selectedSubjectId.value}_${marksController.selectedSectionId.value}"),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: relevantStudents.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final student = relevantStudents[index];
+              final studentId = student.studentId!;
 
-          final subIdStr = marksController.selectedSubjectId.value.toString();
-          final subjectMarks = student.marks?[subIdStr];
+              final subIdStr = marksController.selectedSubjectId.value.toString();
+              final subjectMarks = student.marks?[subIdStr];
           final existingAttendance = subjectMarks?.attendance;
 
           if (!_attendanceMap.containsKey(studentId)) {
@@ -316,20 +358,39 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
           }
 
           final components = selectedSubject?.components;
+          final String? subName = selectedSubject?.name;
+          final bool hasSubComponents = components != null && (
+              components.wEnabled == true ||
+              components.oEnabled == true ||
+              components.aEnabled == true ||
+              components.bEnabled == true ||
+              components.assEnabled == true ||
+              components.pEnabled == true
+          );
+
           List<Widget> markFields = [];
 
           // 1. Add Marks Components (Written, Oral, etc.)
           if (components != null) {
-            if (components.wEnabled == true) markFields.add(_buildMarkInput(studentId, 'w', 'Written', subjectMarks?.wMarks, components.wMax, marksController.isLocked.value, _attendanceMap[studentId]));
-            if (components.oEnabled == true) markFields.add(_buildMarkInput(studentId, 'o', 'Oral', subjectMarks?.oMarks, components.oMax, marksController.isLocked.value, _attendanceMap[studentId]));
-            if (components.aEnabled == true) markFields.add(_buildMarkInput(studentId, 'a', 'A', subjectMarks?.aMarks, components.aMax, marksController.isLocked.value, _attendanceMap[studentId]));
-            if (components.bEnabled == true) markFields.add(_buildMarkInput(studentId, 'b', 'B', subjectMarks?.bMarks, components.bMax, marksController.isLocked.value, _attendanceMap[studentId]));
-            if (components.assEnabled == true) markFields.add(_buildMarkInput(studentId, 'ass', 'Assign.', subjectMarks?.assMarks, components.assMax, marksController.isLocked.value, _attendanceMap[studentId]));
-            if (components.pEnabled == true) markFields.add(_buildMarkInput(studentId, 'p', 'Pract.', subjectMarks?.pMarks, components.pMax, marksController.isLocked.value, _attendanceMap[studentId]));
+            if (components.wEnabled == true) markFields.add(_buildMarkInput(studentId, 'w', 'Written', subjectMarks?.wMarks, components.wMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('w', subName)));
+            if (components.oEnabled == true) markFields.add(_buildMarkInput(studentId, 'o', 'Oral', subjectMarks?.oMarks, components.oMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('o', subName)));
+            if (components.aEnabled == true) markFields.add(_buildMarkInput(studentId, 'a', 'A', subjectMarks?.aMarks, components.aMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('a', subName)));
+            if (components.bEnabled == true) markFields.add(_buildMarkInput(studentId, 'b', 'B', subjectMarks?.bMarks, components.bMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('b', subName)));
+            if (components.assEnabled == true) markFields.add(_buildMarkInput(studentId, 'ass', 'Assessment', subjectMarks?.assMarks, components.assMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('ass', subName)));
+            if (components.pEnabled == true) markFields.add(_buildMarkInput(studentId, 'p', 'Pract.', subjectMarks?.pMarks, components.pMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('p', subName)));
 
             bool showTotal = components.tEnabled == true || (!isGrading && markFields.isEmpty);
             if (showTotal) {
-              markFields.add(_buildMarkInput(studentId, 't', 'Total', subjectMarks?.tMarks, components.tMax, marksController.isLocked.value, _attendanceMap[studentId]));
+              markFields.add(_buildMarkInput(
+                studentId,
+                't',
+                'Total',
+                subjectMarks?.tMarks,
+                components.tMax,
+                marksController.isLocked.value,
+                _attendanceMap[studentId],
+                isReadOnly: hasSubComponents,
+              ));
             }
           } else if (!isGrading) {
             markFields.add(_buildMarkInput(studentId, 't', 'Total', subjectMarks?.tMarks, "100", marksController.isLocked.value, _attendanceMap[studentId]));
@@ -421,9 +482,15 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
                             Text(
                               student.studentName ?? "N/A",
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.black),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
+                            const SizedBox(height: 2),
+                            if (student.fatherName != null && student.fatherName!.isNotEmpty) ...[
+                              Text(
+                                "Father: ${student.fatherName}",
+                                style: TextStyle(color: AppColors.black.withValues(alpha: 0.55), fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 2),
+                            ],
                             Text(
                               "Roll No: ${student.rollNo ?? "N/A"} • Adm: ${student.admissionNo ?? "N/A"}",
                               style: TextStyle(color: AppColors.black.withValues(alpha: 0.4), fontSize: 11, fontWeight: FontWeight.w500),
@@ -457,18 +524,52 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
                 ]
               ],
             ),
-          );
-        },
-      );
-    });
+            );
+          },
+        ),
+      ],
+    );
+  });
+}
+
+  bool _isComponentDisabledForSubject(String comp, String? subjectName) {
+    if (subjectName == null || subjectName.trim().isEmpty) return false;
+    final cleanName = subjectName.trim().toLowerCase();
+
+    // Check if subject represents 'A' (e.g. Punjabi (A), Punjabi A, Punjabi-A, Paper A, Part A)
+    final bool isSubjectA = RegExp(r'(\([aA]\)|[-_/\s][aA]$|\b[aA]\b|paper[\s-_]*[aA]|part[\s-_]*[aA])').hasMatch(cleanName);
+    
+    // Check if subject represents 'B' (e.g. Punjabi (B), Punjabi B, Punjabi-B, Paper B, Part B)
+    final bool isSubjectB = RegExp(r'(\([bB]\)|[-_/\s][bB]$|\b[bB]\b|paper[\s-_]*[bB]|part[\s-_]*[bB])').hasMatch(cleanName);
+
+    if (isSubjectA && !isSubjectB) {
+      // If subject is A, disable component B
+      return comp == 'b';
+    }
+    if (isSubjectB && !isSubjectA) {
+      // If subject is B, disable component A
+      return comp == 'a';
+    }
+    return false;
   }
 
-  Widget _buildMarkInput(int studentId, String comp, String label, String? existingMark, dynamic maxMarksVal, bool isLocked, String? attendance) {
+  Widget _buildMarkInput(
+    int studentId,
+    String comp,
+    String label,
+    String? existingMark,
+    dynamic maxMarksVal,
+    bool isLocked,
+    String? attendance, {
+    bool isReadOnly = false,
+    bool isCompDisabled = false,
+  }) {
     final controller = _getController(studentId, comp, existingMark);
     final maxMarksStr = maxMarksVal?.toString() ?? "100";
     final maxMarks = int.tryParse(maxMarksStr) ?? 100;
     
-    final bool isDisabled = isLocked || attendance != "P";
+    final bool isDisabled = isLocked || attendance != "P" || isCompDisabled;
+    final bool isTotal = comp == 't';
 
     return SizedBox(
       width: 90,
@@ -482,15 +583,27 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
                   label.toUpperCase(),
                   style: TextStyle(
                     fontSize: 9,
-                    color: AppColors.black.withValues(alpha: 0.5),
+                    color: isCompDisabled
+                        ? AppColors.black.withValues(alpha: 0.3)
+                        : ((isTotal && isReadOnly)
+                            ? AppColors.primary
+                            : AppColors.black.withValues(alpha: 0.5)),
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
               Text(
                 "/$maxMarksStr",
-                style: TextStyle(fontSize: 9, color: AppColors.primary.withValues(alpha: 0.4), fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 9,
+                  color: isCompDisabled
+                      ? AppColors.primary.withValues(alpha: 0.2)
+                      : ((isTotal && isReadOnly)
+                          ? AppColors.primary.withValues(alpha: 0.7)
+                          : AppColors.primary.withValues(alpha: 0.4)),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -498,43 +611,65 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
           Container(
             height: 40,
             decoration: BoxDecoration(
-              color: isDisabled ? Colors.grey.shade50 : Colors.white,
+              color: isCompDisabled
+                  ? Colors.grey.shade100
+                  : (isDisabled
+                      ? Colors.grey.shade50
+                      : (isReadOnly ? AppColors.primary.withValues(alpha: 0.05) : Colors.white)),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isDisabled ? Colors.grey.shade200 : AppColors.primary.withValues(alpha: 0.2),
-                width: 1.5
+                color: isCompDisabled
+                    ? Colors.grey.shade300
+                    : (isDisabled
+                        ? Colors.grey.shade200
+                        : (isReadOnly
+                            ? AppColors.primary.withValues(alpha: 0.35)
+                            : AppColors.primary.withValues(alpha: 0.2))),
+                width: 1.5,
               ),
             ),
             child: TextField(
               controller: controller,
               enabled: !isDisabled,
+              readOnly: isReadOnly,
+              enableInteractiveSelection: !isReadOnly && !isDisabled,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDisabled ? Colors.grey : AppColors.black,
-                  fontSize: 15
+                fontWeight: FontWeight.bold,
+                color: isCompDisabled
+                    ? Colors.grey.shade400
+                    : (isDisabled
+                        ? Colors.grey
+                        : (isReadOnly ? AppColors.primary : AppColors.black)),
+                fontSize: 15,
               ),
-              onChanged: (v) {
-                if (v.isNotEmpty) {
-                  int? val = int.tryParse(v);
-                  if (val != null && val > maxMarks) {
-                    controller.text = maxMarks.toString();
-                    controller.selection = TextSelection.fromPosition(
-                        TextPosition(offset: controller.text.length));
-                    Get.snackbar("Alert", "$label cannot exceed $maxMarks",
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.redAccent,
-                        colorText: Colors.white,
-                        duration: const Duration(seconds: 1));
-                  }
-                }
-              },
+              onChanged: (isReadOnly || isDisabled)
+                  ? null
+                  : (v) {
+                      if (v.isNotEmpty) {
+                        int? val = int.tryParse(v);
+                        if (val != null && val > maxMarks) {
+                          controller.text = maxMarks.toString();
+                          controller.selection = TextSelection.fromPosition(
+                              TextPosition(offset: controller.text.length));
+                          Get.snackbar("Alert", "$label cannot exceed $maxMarks",
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 1));
+                        }
+                      }
+                    },
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
                 border: InputBorder.none,
-                hintText: "-",
-                hintStyle: TextStyle(color: AppColors.grey.withValues(alpha: 0.3)),
+                hintText: isCompDisabled ? "N/A" : "-",
+                hintStyle: TextStyle(
+                  color: isCompDisabled ? Colors.grey.shade400 : AppColors.grey.withValues(alpha: 0.3),
+                  fontSize: isCompDisabled ? 12 : 14,
+                  fontWeight: isCompDisabled ? FontWeight.w600 : FontWeight.normal,
+                ),
                 isDense: true,
               ),
             ),
@@ -687,10 +822,9 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
     final selectedSubjectId = marksController.selectedSubjectId.value;
     final subjects = marksController.subjectList;
     final currentSubject = subjects.firstWhereOrNull((s) => s.subjectId == selectedSubjectId);
-    final bool isGrading = currentSubject?.gradingType?.toLowerCase().contains('grade') == true ||
-        currentSubject?.name?.toLowerCase().contains('computer') == true;
+    // final bool isGrading = currentSubject?.gradingType?.toLowerCase().contains('grade') == true;
     
-    for (var student in marksController.studentsList) {
+    for (var student in marksController.studentsForSelectedSubject) {
       final studentId = student.studentId;
       if (studentId == null) continue;
       final attendance = _attendanceMap[studentId] ?? "P";
@@ -722,13 +856,13 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
           subjectId: selectedSubjectId,
           isMisc: currentSubject?.isMisc ?? false,
           attendance: attendance,
-          wMarks: int.tryParse(_marksControllers["$studentId-w"]?.text ?? ""),
-          oMarks: int.tryParse(_marksControllers["$studentId-o"]?.text ?? ""),
-          aMarks: int.tryParse(_marksControllers["$studentId-a"]?.text ?? ""),
-          bMarks: int.tryParse(_marksControllers["$studentId-b"]?.text ?? ""),
-          assMarks: int.tryParse(_marksControllers["$studentId-ass"]?.text ?? ""),
-          pMarks: int.tryParse(_marksControllers["$studentId-p"]?.text ?? ""),
-          tMarks: int.tryParse(_marksControllers["$studentId-t"]?.text ?? ""),
+          wMarks: num.tryParse(_marksControllers["$studentId-w"]?.text ?? ""),
+          oMarks: num.tryParse(_marksControllers["$studentId-o"]?.text ?? ""),
+          aMarks: num.tryParse(_marksControllers["$studentId-a"]?.text ?? ""),
+          bMarks: num.tryParse(_marksControllers["$studentId-b"]?.text ?? ""),
+          assMarks: num.tryParse(_marksControllers["$studentId-ass"]?.text ?? ""),
+          pMarks: num.tryParse(_marksControllers["$studentId-p"]?.text ?? ""),
+          tMarks: num.tryParse(_marksControllers["$studentId-t"]?.text ?? ""),
           gGrade: _marksControllers["$studentId-g"]?.text.isNotEmpty == true ? _marksControllers["$studentId-g"]?.text : null,
           remarks: "",
         ));
@@ -773,16 +907,17 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: marksController.isSaving.value ? null : () async {
-                    final selectedData = marksController.marksEntryClasses.firstWhereOrNull(
-                      (element) => element.classId == marksController.selectedClassId.value && 
-                                   element.sectionId == marksController.selectedSectionId.value
-                    );
-  
+                    int? streamId;
+                    final sId = marksController.selectedStreamId.value;
+                    if (sId != null && sId != "null" && sId.isNotEmpty) {
+                      streamId = int.tryParse(sId);
+                    }
+
                     final request = MarksSaveRequest(
                       marksEntryId: marksController.selectedExamTypeId.value,
                       classId: int.tryParse(marksController.selectedClassId.value ?? ""),
                       sectionId: int.tryParse(marksController.selectedSectionId.value ?? ""),
-                      streamId: int.tryParse(selectedData?.streamId ?? ""),
+                      streamId: streamId,
                       entries: entries,
                     );
   
@@ -875,17 +1010,16 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
                       onPressed: () async {
                         Get.back();
   
-                        final selectedData = marksController.marksEntryClasses.firstWhereOrNull(
-                          (element) => element.classId == marksController.selectedClassId.value && 
-                                       element.sectionId == marksController.selectedSectionId.value
-                        );
-  
                         final Map<String, dynamic> body = {
                           "marks_entry_id": marksController.selectedExamTypeId.value,
                           "class_id": int.tryParse(marksController.selectedClassId.value ?? ""),
                           "section_id": int.tryParse(marksController.selectedSectionId.value ?? ""),
-                          "stream_id": int.tryParse(selectedData?.streamId ?? ""),
                         };
+  
+                        final sId = marksController.selectedStreamId.value;
+                        if (sId != null && sId != "null" && sId.isNotEmpty) {
+                          body["stream_id"] = int.tryParse(sId);
+                        }
   
                         bool success = await marksController.submitMarksToApi(body);
                         if (success) {
@@ -907,14 +1041,17 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
   Widget _buildAddedSubjectsCard() {
     final List<SubjectData> subjects = List<SubjectData>.from(marksController.subjectList);
-    final students = marksController.studentsList;
+    final allStudents = marksController.studentsList;
     
-    if (subjects.isEmpty || students.isEmpty) return const SizedBox.shrink();
+    if (subjects.isEmpty || allStudents.isEmpty) return const SizedBox.shrink();
 
-    // Helper function to check if subject has data
+    // Helper function to check if subject has data for its enrolled students
     bool hasDataForSubject(SubjectData subject) {
       String subId = subject.subjectId.toString();
-      for (var student in students) {
+      final enrolled = allStudents.where((s) => s.hasSubject(subject.subjectId, subject.name)).toList();
+      if (enrolled.isEmpty) return false;
+
+      for (var student in enrolled) {
         var m = student.marks?[subId];
         if (m != null) {
           bool hasMarks = (m.wMarks?.isNotEmpty == true && m.wMarks != "null") ||
@@ -924,7 +1061,8 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
               (m.bMarks?.isNotEmpty == true && m.bMarks != "null") ||
               (m.assMarks?.isNotEmpty == true && m.assMarks != "null") ||
               (m.pMarks?.isNotEmpty == true && m.pMarks != "null") ||
-              (m.gGrade?.isNotEmpty == true && m.gGrade != "null");
+              (m.gGrade?.isNotEmpty == true && m.gGrade != "null") ||
+              (m.grade?.isNotEmpty == true && m.grade != "null");
 
           String? att = m.attendance;
           bool hasAtt = att != null && att.trim().isNotEmpty && att != "null" && att != "P";
@@ -935,7 +1073,34 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
       return false;
     }
 
-    // Sort subjects: Added (green) first
+    // Helper to count entered students for a subject
+    int countEnteredForSubject(SubjectData subject) {
+      String subId = subject.subjectId.toString();
+      final enrolled = allStudents.where((s) => s.hasSubject(subject.subjectId, subject.name)).toList();
+      int count = 0;
+      for (var student in enrolled) {
+        var m = student.marks?[subId];
+        if (m != null) {
+          bool hasMarks = (m.wMarks?.isNotEmpty == true && m.wMarks != "null") ||
+              (m.oMarks?.isNotEmpty == true && m.oMarks != "null") ||
+              (m.tMarks?.isNotEmpty == true && m.tMarks != "null") ||
+              (m.aMarks?.isNotEmpty == true && m.aMarks != "null") ||
+              (m.bMarks?.isNotEmpty == true && m.bMarks != "null") ||
+              (m.assMarks?.isNotEmpty == true && m.assMarks != "null") ||
+              (m.pMarks?.isNotEmpty == true && m.pMarks != "null") ||
+              (m.gGrade?.isNotEmpty == true && m.gGrade != "null") ||
+              (m.grade?.isNotEmpty == true && m.grade != "null");
+
+          String? att = m.attendance;
+          bool hasAtt = att != null && att.trim().isNotEmpty && att != "null";
+
+          if (hasMarks || hasAtt) count++;
+        }
+      }
+      return count;
+    }
+
+    // Sort subjects: Added/Completed first
     subjects.sort((a, b) {
       bool aHas = hasDataForSubject(a);
       bool bHas = hasDataForSubject(b);
@@ -979,6 +1144,10 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
             runSpacing: 8,
             children: subjects.map((subject) {
               bool hasData = hasDataForSubject(subject);
+              int totalEnrolled = marksController.getStudentCountForSubject(subject);
+              int entered = countEnteredForSubject(subject);
+              bool isFullyCompleted = totalEnrolled > 0 && entered >= totalEnrolled;
+
               String displayName = subject.name ?? "";
               if (subject.isMisc == true) {
                 displayName += " (Misc)";
@@ -987,24 +1156,35 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: hasData ? Colors.green.withValues(alpha: 0.1) : Colors.white,
+                  color: isFullyCompleted 
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : (hasData ? Colors.orange.withValues(alpha: 0.1) : Colors.white),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: hasData ? Colors.green : Colors.grey.withValues(alpha: 0.3),
+                    color: isFullyCompleted 
+                        ? Colors.green 
+                        : (hasData ? Colors.orange : Colors.grey.withValues(alpha: 0.3)),
                     width: 1
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (hasData) const Icon(Icons.check_circle, size: 12, color: Colors.green),
-                    if (hasData) const SizedBox(width: 4),
+                    if (isFullyCompleted)
+                      const Icon(Icons.check_circle, size: 12, color: Colors.green)
+                    else if (hasData)
+                      const Icon(Icons.timelapse_rounded, size: 12, color: Colors.orange),
+                    if (isFullyCompleted || hasData) const SizedBox(width: 4),
                     Text(
-                      displayName,
+                      totalEnrolled > 0 && totalEnrolled < allStudents.length
+                          ? "$displayName ($entered/$totalEnrolled)"
+                          : (hasData ? "$displayName ($entered/$totalEnrolled)" : displayName),
                       style: TextStyle(
                         fontSize: 11, 
-                        fontWeight: hasData ? FontWeight.bold : FontWeight.w500, 
-                        color: hasData ? Colors.green : Colors.grey.shade600
+                        fontWeight: (isFullyCompleted || hasData) ? FontWeight.bold : FontWeight.w500, 
+                        color: isFullyCompleted 
+                            ? Colors.green 
+                            : (hasData ? Colors.orange.shade800 : Colors.grey.shade600)
                       ),
                     ),
                   ],
@@ -1019,15 +1199,16 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
   Widget _buildSummaryCard() {
     return Obx(() {
-      int total = marksController.studentsList.length;
+      final relevantStudents = marksController.studentsForSelectedSubject;
+      int total = relevantStudents.length;
       int entered = enteredCount.value;
       int pending = total - entered;
+      if (pending < 0) pending = 0;
 
       final selectedSubject = marksController.subjectList.firstWhereOrNull(
               (s) => s.subjectId == marksController.selectedSubjectId.value
       );
-      final bool isGrading = selectedSubject?.gradingType?.toLowerCase().contains('grade') == true ||
-          selectedSubject?.name?.toLowerCase().contains('computer') == true;
+      final bool isGrading = selectedSubject?.gradingType?.toLowerCase().contains('grade') == true;
 
       final maxMarks = isGrading ? "Grade" : (selectedSubject?.components?.tMax?.toString() ?? "N/A");
 
@@ -1051,7 +1232,7 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
             _summaryDivider(),
             _summaryItem("Added", entered.toString(), Icons.check_circle_outline, AppColors.green),
             _summaryDivider(),
-            _summaryItem("Pending", pending.toString(), Icons.pending_actions, AppColors.orange),
+            _summaryItem("Pending", pending.toString(), Icons.pending_actions, Colors.orange),
             _summaryDivider(),
             _summaryItem("Max", maxMarks, Icons.stars_outlined, Colors.blue),
           ],
@@ -1096,6 +1277,148 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
     );
   }
 
+  Widget _buildExamCategoryDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle("SELECT EXAM CATEGORY"),
+        const SizedBox(height: 8),
+        Obx(() {
+          final exams = marksController.marksEntries;
+          return _buildDropdownCard(
+            icon: Icons.assignment_rounded,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                isExpanded: true,
+                hint: Text("Choose Exam", style: AppTextStyles.body.copyWith(color: AppColors.grey)),
+                value: exams.any((e) => e.id == marksController.selectedExamTypeId.value)
+                    ? marksController.selectedExamTypeId.value
+                    : null,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                items: exams.map((item) {
+                  return DropdownMenuItem<int>(
+                    value: item.id,
+                    child: Text(item.datesheetName ?? "", style: AppTextStyles.body),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  marksController.selectedExamTypeId.value = val;
+                },
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildClassDropdown() {
+    final bool isFromViewMarks = Get.arguments != null && 
+                                Get.arguments is Map && 
+                                Get.arguments['fromViewMarks'] == true;
+
+    return Obx(() {
+      final classes = marksController.uniqueClasses;
+      final selectedClass = classes.firstWhereOrNull(
+        (c) => c.classId == marksController.selectedClassId.value
+      );
+
+      if (isFromViewMarks && selectedClass != null) {
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "SELECTED CLASS",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      selectedClass.className ?? "N/A",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.lock_outline_rounded, color: Colors.white70, size: 20),
+            ],
+          ),
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle("SELECT CLASS"),
+          const SizedBox(height: 8),
+          _buildDropdownCard(
+            icon: Icons.class_outlined,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                hint: Text("Choose Class", style: AppTextStyles.body.copyWith(color: AppColors.grey)),
+                value: selectedClass?.classId,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                items: classes.map((item) {
+                  return DropdownMenuItem<String>(
+                    value: item.classId,
+                    child: Text(item.className ?? "", style: AppTextStyles.body),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  marksController.selectedClassId.value = val;
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
   Widget _buildSectionDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1103,14 +1426,16 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
         _buildSectionTitle("SELECT SECTION"),
         const SizedBox(height: 8),
         Obx(() {
-          final sections = marksController.sectionsForSelectedClass;
+          final sections = marksController.sectionsForSelectedClassAndStream;
           return _buildDropdownCard(
             icon: Icons.grid_view_rounded,
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 isExpanded: true,
                 hint: Text("Choose Section", style: AppTextStyles.body.copyWith(color: AppColors.grey)),
-                value: marksController.selectedSectionId.value,
+                value: sections.any((item) => item.sectionId == marksController.selectedSectionId.value)
+                    ? marksController.selectedSectionId.value
+                    : null,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
                 dropdownColor: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -1131,6 +1456,46 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
     );
   }
 
+  Widget _buildStreamDropdown() {
+    return Obx(() {
+      final streams = marksController.uniqueStreamsForSelectedClass;
+      if (streams.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          _buildSectionTitle("SELECT STREAM"),
+          const SizedBox(height: 8),
+          _buildDropdownCard(
+            icon: Icons.account_tree_outlined,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                hint: Text("Choose Stream", style: AppTextStyles.body.copyWith(color: AppColors.grey)),
+                value: streams.any((item) => item.streamId == marksController.selectedStreamId.value)
+                    ? marksController.selectedStreamId.value
+                    : null,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                items: streams.map((item) {
+                  return DropdownMenuItem<String>(
+                    value: item.streamId,
+                    child: Text(item.streamName ?? "", style: AppTextStyles.body),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  marksController.selectedStreamId.value = val;
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
   Widget _buildSubjectDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1139,13 +1504,17 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
         const SizedBox(height: 8),
         Obx(() {
           final subjects = marksController.subjectList;
+          final totalStudents = marksController.studentsList.length;
+
           return _buildDropdownCard(
             icon: Icons.book_outlined,
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 isExpanded: true,
                 hint: Text("Choose Subject", style: AppTextStyles.body.copyWith(color: AppColors.grey)),
-                value: marksController.selectedSubjectId.value,
+                value: subjects.any((item) => item.subjectId == marksController.selectedSubjectId.value)
+                    ? marksController.selectedSubjectId.value
+                    : null,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
                 dropdownColor: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -1154,6 +1523,12 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
                   if (item.isMisc == true) {
                     displayName += " (Misc)";
                   }
+                  
+                  int enrolled = marksController.getStudentCountForSubject(item);
+                  if (totalStudents > 0 && enrolled < totalStudents) {
+                    displayName += " ($enrolled Students)";
+                  }
+
                   return DropdownMenuItem<int>(
                     value: item.subjectId,
                     child: Text(displayName, style: AppTextStyles.body),

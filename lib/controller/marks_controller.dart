@@ -27,6 +27,7 @@ class MarksController extends GetxController {
 
   var selectedClassId = Rxn<String>();
   var selectedSectionId = Rxn<String>();
+  var selectedStreamId = Rxn<String>();
   var selectedSubjectId = Rxn<int>();
 
   @override
@@ -38,6 +39,7 @@ class MarksController extends GetxController {
       if (id != null) {
         selectedClassId.value = null;
         selectedSectionId.value = null;
+        selectedStreamId.value = null;
         selectedSubjectId.value = null;
         studentsList.clear();
         subjectList.clear();
@@ -45,49 +47,59 @@ class MarksController extends GetxController {
       }
     });
 
-    // Reset section, subject and students when class changes
+    // Reset section, stream, subject and students when class changes
     ever(selectedClassId, (classId) {
-      if (classId == null) return;
+      if (classId == null) {
+        selectedSectionId.value = null;
+        selectedStreamId.value = null;
+        return;
+      }
+      
+      selectedSubjectId.value = null;
+      subjectList.clear();
+      studentsList.clear();
 
-      // Check if current section is still valid for the new class
-      bool isSectionValid = false;
-      if (selectedSectionId.value != null) {
-        isSectionValid = marksEntryClasses.any(
-          (element) => element.classId == classId && element.sectionId == selectedSectionId.value
-        );
+      // 1. Auto-select Stream if not already set or invalid
+      final streams = uniqueStreamsForSelectedClass;
+      bool isStreamValid = selectedStreamId.value != null && 
+                          streams.any((s) => s.streamId == selectedStreamId.value);
+      
+      if (!isStreamValid) {
+        if (streams.isNotEmpty) {
+          selectedStreamId.value = streams.first.streamId;
+        } else {
+          selectedStreamId.value = null;
+        }
       }
 
-      if (!isSectionValid) {
-        // Try to find Section 'A' as default
-        final sectionA = marksEntryClasses.firstWhereOrNull(
-          (element) => element.classId == classId && (element.sectionName?.toUpperCase() == 'A' || element.sectionName?.toLowerCase() == 'a')
-        );
-        
-        if (sectionA != null) {
-          selectedSectionId.value = sectionA.sectionId;
-        } else {
-          // Pick first available section if 'A' not found
-          final firstSection = marksEntryClasses.firstWhereOrNull(
-            (element) => element.classId == classId
-          );
-          if (firstSection != null) {
-            selectedSectionId.value = firstSection.sectionId;
-          } else {
-            selectedSectionId.value = null;
-            selectedSubjectId.value = null;
-            isLocked.value = false;
-            subjectList.clear();
-            studentsList.clear();
-          }
-        }
+      // 2. Auto-select Section 'A' or first available for this class (+ stream)
+      _autoSelectSection(classId, selectedStreamId.value);
+    });
+
+    // Reset section when stream changes
+    ever(selectedStreamId, (streamId) {
+      if (selectedClassId.value != null) {
+        _autoSelectSection(selectedClassId.value!, streamId);
       }
     });
 
-    // Listen to exam type, class or section changes to fetch students
-    everAll([selectedExamTypeId, selectedClassId, selectedSectionId], (_) {
+    // Listen to subject list changes to auto-select first subject
+    ever(subjectList, (List<SubjectData> subjects) {
+      if (subjects.isNotEmpty && selectedSubjectId.value == null) {
+        selectedSubjectId.value = subjects.first.subjectId;
+      }
+    });
+
+    // Listen to selection changes to fetch students
+    everAll([selectedExamTypeId, selectedClassId, selectedSectionId, selectedStreamId], (_) {
+      // If a class has streams, selectedStreamId MUST be selected
+      bool needsStream = uniqueStreamsForSelectedClass.isNotEmpty;
+      bool streamSelected = selectedStreamId.value != null;
+
       if (selectedExamTypeId.value != null && 
           selectedClassId.value != null && 
-          selectedSectionId.value != null) {
+          selectedSectionId.value != null &&
+          (!needsStream || streamSelected)) {
         fetchStudents();
       }
     });
@@ -175,22 +187,25 @@ class MarksController extends GetxController {
       subjectList.clear();
       gradeList.clear();
 
-      final selectedData = marksEntryClasses.firstWhereOrNull(
-        (element) => element.classId == selectedClassId.value && 
-                     element.sectionId == selectedSectionId.value
-      );
 
       final Map<String, dynamic> params = {
         "class_id": selectedClassId.value,
         "section_id": selectedSectionId.value,
-        "stream_id": selectedData?.streamId,
       };
+
+      if (selectedStreamId.value != null && selectedStreamId.value != "null" && selectedStreamId.value!.isNotEmpty) {
+        params["stream_id"] = selectedStreamId.value;
+      }
 
       final response = await _marksService.getStudentsForMarks(selectedExamTypeId.value!, params);
       if (response.success == true) {
         isLocked.value = response.isLocked ?? false;
         if (response.subjects != null) {
-          subjectList.assignAll(response.subjects!);
+          // Ensure unique subjects by subjectId to prevent Dropdown crash
+          final seen = <int>{};
+          final uniqueSubjects = response.subjects!.where((s) => s.subjectId != null && seen.add(s.subjectId!)).toList();
+          subjectList.assignAll(uniqueSubjects);
+
           // If previous selection is no longer valid, or none selected, pick the first one
           if (selectedSubjectId.value == null || !subjectList.any((s) => s.subjectId == selectedSubjectId.value)) {
             if (subjectList.isNotEmpty) {
@@ -229,9 +244,118 @@ class MarksController extends GetxController {
     return marksEntryClasses.where((item) => seen.add(item.classId ?? "")).toList();
   }
 
-  List<MarksEntryClassData> get sectionsForSelectedClass {
+  List<MarksEntryClassData> get uniqueStreamsForSelectedClass {
     if (selectedClassId.value == null) return [];
-    return marksEntryClasses.where((item) => item.classId == selectedClassId.value).toList();
+    final seen = <String>{};
+    return marksEntryClasses
+        .where((item) => 
+            item.classId == selectedClassId.value && 
+            item.streamId != null && 
+            item.streamId != "null" && 
+            item.streamId!.isNotEmpty
+        )
+        .where((item) => seen.add(item.streamId!))
+        .toList();
+  }
+
+  List<MarksEntryClassData> get sectionsForSelectedClassAndStream {
+    if (selectedClassId.value == null) return [];
+    final seen = <String>{};
+    return marksEntryClasses
+        .where((item) => 
+            item.classId == selectedClassId.value && 
+            (selectedStreamId.value == null || item.streamId == selectedStreamId.value)
+        )
+        .where((item) => seen.add(item.sectionId ?? ""))
+        .toList();
+  }
+
+  /// Returns students enrolled in the currently selected subject
+  List<StudentMarkData> get studentsForSelectedSubject {
+    if (studentsList.isEmpty) return [];
+
+    final subId = selectedSubjectId.value;
+    if (subId == null) return studentsList;
+
+    final subject = subjectList.firstWhereOrNull((s) => s.subjectId == subId);
+    final subjectName = subject?.name;
+
+    // Check if any student has specific subject restrictions
+    final hasAnyStudentWithAssignments = studentsList.any((s) =>
+        (s.allowedSubjects != null && s.allowedSubjects!.isNotEmpty));
+
+    if (!hasAnyStudentWithAssignments) {
+      return studentsList;
+    }
+
+    return studentsList.where((s) => s.hasSubject(subId, subjectName)).toList();
+  }
+
+  /// Get total count of students enrolled in a specific subject
+  int getStudentCountForSubject(SubjectData subject) {
+    if (studentsList.isEmpty) return 0;
+
+    final hasAnyStudentWithAssignments = studentsList.any((s) =>
+        (s.allowedSubjects != null && s.allowedSubjects!.isNotEmpty));
+
+    if (!hasAnyStudentWithAssignments) {
+      return studentsList.length;
+    }
+
+    return studentsList.where((s) => s.hasSubject(subject.subjectId, subject.name)).length;
+  }
+
+  /// Check if a subject has marks/attendance entered for its enrolled students
+  bool isSubjectCompleted(SubjectData subject) {
+    final subIdStr = subject.subjectId.toString();
+    final enrolledStudents = studentsList.where((s) => s.hasSubject(subject.subjectId, subject.name)).toList();
+    if (enrolledStudents.isEmpty) return false;
+
+    for (var student in enrolledStudents) {
+      final m = student.marks?[subIdStr];
+      if (m == null) return false;
+
+      bool hasMarks = (m.wMarks?.isNotEmpty == true && m.wMarks != "null") ||
+          (m.oMarks?.isNotEmpty == true && m.oMarks != "null") ||
+          (m.tMarks?.isNotEmpty == true && m.tMarks != "null") ||
+          (m.aMarks?.isNotEmpty == true && m.aMarks != "null") ||
+          (m.bMarks?.isNotEmpty == true && m.bMarks != "null") ||
+          (m.assMarks?.isNotEmpty == true && m.assMarks != "null") ||
+          (m.pMarks?.isNotEmpty == true && m.pMarks != "null") ||
+          (m.gGrade?.isNotEmpty == true && m.gGrade != "null") ||
+          (m.grade?.isNotEmpty == true && m.grade != "null");
+
+      String? att = m.attendance;
+      bool hasAtt = att != null && att.trim().isNotEmpty && att != "null";
+
+      if (!hasMarks && !hasAtt) return false;
+    }
+    return true;
+  }
+
+  void _autoSelectSection(String classId, String? streamId) {
+    // Check if current section is still valid for this class and stream
+    final sections = sectionsForSelectedClassAndStream;
+    bool isSectionValid = selectedSectionId.value != null && 
+                         sections.any((s) => s.sectionId == selectedSectionId.value);
+    
+    if (isSectionValid) return;
+
+    final sectionA = marksEntryClasses.firstWhereOrNull(
+      (element) => 
+          element.classId == classId && 
+          (streamId == null || element.streamId == streamId) &&
+          (element.sectionName?.toUpperCase() == 'A')
+    );
+    
+    if (sectionA != null) {
+      selectedSectionId.value = sectionA.sectionId;
+    } else {
+      final firstSection = marksEntryClasses.firstWhereOrNull(
+        (element) => element.classId == classId && (streamId == null || element.streamId == streamId)
+      );
+      selectedSectionId.value = firstSection?.sectionId;
+    }
   }
 
   Future<bool> saveMarksToApi(MarksSaveRequest request) async {

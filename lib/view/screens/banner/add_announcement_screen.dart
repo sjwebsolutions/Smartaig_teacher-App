@@ -86,7 +86,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFF4F7FF),
+        color: Color(0xFFF8F9FE),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,

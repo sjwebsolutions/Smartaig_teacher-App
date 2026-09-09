@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import '../controller/image_update_controller.dart';
 import '../models/image_update_students_model.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
@@ -18,11 +17,6 @@ class StudentImageUploadScreen extends StatefulWidget {
 
 class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
   final ImageUpdateController controller = Get.find<ImageUpdateController>();
-  final ImagePicker _picker = ImagePicker();
-
-  File? _profileImage;
-  File? _fatherImage;
-  File? _motherImage;
 
   late ImageUpdateStudentData student;
 
@@ -35,15 +29,7 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
   Future<void> _pickImage(String type) async {
     final result = await Get.to(() => const CustomCameraScreen());
     if (result != null) {
-      setState(() {
-        if (type == 'profile') {
-          _profileImage = File(result);
-        } else if (type == 'father') {
-          _fatherImage = File(result);
-        } else if (type == 'mother') {
-          _motherImage = File(result);
-        }
-      });
+      await controller.saveCapturedImage(student.id!, type, result);
     }
   }
 
@@ -71,9 +57,9 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
             children: [
               _buildStudentHeader(),
               const SizedBox(height: 20),
-              _buildImagePickerRow("Student Profile", _profileImage, 'profile'),
-              _buildImagePickerRow("Father's Image", _fatherImage, 'father'),
-              _buildImagePickerRow("Mother's Image", _motherImage, 'mother'),
+              _buildImagePickerRow("Student Profile", 'profile'),
+              _buildImagePickerRow("Father's Image", 'father'),
+              _buildImagePickerRow("Mother's Image", 'mother'),
               const SizedBox(height: 30),
               Obx(() => SizedBox(
                 width: double.infinity,
@@ -82,9 +68,9 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
                   onPressed: controller.isSubmitting.value ? null : () {
                     controller.submitRequest(
                       studentId: student.id!,
-                      profileImage: _profileImage?.path,
-                      fatherImage: _fatherImage?.path,
-                      motherImage: _motherImage?.path,
+                      profileImage: controller.getCapturedImage(student.id!, 'profile'),
+                      fatherImage: controller.getCapturedImage(student.id!, 'father'),
+                      motherImage: controller.getCapturedImage(student.id!, 'mother'),
                       onSuccess: () => Get.back(result: true),
                     );
                   },
@@ -133,9 +119,9 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
     );
   }
 
-  Widget _buildImagePickerRow(String title, File? image, String type) {
+  Widget _buildImagePickerRow(String title, String type) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10), // 10 ka gap
+      padding: const EdgeInsets.only(bottom: 10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -153,7 +139,6 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left: Title
             Expanded(
               flex: 3,
               child: Text(
@@ -167,21 +152,23 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
               ),
             ),
             
-            // Middle: Status Text
             Expanded(
               flex: 3,
-              child: Text(
-                image == null ? "No Select Image" : "Image Selected",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: image == null ? Colors.red.withValues(alpha: 0.5) : Colors.green,
-                ),
-              ),
+              child: Obx(() {
+                String? path = controller.getCapturedImage(student.id!, type);
+                bool hasImage = path != null && File(path).existsSync();
+                return Text(
+                  hasImage ? "Image Selected" : "No Select Image",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: hasImage ? Colors.green : Colors.red.withValues(alpha: 0.5),
+                  ),
+                );
+              }),
             ),
             
-            // Right: Camera/Preview
             GestureDetector(
               onTap: () => _pickImage(type),
               child: Container(
@@ -192,12 +179,16 @@ class _StudentImageUploadScreenState extends State<StudentImageUploadScreen> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
                 ),
-                child: image != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.file(image, fit: BoxFit.cover),
-                      )
-                    : const Icon(Icons.camera_alt_outlined, color: AppColors.primary, size: 26),
+                child: Obx(() {
+                  String? path = controller.getCapturedImage(student.id!, type);
+                  if (path != null && File(path).existsSync()) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(File(path), fit: BoxFit.cover),
+                    );
+                  }
+                  return const Icon(Icons.camera_alt_outlined, color: AppColors.primary, size: 26);
+                }),
               ),
             ),
           ],

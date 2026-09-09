@@ -13,10 +13,16 @@ class UploadHomeworkScreen extends GetView<HomeworkController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
-          end: Alignment.bottomCenter,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB0D7FE),
+            Color(0xFFE8D8FD),
+            Color(0xFFD3E1FD),
+            Color(0xFFD7E5FD),
+          ],
         ),
       ),
       child: Scaffold(

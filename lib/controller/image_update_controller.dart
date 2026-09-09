@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:path_provider/path_provider.dart';
 import '../api_service/image_update_service.dart';
 import '../models/image_update_classes_model.dart';
 import '../models/image_update_students_model.dart';
@@ -9,6 +13,7 @@ import 'announcement_controller.dart';
 
 class ImageUpdateController extends GetxController {
   final ImageUpdateService _service = ImageUpdateService();
+  final _storage = const FlutterSecureStorage();
   
   final isLoading = false.obs;
   final isSubmitting = false.obs;
@@ -16,10 +21,72 @@ class ImageUpdateController extends GetxController {
   final studentsList = <ImageUpdateStudentData>[].obs;
   final errorMessage = "".obs;
 
+  // Store image paths: { "studentId_type": "path" }
+  final capturedImages = <String, String>{}.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchClasses();
+    _loadSavedImages();
+  }
+
+  Future<void> _loadSavedImages() async {
+    try {
+      String? data = await _storage.read(key: 'captured_images');
+      if (data != null) {
+        Map<String, dynamic> decoded = jsonDecode(data);
+        capturedImages.assignAll(decoded.cast<String, String>());
+      }
+    } catch (e) {
+      debugPrint("Error loading saved images: $e");
+    }
+  }
+
+  Future<String?> saveCapturedImage(int studentId, String type, String path) async {
+    try {
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final String fileName = "${studentId}_${type}_${DateTime.now().millisecondsSinceEpoch}.jpg";
+      final String permanentPath = "${appDir.path}/$fileName";
+      
+      // Copy the file to permanent storage
+      File tempFile = File(path);
+      if (await tempFile.exists()) {
+        // Delete old image if it exists
+        String? oldPath = getCapturedImage(studentId, type);
+        if (oldPath != null) {
+          File oldFile = File(oldPath);
+          if (await oldFile.exists()) {
+            try {
+              await oldFile.delete();
+            } catch (e) {
+              debugPrint("Error deleting old file: $e");
+            }
+          }
+        }
+        
+        await tempFile.copy(permanentPath);
+        
+        String key = "${studentId}_$type";
+        capturedImages[key] = permanentPath;
+        await _storage.write(key: 'captured_images', value: jsonEncode(capturedImages.value));
+        return permanentPath;
+      }
+    } catch (e) {
+      debugPrint("Error saving image path: $e");
+    }
+    return null;
+  }
+
+  String? getCapturedImage(int studentId, String type) {
+    return capturedImages["${studentId}_$type"];
+  }
+
+  void clearCapturedImages(int studentId) {
+    capturedImages.remove("${studentId}_profile");
+    capturedImages.remove("${studentId}_father");
+    capturedImages.remove("${studentId}_mother");
+    _storage.write(key: 'captured_images', value: jsonEncode(capturedImages.value));
   }
 
   Future<void> fetchClasses() async {

@@ -7,6 +7,7 @@ import 'package:teacher_app_attendance/utils/app_snackbar.dart';
 import '../api_service/auth_service.dart';
 import '../services/fcm_services.dart';
 import '../services/storage_services.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -30,27 +31,43 @@ class AuthController extends GetxController {
     print("AuthController INIT");
   }
   Future<void> sendOtp() async {
-    if (mobileController.text.trim().length != 10) {
+    String mobile = mobileController.text.trim();
+    if (mobile.length < 10) {
       AppSnackBar.error("Enter valid mobile number");
       return;
     }
 
+    if (isLoading.value) return;
+
     try {
       isLoading.value = true;
+      mobileNumber.value = mobile;
 
-      mobileNumber.value = mobileController.text.trim();
+      // APPLE REVIEW BYPASS: If test number is used, skip API call
+      if (mobile == "9999999999") {
+        AppSnackBar.success("OTP sent successfully");
+        startOtpTimer();
+        Get.toNamed("/verifyOtp");
+        return;
+      }
 
       final success = await _authService.sendOtp(
-        mobile: mobileController.text.trim(),
+        mobile: mobile,
       );
 
       if (success) {
-        AppSnackBar.success( "OTP sent successfully");
+        AppSnackBar.success("OTP sent successfully");
         startOtpTimer();
-        Get.toNamed("/verifyOtp");
+        if (Get.currentRoute != "/verifyOtp") {
+          Get.toNamed("/verifyOtp");
+        }
       }
     } catch (e) {
-      AppSnackBar.error( e.toString());
+      String errorMessage = e.toString();
+      if (errorMessage.contains("Please wait") && errorMessage.contains("seconds")) {
+        errorMessage = "Please wait 20 seconds before requesting another OTP.";
+      }
+      AppSnackBar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }
@@ -66,7 +83,7 @@ class AuthController extends GetxController {
       print("MOBILE: ${mobileNumber.value}");
       print("OTP ENTERED: $otp");
 
-      if (otp.length != 6) {
+      if (otp.length < 4) {
         AppSnackBar.error( "Enter complete OTP");
         return;
       }
@@ -93,6 +110,7 @@ class AuthController extends GetxController {
         
         print("NAVIGATING TO DASHBOARD");
         Get.offAllNamed("/dashboard");
+        AppSnackBar.success("Login Successful");
       } else {
         print("VERIFY FAILED: ${response.message}");
         AppSnackBar.error(response.message ?? "Verification failed");
@@ -107,12 +125,13 @@ class AuthController extends GetxController {
   }
 
   Future<void> loginWithManualOtp() async {
-    if (mobileController.text.trim().length != 10) {
+    String mobile = mobileController.text.trim();
+    if (mobile.length < 8) {
       AppSnackBar.error("Enter valid mobile number");
       return;
     }
-    if (manualOtpController.text.trim().length != 6) {
-      AppSnackBar.error("Enter valid 6-digit OTP");
+    if (manualOtpController.text.trim().length < 4) {
+      AppSnackBar.error("Enter valid OTP");
       return;
     }
 
@@ -155,6 +174,19 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
+      // Show clean loader only
+      Get.dialog(
+        const PopScope(
+          canPop: false,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
       try {
         await _authService.logout();
       } catch (_) {}
@@ -162,12 +194,10 @@ class AuthController extends GetxController {
       await StorageService.clearToken();
       final token = await StorageService.getToken();
       print("TOKEN AFTER LOGOUT => $token");
+      
       Get.offAllNamed('/login');
 
-      AppSnackBar.success(
-
-        "Logged out successfully",
-      );
+      AppSnackBar.success("Logged out successfully");
     } finally {
       isLoading.value = false;
     }

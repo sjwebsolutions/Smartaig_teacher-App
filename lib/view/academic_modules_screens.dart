@@ -8,8 +8,11 @@ import '../controller/marks_controller.dart';
 import '../controller/announcement_controller.dart';
 import '../controller/syllabus_controller.dart';
 import '../controller/date_sheet_controller.dart';
+import '../controller/time_table_controller.dart';
+import '../controller/gate_pass_controller.dart';
 import 'grid_module_item.dart';
 import 'syllabus_screen.dart';
+import '../themes/appColors_&_styles/text_styles.dart';
 
 class AcademicModuleGrid extends StatelessWidget {
   const AcademicModuleGrid({super.key});
@@ -25,6 +28,8 @@ class AcademicModuleGrid extends StatelessWidget {
     final announcementController = Get.isRegistered<AnnouncementController>() ? Get.find<AnnouncementController>() : Get.put(AnnouncementController());
     final syllabusController = Get.isRegistered<SyllabusController>() ? Get.find<SyllabusController>() : Get.put(SyllabusController());
     final dateSheetController = Get.isRegistered<DateSheetController>() ? Get.find<DateSheetController>() : Get.put(DateSheetController());
+    final timeTableController = Get.isRegistered<TimeTableController>() ? Get.find<TimeTableController>() : Get.put(TimeTableController());
+    final gatePassController = Get.isRegistered<GatePassController>() ? Get.find<GatePassController>() : Get.put(GatePassController());
 
     return Obx(() {
       final modules = [
@@ -80,10 +85,10 @@ class AcademicModuleGrid extends StatelessWidget {
             isEnabled: true,
             badgeCount: syllabusController.teacherSyllabusList.length,
             onTap: () {
-              Get.to(() => const SyllabusScreen());
+              Get.toNamed('/syllabus');
             }),
         ModuleItem(
-            title: "Upload Image",
+            title: "Update Image",
             icon: Icons.camera_alt_rounded,
             color: const Color(0xFFF43F5E), // Rose
             isEnabled: true,
@@ -99,6 +104,26 @@ class AcademicModuleGrid extends StatelessWidget {
             onTap: () {
               Get.toNamed('/dateSheet');
             }),
+        ModuleItem(
+          title: "Time Table",
+          icon: Icons.schedule_rounded,
+          color: const Color(0xFF8B5CF6), // Purple
+          isEnabled: true,
+          badgeCount: timeTableController.timeTables.length,
+          onTap: () {
+            Get.toNamed('/timeTable');
+          },
+        ),
+        ModuleItem(
+          title: "Get Pass",
+          icon: Icons.badge_rounded,
+          color: const Color(0xFF14B8A6), // Teal
+          isEnabled: true,
+          badgeCount: gatePassController.gatePasses.length,
+          onTap: () {
+            Get.toNamed('/getPass');
+          },
+        ),
       ];
 
       final double screenWidth = MediaQuery.of(context).size.width;
@@ -110,76 +135,106 @@ class AcademicModuleGrid extends StatelessWidget {
         itemCount: modules.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: isTablet ? 6 : 3,
-          mainAxisSpacing: 15,
-          crossAxisSpacing: 12,
-          childAspectRatio: isTablet ? 1.1 : 0.85,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: isTablet ? 1.0 : 0.88,
         ),
         itemBuilder: (context, index) {
           final item = modules[index];
+          final bool isEnabled = item.isEnabled;
+          final int badgeCount = item.badgeCount;
+          final bool showBadge = badgeCount > 0;
           
-          return Column(
-            children: [
-              InkWell(
-                onTap: item.onTap,
-                borderRadius: BorderRadius.circular(10),
+          return Opacity(
+            opacity: isEnabled ? 1.0 : 0.6,
+            child: GestureDetector(
+              onTap: isEnabled ? item.onTap : null,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: (isEnabled ? item.color : AppColors.grey).withValues(alpha: 0.12),
+                    width: 1,
+                  ),
+                ),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      height: 58,
-                      width: 58,
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: item.color.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 46,
+                            width: 46,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  (isEnabled ? item.color : AppColors.grey).withValues(alpha: 0.2),
+                                  (isEnabled ? item.color : AppColors.grey).withValues(alpha: 0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              item.icon,
+                              color: isEnabled ? item.color : AppColors.grey,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              item.title,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.body.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isEnabled 
+                                    ? AppColors.primary.withValues(alpha: 0.9)
+                                    : AppColors.grey,
+                              ),
+                            ),
+                          ),
                         ],
-                        border: Border.all(
-                          color: item.color.withValues(alpha: 0.04),
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: item.color.withValues(alpha: 0.06),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            item.icon,
-                            color: item.color,
-                            size: 22,
-                          ),
-                        ),
                       ),
                     ),
-                    if (item.badgeCount > 0)
+                    if (showBadge)
                       Positioned(
-                        top: -2,
-                        right: -2,
+                        top: 8,
+                        right: 8,
                         child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
                             color: Colors.red,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
                           ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${item.badgeCount}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          child: Text(
+                            "$badgeCount",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -187,19 +242,7 @@ class AcademicModuleGrid extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                item.title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
+            ),
           );
         },
       );

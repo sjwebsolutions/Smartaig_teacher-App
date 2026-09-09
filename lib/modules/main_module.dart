@@ -6,6 +6,8 @@ import '../controller/homework_controller.dart';
 import '../controller/auth_controller.dart';
 import '../controller/banner_controller.dart';
 import '../controller/announcement_controller.dart';
+import '../controller/support_controller.dart';
+import '../controller/policy_controller.dart';
 
 class MainBinding extends Bindings {
   @override
@@ -17,5 +19,7 @@ class MainBinding extends Bindings {
     Get.lazyPut<AuthController>(() => AuthController());
     Get.lazyPut<BannerController>(() => BannerController());
     Get.lazyPut<AnnouncementController>(() => AnnouncementController());
+    Get.lazyPut<SupportController>(() => SupportController());
+    Get.lazyPut<PolicyController>(() => PolicyController());
   }
 }

@@ -20,10 +20,16 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
-          end: Alignment.bottomCenter,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB0D7FE),
+            Color(0xFFE8D8FD),
+            Color(0xFFD3E1FD),
+            Color(0xFFD7E5FD),
+          ],
         ),
       ),
       child: Scaffold(
@@ -98,7 +104,9 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
-                value: marksController.selectedExamTypeId.value,
+                value: marksController.marksEntries.any((e) => e.id == marksController.selectedExamTypeId.value)
+                    ? marksController.selectedExamTypeId.value
+                    : null,
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
                 dropdownColor: AppColors.white,
@@ -157,16 +165,37 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
           (context, index) {
             final classData = classes[index];
             final classId = classData.classId ?? "";
-            final sections = marksController.marksEntryClasses.where((s) => s.classId == classId).toList();
             final className = classData.className ?? "N/A";
             
-            int totalSections = sections.length;
-            int addedSections = sections.where((s) => s.isLocked == true).length;
+            final allEntriesForClass = marksController.marksEntryClasses.where((s) => s.classId == classId).toList();
+            
+            // Stream logic
+            final streamEntries = allEntriesForClass.where((s) => 
+                s.streamId != null && s.streamId != "null" && s.streamId!.isNotEmpty).toList();
+            
+            final uniqueStreamIds = streamEntries.map((s) => s.streamId).toSet();
+            bool hasStreams = uniqueStreamIds.isNotEmpty;
+            
+            int totalStreams = uniqueStreamIds.length;
+            int addedStreams = 0;
+            if (hasStreams) {
+              for (var sId in uniqueStreamIds) {
+                final streamSections = streamEntries.where((s) => s.streamId == sId).toList();
+                if (streamSections.every((s) => s.isLocked == true)) {
+                  addedStreams++;
+                }
+              }
+            }
+            int pendingStreams = totalStreams - addedStreams;
+
+            // Section logic
+            int totalSections = allEntriesForClass.length;
+            int addedSections = allEntriesForClass.where((s) => s.isLocked == true).length;
             int pendingSections = totalSections - addedSections;
 
             int totalStudents = 0;
             int markedStudents = 0;
-            for (var s in sections) {
+            for (var s in allEntriesForClass) {
               markedStudents += s.added ?? 0;
               totalStudents += s.totalStudents ?? 0;
             }
@@ -188,7 +217,9 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
               child: InkWell(
                 onTap: () {
                   marksController.selectedClassId.value = classId;
-                  Get.toNamed('/marksEntry');
+                  // If class has streams, we don't pre-select streamId here as there are multiple
+                  marksController.selectedStreamId.value = null; 
+                  Get.toNamed('/marksEntry', arguments: {'fromViewMarks': true});
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
@@ -199,12 +230,14 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Class: $className",
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1A237E),
+                          Expanded(
+                            child: Text(
+                              "Class: $className",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1A237E),
+                              ),
                             ),
                           ),
                           Container(
@@ -214,7 +247,7 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              "Total Section: $totalSections",
+                              hasStreams ? "Streams: $totalStreams" : "Sections: $totalSections",
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -227,14 +260,32 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
                       const SizedBox(height: 8),
                       const Divider(height: 1, color: Color(0xFFEEEEEE)),
                       const SizedBox(height: 12),
+                      
+                      // Section Stats Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem("Added", addedSections.toString(), const Color(0xFF4CAF50)),
-                          _buildStatItem("Pending", pendingSections.toString(), const Color(0xFFE53935)),
-                          _buildStatItem("Total", totalSections.toString(), const Color(0xFFFFA000)),
+                          _buildStatItem("Added Section", addedSections.toString(), const Color(0xFF4CAF50)),
+                          _buildStatItem("Pending Section", pendingSections.toString(), const Color(0xFFE53935)),
+                          _buildStatItem("Total Section", totalSections.toString(), const Color(0xFFFFA000)),
                         ],
                       ),
+                      
+                      if (hasStreams) ...[
+                        const SizedBox(height: 16),
+                        const Divider(height: 1, color: Color(0xFFEEEEEE), indent: 20, endIndent: 20),
+                        const SizedBox(height: 12),
+                        // Stream Stats Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatItem("Added Stream", addedStreams.toString(), const Color(0xFF4CAF50)),
+                            _buildStatItem("Pending Stream", pendingStreams.toString(), const Color(0xFFE53935)),
+                            _buildStatItem("Total Stream", totalStreams.toString(), const Color(0xFF2196F3)),
+                          ],
+                        ),
+                      ],
+                      
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,7 +294,7 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
                             text: TextSpan(
                               style: const TextStyle(fontSize: 12, color: Colors.black87),
                               children: [
-                                const TextSpan(text: "Marked: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                const TextSpan(text: "Overall Marked: ", style: TextStyle(fontWeight: FontWeight.bold)),
                                 TextSpan(text: "$markedStudents/$totalStudents"),
                               ],
                             ),

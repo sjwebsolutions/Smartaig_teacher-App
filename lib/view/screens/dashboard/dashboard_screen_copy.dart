@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 import '../../academic_modules_screens.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
-  TeacherDashboardScreen({super.key});
+  const TeacherDashboardScreen({super.key});
   @override
   Widget build(BuildContext context) {
     final dashboardController = Get.find<DashboardController>();
@@ -47,15 +47,7 @@ class TeacherDashboardScreen extends StatelessWidget {
               ),
             ],
           ),
-
-          actions: [
-            IconButton(
-              onPressed: () {
-                authController.logout();
-              },
-              icon: const Icon(Icons.logout, size: 19, color: AppColors.red),
-            ),
-          ],
+          
         ),
         body: SafeArea(
           child: RefreshIndicator(
@@ -185,16 +177,25 @@ class TeacherDashboardScreen extends StatelessWidget {
                             Obx(() {
                               final isLoading = dashboardController.isLoading.value;
                               final attendance = dashboardController.dashboard.value?.data?.todayAttendance;
-                              final isPresent = attendance?.status == "present" || dashboardController.isMarked.value;
 
                               String statusText = "Checking...";
                               Color statusColor = AppColors.grey;
                               Color bgColor = AppColors.grey.withValues(alpha: 0.12);
 
                               if (!isLoading) {
-                                statusText = attendance?.statusLabel ?? (isPresent ? "Present" : "Absent");
-                                statusColor = isPresent ? AppColors.green : AppColors.red;
-                                bgColor = (isPresent ? AppColors.green : AppColors.red).withValues(alpha: 0.12);
+                                if (dashboardController.isMarked.value || attendance?.status == "present") {
+                                  statusText = "Present";
+                                  statusColor = AppColors.green;
+                                  bgColor = AppColors.green.withValues(alpha: 0.12);
+                                } else if (attendance?.status == "absent") {
+                                  statusText = "Absent";
+                                  statusColor = AppColors.red;
+                                  bgColor = AppColors.red.withValues(alpha: 0.12);
+                                } else {
+                                  statusText = "Not marked yet";
+                                  statusColor = Colors.orange;
+                                  bgColor = Colors.orange.withValues(alpha: 0.12);
+                                }
                               }
 
                               return Row(

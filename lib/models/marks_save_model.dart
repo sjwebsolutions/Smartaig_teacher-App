@@ -1,3 +1,4 @@
+
 class MarksSaveRequest {
   int? marksEntryId;
   int? classId;
@@ -17,7 +18,9 @@ class MarksSaveRequest {
     data['marks_entry_id'] = marksEntryId;
     data['class_id'] = classId;
     data['section_id'] = sectionId;
-    data['stream_id'] = streamId;
+    if (streamId != null) {
+      data['stream_id'] = streamId;
+    }
     if (entries != null) {
       data['entries'] = entries!.map((v) => v.toJson()).toList();
     }
@@ -30,13 +33,13 @@ class MarksEntry {
   int? subjectId;
   bool? isMisc;
   String? attendance;
-  int? wMarks;
-  int? oMarks;
-  int? aMarks;
-  int? bMarks;
-  int? assMarks;
-  int? pMarks;
-  int? tMarks;
+  dynamic wMarks;
+  dynamic oMarks;
+  dynamic aMarks;
+  dynamic bMarks;
+  dynamic assMarks;
+  dynamic pMarks;
+  dynamic tMarks;
   String? gGrade;
   String? remarks;
 

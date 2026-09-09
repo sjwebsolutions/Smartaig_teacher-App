@@ -133,12 +133,16 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          teacher.name ?? "No Name",
-                          style: AppTextStyles.body.copyWith(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            teacher.name ?? "No Name",
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.body.copyWith(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.black,
+                            ),
                           ),
                         ),
                       ],
@@ -476,24 +480,105 @@ class ProfileScreen extends StatelessWidget {
 
   void _showLogoutDialog(BuildContext context, AuthController authController) {
     Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Logout", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text("Are you sure you want to logout from your account?"),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text("Cancel", style: TextStyle(color: AppColors.black.withValues(alpha: 0.6))),
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        elevation: 10,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.logout_rounded,
+                    color: Colors.redAccent,
+                    size: 34,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Confirm Logout",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Are you sure you want to log out from your account?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Get.back();
+                        authController.logout();
+                      },
+                      child: const Text(
+                        "Confirm",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              authController.logout();
-            },
-            child: const Text("Logout", style: TextStyle(color: AppColors.red, fontWeight: FontWeight.bold)),
-          ),
-        ],
+        ),
       ),
+      barrierDismissible: true,
     );
   }
 }

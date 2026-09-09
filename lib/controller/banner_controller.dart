@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../api_service/banner_service.dart';
 import '../models/banner_model.dart';
 import '../services/fcm_services.dart';
+import '../services/storage_services.dart';
 import 'announcement_controller.dart';
 
 class BannerController extends GetxController {
@@ -48,15 +49,13 @@ class BannerController extends GetxController {
       final result = await _bannerServices.getBanners();
       
       if (result.banners != null) {
-        // Deduplicate banners by ID to prevent Hero tag conflicts
-        final seenIds = <int>{};
+        // Deduplicate banners by ID + imageUrl key to prevent Hero conflicts for identical items,
+        // but allow banners with duplicate IDs but different images to show.
+        final seenKeys = <String>{};
         final uniqueBanners = <BannerData>[];
         for (var b in result.banners!) {
-          if (b.id != null) {
-            if (seenIds.add(b.id!)) {
-              uniqueBanners.add(b);
-            }
-          } else {
+          final key = "${b.id}_${b.imageUrl}";
+          if (seenKeys.add(key)) {
             uniqueBanners.add(b);
           }
         }
@@ -65,16 +64,28 @@ class BannerController extends GetxController {
 
       // Check for new banners to show notification dot and trigger sound
       if (result.banners != null && result.banners!.isNotEmpty) {
-        if (banners.value == null || (result.banners!.length > (banners.value?.banners?.length ?? 0))) {
-          // Trigger local notification and sound
-          await FcmService.showLocalNotification(
-            title: "New Banners Available",
-            body: "Check out the latest school updates in the banners section.",
-          );
+        final storedStr = await StorageService.getNotifiedBannerIds() ?? "";
+        final seenIds = storedStr.split(',').where((s) => s.isNotEmpty).map(int.parse).toSet();
 
-          if (Get.isRegistered<AnnouncementController>()) {
-            Get.find<AnnouncementController>().hasNewNotifications.value = true;
+        final fetchedIds = result.banners!.map((b) => b.id).whereType<int>().toSet();
+        final newIds = fetchedIds.difference(seenIds);
+
+        if (newIds.isNotEmpty) {
+          // Only show notification if we have seen banners before (to prevent login/startup spam)
+          if (seenIds.isNotEmpty) {
+            await FcmService.showLocalNotification(
+              title: "New Banners Available",
+              body: "Check out the latest school updates in the banners section.",
+            );
+
+            if (Get.isRegistered<AnnouncementController>()) {
+              Get.find<AnnouncementController>().hasNewNotifications.value = true;
+            }
           }
+
+          // Save updated list of seen banner IDs to storage
+          final updatedSeenIds = seenIds.union(fetchedIds);
+          await StorageService.saveNotifiedBannerIds(updatedSeenIds.join(','));
         }
       }
 

@@ -19,7 +19,17 @@ class StorageService {
   //DELETE TOKEN(LOGOUT)
   static Future<void> clearToken() async {
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _bannerIdsKey);
+  }
 
+  static const _bannerIdsKey = "notified_banner_ids";
+
+  static Future<void> saveNotifiedBannerIds(String ids) async {
+    await _storage.write(key: _bannerIdsKey, value: ids);
+  }
+
+  static Future<String?> getNotifiedBannerIds() async {
+    return await _storage.read(key: _bannerIdsKey);
   }
 
 

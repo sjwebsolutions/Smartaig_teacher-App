@@ -10,26 +10,22 @@ class SplashController extends GetxController with GetSingleTickerProviderStateM
 
 
   @override
-  @override
   void onInit() {
     super.onInit();
+    print("SplashController onInit");
 
     animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(seconds: 2),
     );
 
     logoAnimation = Tween<Offset>(
-      begin: const Offset(0, 2),
+      begin: const Offset(0, 2.2),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
         parent: animationController,
-        curve: const Interval(
-          0.0,
-          0.4,
-          curve: Curves.easeOutBack,
-        ),
+        curve: Curves.easeOutBack,
       ),
     );
 
@@ -52,7 +48,8 @@ class SplashController extends GetxController with GetSingleTickerProviderStateM
   }
 
   void _navigate() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Animation 2s chalta hai, 3s delay dene se settle hone ka time milega
+    await Future.delayed(const Duration(seconds: 3));
 
     final token = await StorageService.getToken();
 

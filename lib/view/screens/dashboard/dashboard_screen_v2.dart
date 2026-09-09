@@ -19,9 +19,17 @@ import '../../../themes/app_bar/app_top_bar.dart';
 import '../../academic_modules_screens.dart';
 import '../../widgets/notification_action.dart';
 import '../banner/banner_widget.dart';
+import '../../profile_screen.dart';
 
 class NewTeacherDashboardScreen extends StatelessWidget {
   const NewTeacherDashboardScreen({super.key});
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return "Good Morning 🙏";
+    if (hour < 17) return "Good Afternoon 🙏";
+    return "Good Evening 🙏";
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -35,17 +43,22 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     return Obx(() {
       if (dashboardController.isInitialLoading.value) {
         return Container(
-          decoration: BoxDecoration(
-            gradient: AppGradients.primary(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
-              end: Alignment.bottomCenter,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFB0D7FE),
+                Color(0xFFE8D8FD),
+                Color(0xFFD3E1FD),
+                Color(0xFFD7E5FD),
+              ],
             ),
           ),
           child: Scaffold(
             backgroundColor: Colors.transparent,
             appBar: const AppTopBar(
               backgroundColor: Colors.transparent,
-              title: "Dashboard",
               showBack: false,
               showDivider: false,
             ),
@@ -55,10 +68,16 @@ class NewTeacherDashboardScreen extends StatelessWidget {
       }
 
       return Container(
-        decoration: BoxDecoration(
-          gradient: AppGradients.primary(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
-            end: Alignment.bottomCenter,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFB0D7FE),
+              Color(0xFFE8D8FD),
+              Color(0xFFD3E1FD),
+              Color(0xFFD7E5FD),
+            ],
           ),
         ),
         child: Scaffold(
@@ -67,6 +86,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
             backgroundColor: Colors.transparent,
             showBack: false,
             showDivider: false,
+            centerTitle: true,
             actions: const [
               NotificationAction(),
               SizedBox(width: 8),
@@ -86,55 +106,99 @@ class NewTeacherDashboardScreen extends StatelessWidget {
           ),
           body: SafeArea(
             child: RefreshIndicator(
-              onRefresh: () async {
-                await dashboardController.fetchDashboard(showLoading: false);
-                if (Get.isRegistered<BannerController>()) {
-                  await Get.find<BannerController>().fetchBanners(showLoading: false);
-                }
-                await announcementController.fetchAnnouncements();
-              },
-              color: AppColors.primary,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Container(
-                  width: double.infinity,
-                  color: Colors.transparent,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 15),
-                      _buildTeacherInfoCard(dashboardController, kCardMargin, kCardPadding),
-                      Obx(() {
-                        final banners = bannerController.banners.value?.banners ?? [];
-                        final isLoading = bannerController.isLoading.value;
-                        if (banners.isEmpty && !isLoading) {
-                          return const SizedBox.shrink();
-                        }
-                        return const Column(
-                          children: [
-                            SizedBox(height: 9),
-                            BannerWidget(),
-                          ],
-                        );
-                      }),
-                      const SizedBox(height: 9),
-                      _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
-                      const SizedBox(height: 9),
-                      _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
-                      _buildAcademicModulesSection(),
-                    ],
-                  ),
+            onRefresh: () async {
+              await dashboardController.fetchDashboard(showLoading: false);
+              if (Get.isRegistered<BannerController>()) {
+                await Get.find<BannerController>().fetchBanners(showLoading: false);
+              }
+              await announcementController.fetchAnnouncements();
+            },
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Container(
+                width: double.infinity,
+                color: Colors.transparent,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: AppTextStyles.h2.copyWith(
+                              fontSize: 14,
+                              color: AppColors.primary.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          SizedBox(height: 2,),
+                          Obx(() => Padding(
+                            padding: const EdgeInsets.only(left: 5),
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: dashboardController.dashboard.value?.data?.teacher?.name ?? "",
+                                    style: AppTextStyles.h1.copyWith(
+                                      fontSize: 17,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(left: 4),
+                                      child: Icon(
+                                        Icons.verified,
+                                        color: Color(0xFF1892FA),
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )),
+                        ],
+                      ),
+                    ),
+                    Obx(() {
+                      final banners = bannerController.banners.value?.banners ?? [];
+                      final isLoading = bannerController.isLoading.value;
+                      if (banners.isEmpty && !isLoading) {
+                        return const SizedBox(height: 10);
+                      }
+                      return const Column(
+                        children: [
+                          SizedBox(height: 10),
+                          BannerWidget(),
+                          SizedBox(height: 10),
+                        ],
+                      );
+                    }),
+                    _buildTeacherInfoCard(dashboardController, kCardMargin, kCardPadding),
+                    _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
+                    const SizedBox(height: 10),
+                    _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
+                    const SizedBox(height: 5),
+                    _buildAcademicModulesSection(),
+                  ],
                 ),
               ),
             ),
           ),
         ),
-      );
+      ));
     });
   }
 
   Widget _buildShimmerDashboard() {
     return Container(
-      color: const Color(0xFFF8F9FD),
+      color: Colors.transparent,
       child: Shimmer.fromColors(
         baseColor: Colors.grey[200]!,
         highlightColor: Colors.white,
@@ -145,12 +209,24 @@ class NewTeacherDashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Banner Skeleton (Moved to top)
-              Container(
-                height: 165,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 80,
+                      height: 80,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 25),
@@ -225,7 +301,8 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                 builder: (context) {
                   final double screenWidth = MediaQuery.of(context).size.width;
                   final bool isTablet = screenWidth >= 600;
-                  return GridView.builder(
+                  return
+                    GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: isTablet ? 6 : 3,
@@ -238,15 +315,15 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     itemBuilder: (_, __) => Column(
                       children: [
                         Container(
-                          height: 65,
-                          width: 65,
-                          decoration: BoxDecoration(
+                          height: 50,
+                          width: 50,
+                          decoration: const BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                            shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Container(height: 12, width: 55, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
+                        Container(height: 10, width: 45, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
                       ],
                     ),
                   );
@@ -267,75 +344,179 @@ class NewTeacherDashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: AppColors.primary.withValues(alpha: 0.06),
+            blurRadius: 25,
+            offset: const Offset(0, 12),
           ),
         ],
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.08), width: 1.5),
       ),
-      child: Padding(
-        padding: padding,
-        child: Obx(() {
-          final teacher = controller.dashboard.value?.data?.teacher;
-          return Row(
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 2),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: (teacher?.image != null && teacher!.image!.isNotEmpty)
-                    ? CachedNetworkImage(
-                        imageUrl: teacher.image!,
-                        fit: BoxFit.cover,
-                        useOldImageOnUrlChange: true,
-                        fadeInDuration: Duration.zero,
-                        placeholder: (context, url) => const Center(
-                          child: Icon(Icons.person, color: AppColors.primary, size: 30),
-                        ),
-                        errorWidget: (context, url, error) => const Center(
-                          child: Icon(Icons.person, color: AppColors.primary, size: 30),
-                        ),
-                      )
-                    : const Center(
-                        child: Icon(Icons.person, color: AppColors.primary, size: 30),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -15,
+            bottom: -15,
+            child: Icon(
+              Icons.auto_awesome_mosaic_rounded,
+              size: 100,
+              color: AppColors.primary.withValues(alpha: 0.03),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Obx(() {
+              final teacher = controller.dashboard.value?.data?.teacher;
+              return Row(
+                children: [
+                  // Profile Image with Ring Effect
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        width: 1.5,
                       ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(teacher?.name ?? "No name",
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.black.withValues(alpha: 0.9),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        )),
-                    const SizedBox(height: 2),
-                    Text(teacher?.staffType ?? "No role",
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.black.withValues(alpha: 0.6),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        )),
-                    Text("Emp ID: ${teacher?.id ?? '-'}",
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.black.withValues(alpha: 0.4),
-                          fontSize: 14,
-                        )),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }),
+                    ),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: (teacher?.image != null && teacher!.image!.isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: teacher.image!,
+                              fit: BoxFit.cover,
+                              useOldImageOnUrlChange: true,
+                              placeholder: (context, url) => const Center(
+                                child: Icon(Icons.person, color: AppColors.primary, size: 40),
+                              ),
+                              errorWidget: (context, url, error) => const Center(
+                                child: Icon(Icons.person, color: AppColors.primary, size: 40),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(Icons.person, color: AppColors.primary, size: 40),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: teacher?.name ?? "Teacher Name",
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.primary,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 4),
+                                  child: Icon(
+                                    Icons.verified,
+                                    color: Color(0xFF1892FA),
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            (teacher?.staffType ?? "Staff").toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(Icons.alternate_email_rounded, "Emp ID: ${teacher?.id ?? '-'}"),
+                        const SizedBox(height: 5),
+                        _buildInfoRow(
+                          Icons.location_city_rounded,
+                          controller.dashboard.value?.data?.school?.schoolName ?? "No school",
+                          isVerified: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, {bool isVerified = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 14, color: AppColors.primary.withValues(alpha: 0.5)),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: label,
+                  style: TextStyle(
+                    color: AppColors.black.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (isVerified) ...[
+                  const WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: Icon(
+                        Icons.verified,
+                        color: Color(0xFF1892FA),
+                        size: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -349,212 +530,169 @@ class NewTeacherDashboardScreen extends StatelessWidget {
       }
 
       final selected = controller.selectedAnnouncement.value;
+      if (selected == null) return const SizedBox.shrink();
 
-      return Container(
-        margin: margin,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+      return Column(
+        children: [
+          const SizedBox(height: 9),
+          Container(
+            margin: margin,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
             ),
-          ],
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => controller.isExpanded.toggle(),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 9),
-                        child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (selected.imageUrl != null && selected.imageUrl!.isNotEmpty) ...[
+                        GestureDetector(
+                          onTap: () => _showFullScreenImage(
+                            context,
+                            selected.imageUrl!,
+                            selected.title ?? "Announcement",
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: selected.imageUrl!,
+                              width: 110,
+                              height: 110,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                width: 110,
+                                height: 110,
+                                color: AppColors.primary.withValues(alpha: 0.05),
+                                child: const Center(child: CircularProgressIndicator()),
+                              ),
+                              errorWidget: (context, url, error) => const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
+                            Text(
+                              selected.title ?? "",
+                              style: AppTextStyles.body.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
-                              child: const Icon(
-                                Icons.campaign_rounded,
-                                color: Colors.blue,
-                                size: 18,
-                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                "Latest Announcements",
-                                style: AppTextStyles.body.copyWith(
-                                  color: AppColors.black.withValues(alpha: 0.8),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            const SizedBox(height: 8),
+                            Text(
+                              selected.description ?? "",
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.black.withValues(alpha: 0.6),
+                                fontSize: 13,
+                                height: 1.4,
                               ),
-                            ),
-                            Icon(
-                              controller.isExpanded.value
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              color: AppColors.primary.withValues(alpha: 0.5),
-                              size: 24,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ),
-
-                ],
-              ),
-            ),
-            if (controller.isExpanded.value && selected != null) ...[
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      selected.title ?? "",
-                      style: AppTextStyles.body.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      selected.description ?? "",
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.black.withValues(alpha: 0.6),
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
-                    if (selected.imageUrl != null && selected.imageUrl!.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => _showFullScreenImage(
-                          context,
-                          selected.imageUrl!,
-                          selected.title ?? "Announcement",
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: selected.imageUrl!,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              height: 150,
-                              color: AppColors.primary.withValues(alpha: 0.05),
-                              child: const Center(child: CircularProgressIndicator()),
-                            ),
-                            errorWidget: (context, url, error) => const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       );
     });
   }
 
   void _showFullScreenImage(BuildContext context, String imageUrl, String title) {
     Get.to(
-      () => Container(
-        decoration: BoxDecoration(
-          gradient: AppGradients.primary(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
+      () => Scaffold(
+        backgroundColor: const Color(0xFFF8F9FE),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF8F9FE),
+          elevation: 0,
+          leading: IconButton(
             icon: const Icon(Icons.arrow_back_outlined, color: AppColors.primary),
             onPressed: () => Get.back(),
           ),
-            title: Text(title, style: AppTextStyles.appbarh4.copyWith(fontSize: 18)),
-          ),
-          body: Stack(
-            children: [
-              Center(
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                    errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
-                  ),
+          title: Text(title, style: AppTextStyles.appbarh4.copyWith(fontSize: 18)),
+        ),
+        body: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                  errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
                 ),
               ),
-              Positioned(
-                bottom: 40,
-                left: 20,
-                right: 20,
-                child: Center(
-                  child: InkWell(
-                    onTap: () async {
-                      try {
-                        final tempDir = await getTemporaryDirectory();
-                        final path = '${tempDir.path}/shared_image.png';
-                        await Dio().download(imageUrl, path);
-                        await Share.shareXFiles([XFile(path)]);
-                      } catch (e) {
-                        Get.snackbar("Error", "Could not share image");
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.share, color: Colors.white, size: 20),
-                          SizedBox(width: 10),
-                          Text(
-                            "Share Image",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ],
-                      ),
+            ),
+            Positioned(
+              bottom: 40,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: InkWell(
+                  onTap: () async {
+                    try {
+                      final tempDir = await getTemporaryDirectory();
+                      final path = '${tempDir.path}/shared_image.png';
+                      await Dio().download(imageUrl, path);
+                      await Share.shareXFiles([XFile(path)]);
+                    } catch (e) {
+                      Get.snackbar("Error", "Could not share image");
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.share, color: Colors.white, size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          "Share Image",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       fullscreenDialog: false,
@@ -585,25 +723,50 @@ class NewTeacherDashboardScreen extends StatelessWidget {
             Obx(() {
               final isLoading = controller.isLoading.value;
               final attendance = controller.dashboard.value?.data?.todayAttendance;
-              final isPresent = attendance?.status == "present" || controller.isMarked.value;
+              
+              final String? statusCode = attendance?.statusCode;
+              final String? status = attendance?.status?.toLowerCase();
+              final bool isMarked = attendance?.isMarked ?? false;
+              // Check if teacher has clocked in during current session
+              final bool localClockedIn = controller.isMarked.value || controller.clockInTime.value != null;
+              
+              final isPresent = status == "present" || isMarked || localClockedIn;
+              final isAbsent = status == "absent" && statusCode != "NM";
+              final isNotMarked = statusCode == "NM" || (status == null && !isMarked && !localClockedIn);
 
-              String statusText = (isLoading && attendance == null) 
-                  ? "Checking..." 
-                  : (attendance?.statusLabel ?? (isPresent ? "Present" : "Absent"));
-              Color statusColor = isPresent ? AppColors.green : AppColors.red;
+              String statusText;
+              Color statusColor;
+
+              if (isLoading && attendance == null) {
+                statusText = "Checking...";
+                statusColor = Colors.grey;
+              } else if (isPresent) {
+                statusText = "Present";
+                statusColor = AppColors.green;
+              } else if (isAbsent) {
+                statusText = "Absent";
+                statusColor = AppColors.red;
+              } else {
+                statusText = "Not marked yet";
+                statusColor = Colors.orange;
+              }
               Color bgColor = statusColor.withValues(alpha: 0.1);
 
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Daily Attendance",
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.black.withValues(alpha: 0.8),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      "Daily Attendance",
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.black.withValues(alpha: 0.8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -779,38 +942,22 @@ class NewTeacherDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildAcademicModulesSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Academic Modules",
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.black.withValues(alpha: 0.8),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Academic Modules",
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.black.withValues(alpha: 0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 20),
-            const AcademicModuleGrid(),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          const AcademicModuleGrid(),
+        ],
       ),
     );
   }

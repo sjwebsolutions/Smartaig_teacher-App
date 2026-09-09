@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:teacher_app_attendance/scanner/scanner_screen.dart';
 import 'package:teacher_app_attendance/view/add_homework_screen_v2.dart';
@@ -13,7 +14,9 @@ import 'package:teacher_app_attendance/view/main_screen.dart';
 import 'package:teacher_app_attendance/view/marks_entry.dart';
 import 'package:teacher_app_attendance/view/pdf_viewer_screen.dart';
 import 'package:teacher_app_attendance/view/student_performance.dart';
+import 'package:teacher_app_attendance/view/syllabus_screen.dart';
 import 'package:teacher_app_attendance/view/syllabus_tracker.dart';
+import 'package:teacher_app_attendance/view/upload_syllabus_screen.dart';
 import 'package:teacher_app_attendance/view/upload_homework_screen.dart';
 import 'package:teacher_app_attendance/view/view_marks_screen.dart';
 import 'package:teacher_app_attendance/view/student_image_update_screen.dart';
@@ -43,6 +46,9 @@ import 'view/screens/get_pass/get_pass_screen.dart';
 import 'modules/banner_module.dart';
 import 'modules/announcement_module.dart';
 import 'modules/date_sheet_module.dart';
+import 'view/time_table_screen.dart';
+import 'modules/time_table_module.dart';
+import 'modules/gate_pass_module.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -64,16 +70,22 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.white,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  ));
+
   try {
     await Firebase.initializeApp();
     
-    // Register background handler BEFORE anything else
+    // Register background handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     
-    // Initialize FCM service
-    await FcmService.initialize();
-    
-    // Fetch device info and token
+    // Initialize FCM and other services without awaiting them to avoid blocking UI
+    FcmService.initialize();
     _initializeServices();
   } catch (e) {
     debugPrint("App Initialization Error: $e");
@@ -170,6 +182,16 @@ class MyApp extends StatelessWidget {
           binding: MarksBinding(),
         ),
         GetPage(
+          name: '/syllabus',
+          page: () => const SyllabusScreen(),
+          binding: SyllabusBinding(),
+        ),
+        GetPage(
+          name: '/uploadSyllabus',
+          page: () => const UploadSyllabusScreen(),
+          binding: SyllabusBinding(),
+        ),
+        GetPage(
           name: '/syllabusTracker',
           page: () => const SyllabusTrackerScreen(),
           binding: SyllabusBinding(),
@@ -205,6 +227,7 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: '/getPass',
           page: () => const GetPassScreen(),
+          binding: GatePassBinding(),
         ),
         GetPage(
           name: '/addAnnouncement',
@@ -242,6 +265,11 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: '/dateSheetDetail',
           page: () => const DateSheetDetailScreen(),
+        ),
+        GetPage(
+          name: '/timeTable',
+          page: () => const TimeTableScreen(),
+          binding: TimeTableBinding(),
         ),
       ],
     );
