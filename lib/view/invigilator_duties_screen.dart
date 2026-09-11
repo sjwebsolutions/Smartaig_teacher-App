@@ -10,12 +10,26 @@ class InvigilatorDutiesScreen extends GetView<InvigilatorController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
-      appBar: const AppTopBar(
-        title: "Invigilator Duties",
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB0D7FE),
+            Color(0xFFE8D8FD),
+            Color(0xFFD3E1FD),
+            Color(0xFFD7E5FD),
+          ],
+        ),
       ),
-      body: Obx(() {
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Invigilator Duties",
+          backgroundColor: Colors.transparent,
+        ),
+        body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -42,76 +56,83 @@ class InvigilatorDutiesScreen extends GetView<InvigilatorController> {
             itemCount: duties.length,
             itemBuilder: (context, index) {
               final duty = duties[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            duty.name ?? "N/A",
-                            style: AppTextStyles.h3.copyWith(fontSize: 16),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(duty.status).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            (duty.status ?? "N/A").toUpperCase(),
-                            style: TextStyle(
-                              color: _getStatusColor(duty.status),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+              return GestureDetector(
+                onTap: () {
+                  if (duty.id != null) {
+                    Get.toNamed('/invigilatorDutyDetail', arguments: duty.id);
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              duty.name ?? "N/A",
+                              style: AppTextStyles.h2.copyWith(fontSize: 18, color: AppColors.primary),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildInfoRow(Icons.calendar_today_outlined, "Datesheet", duty.datesheet?.name ?? "N/A"),
-                    _buildInfoRow(Icons.history_toggle_off, "Session", duty.session ?? "N/A"),
-                    const Divider(height: 24),
-                    Row(
-                      children: [
-                        _buildStatItem("Total", duty.totalDuties?.toString() ?? "0", Colors.blue),
-                        _buildStatItem("Upcoming", duty.upcomingDuties?.toString() ?? "0", Colors.orange),
-                        _buildStatItem("Completed", duty.completedDuties?.toString() ?? "0", Colors.green),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildDateInfo("First Duty", duty.firstDutyDate),
-                        _buildDateInfo("Last Duty", duty.lastDutyDate),
-                      ],
-                    ),
-                  ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(duty.status).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              (duty.status ?? "N/A").toUpperCase(),
+                              style: TextStyle(
+                                color: _getStatusColor(duty.status),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoRow(Icons.calendar_today_outlined, "Datesheet", duty.datesheet?.name ?? "N/A"),
+                      _buildInfoRow(Icons.history_toggle_off, "Session", duty.session ?? "N/A"),
+                      const Divider(height: 24),
+                      Row(
+                        children: [
+                          _buildStatItem("Total Duties", duty.totalDuties?.toString() ?? "0", Colors.blue),
+                          _buildStatItem("Upcoming Duties", duty.upcomingDuties?.toString() ?? "0", Colors.orange),
+                          _buildStatItem("Completed Duties", duty.completedDuties?.toString() ?? "0", Colors.green),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildDateInfo("First Duty", duty.firstDutyDate),
+                          _buildDateInfo("Last Duty", duty.lastDutyDate),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
           ),
         );
       }),
-    );
+    ));
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
@@ -121,8 +142,8 @@ class InvigilatorDutiesScreen extends GetView<InvigilatorController> {
         children: [
           Icon(icon, size: 16, color: AppColors.primary.withValues(alpha: 0.6)),
           const SizedBox(width: 8),
-          Text("$label: ", style: AppTextStyles.body.copyWith(fontSize: 13, color: AppColors.grey)),
-          Text(value, style: AppTextStyles.body.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
+          Text("$label: ", style: AppTextStyles.body.copyWith(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.bold)),
+          Text(value, style: AppTextStyles.body.copyWith(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black54)),
         ],
       ),
     );
@@ -132,8 +153,8 @@ class InvigilatorDutiesScreen extends GetView<InvigilatorController> {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: AppTextStyles.h2.copyWith(color: color, fontSize: 18)),
-          Text(label, style: AppTextStyles.body.copyWith(fontSize: 10, color: AppColors.grey)),
+          Text(value, style: AppTextStyles.h2.copyWith(color: color, fontSize: 16)),
+          Text(label, style: AppTextStyles.body.copyWith(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -143,9 +164,9 @@ class InvigilatorDutiesScreen extends GetView<InvigilatorController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.body.copyWith(fontSize: 11, color: AppColors.grey)),
+        Text(label, style: AppTextStyles.body.copyWith(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.bold)),
         const SizedBox(height: 2),
-        Text(date ?? "N/A", style: AppTextStyles.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(date ?? "N/A", style: AppTextStyles.body.copyWith(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black54)),
       ],
     );
   }

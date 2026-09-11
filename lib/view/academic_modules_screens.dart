@@ -10,8 +10,8 @@ import '../controller/syllabus_controller.dart';
 import '../controller/date_sheet_controller.dart';
 import '../controller/time_table_controller.dart';
 import '../controller/gate_pass_controller.dart';
+import '../controller/invigilator_controller.dart';
 import 'grid_module_item.dart';
-import 'syllabus_screen.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 
 class AcademicModuleGrid extends StatelessWidget {
@@ -30,6 +30,7 @@ class AcademicModuleGrid extends StatelessWidget {
     final dateSheetController = Get.isRegistered<DateSheetController>() ? Get.find<DateSheetController>() : Get.put(DateSheetController());
     final timeTableController = Get.isRegistered<TimeTableController>() ? Get.find<TimeTableController>() : Get.put(TimeTableController());
     final gatePassController = Get.isRegistered<GatePassController>() ? Get.find<GatePassController>() : Get.put(GatePassController());
+    final invigilatorController = Get.isRegistered<InvigilatorController>() ? Get.find<InvigilatorController>() : Get.put(InvigilatorController());
 
     return Obx(() {
       final modules = [
@@ -122,6 +123,25 @@ class AcademicModuleGrid extends StatelessWidget {
           badgeCount: gatePassController.gatePasses.length,
           onTap: () {
             Get.toNamed('/getPass');
+          },
+        ),
+        ModuleItem(
+          title: "Invigilator Duties",
+          icon: Icons.assignment_ind_rounded,
+          color: const Color(0xFF475569), // Slate
+          isEnabled: true,
+          badgeCount: invigilatorController.duties.value?.data?.fold<int>(0, (sum, item) => sum + (item.upcomingDuties ?? 0)) ?? 0,
+          onTap: () {
+            Get.toNamed('/invigilatorDuties');
+          },
+        ),
+        ModuleItem(
+          title: "Admit Card Scan",
+          icon: Icons.qr_code_scanner_rounded,
+          color: const Color(0xFF0284C7), // Sky Blue / Slate Blue
+          isEnabled: true,
+          onTap: () {
+            Get.toNamed('/admitCardScanner');
           },
         ),
       ];

@@ -49,6 +49,12 @@ import 'modules/date_sheet_module.dart';
 import 'view/time_table_screen.dart';
 import 'modules/time_table_module.dart';
 import 'modules/gate_pass_module.dart';
+import 'modules/invigilator_module.dart';
+import 'view/invigilator_duties_screen.dart';
+import 'view/invigilator_duty_detail_screen.dart';
+import 'view/admit_card_scanner_screen.dart';
+import 'view/admit_card_detail_screen.dart';
+import 'modules/admit_card_scanner_module.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -270,6 +276,25 @@ class MyApp extends StatelessWidget {
           name: '/timeTable',
           page: () => const TimeTableScreen(),
           binding: TimeTableBinding(),
+        ),
+        GetPage(
+          name: '/invigilatorDuties',
+          page: () => const InvigilatorDutiesScreen(),
+          binding: InvigilatorBinding(),
+        ),
+        GetPage(
+          name: '/invigilatorDutyDetail',
+          page: () => const InvigilatorDutyDetailScreen(),
+          binding: InvigilatorBinding(),
+        ),
+        GetPage(
+          name: '/admitCardScanner',
+          page: () => const AdmitCardScannerScreen(),
+          binding: AdmitCardScannerBinding(),
+        ),
+        GetPage(
+          name: '/admitCardDetail',
+          page: () => const AdmitCardDetailScreen(),
         ),
       ],
     );

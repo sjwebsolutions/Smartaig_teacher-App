@@ -31,6 +31,9 @@ class ApiUrls {
   static String dateSheetDetails(int id) => "$dateSheets/$id";
   static const String timetable = "$baseUrl/timetable";
   static const String gatePasses = "$baseUrl/gate-passes";
+  static const String invigilatorDuties = "$baseUrl/invigilator-duties";
+  static String invigilatorDutyDetails(int id) => "$invigilatorDuties/$id";
+  static const String admitCardScanVerify = "$baseUrl/admit-card/scan-verify";
 
   static String syllabus(int studentId) => "https://smartaig.com/api/v1/students/$studentId/syllabus";
 }

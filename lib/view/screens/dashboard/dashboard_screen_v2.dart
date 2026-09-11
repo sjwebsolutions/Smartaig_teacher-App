@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
@@ -12,14 +10,12 @@ import 'package:path_provider/path_provider.dart';
 import '../../../controller/dashboard_controller_v2.dart';
 import '../../../controller/banner_controller.dart';
 import '../../../controller/announcement_controller.dart';
-import '../../../models/announcement_model.dart';
 import '../../../themes/appColors_&_styles/app_Colors.dart';
 import '../../../themes/appColors_&_styles/text_styles.dart';
 import '../../../themes/app_bar/app_top_bar.dart';
 import '../../academic_modules_screens.dart';
 import '../../widgets/notification_action.dart';
 import '../banner/banner_widget.dart';
-import '../../profile_screen.dart';
 
 class NewTeacherDashboardScreen extends StatelessWidget {
   const NewTeacherDashboardScreen({super.key});
@@ -184,6 +180,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
                     const SizedBox(height: 10),
                     _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
+                    _buildDutiesSection(dashboardController, kCardMargin),
                     const SizedBox(height: 5),
                     _buildAcademicModulesSection(),
                   ],
@@ -249,6 +246,19 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
+              const SizedBox(height: 30),
+
+              // Examination Duties Skeleton
+              Container(height: 18, width: 150, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+              const SizedBox(height: 15),
+              Container(
+                height: 145,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               const SizedBox(height: 30),
 
@@ -699,6 +709,140 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildDutiesSection(NewDashboardController controller, EdgeInsets margin) {
+    return Obx(() {
+      final duties = controller.dashboard.value?.data?.todayTomorrowDuties ?? [];
+      if (duties.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              "Examination Duties",
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.black.withValues(alpha: 0.8),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            margin: margin,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 14, right: 14, top: 14),
+                  child: Text(
+                    duties.first.datesheet?.name ?? "Exam Duty",
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                const Divider(height: 20, thickness: 0.5, indent: 14, endIndent: 14),
+                ...List.generate(duties.length, (index) {
+                  final duty = duties[index];
+                  final isToday = duty.status?.toLowerCase() == 'today';
+                  
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: (isToday ? AppColors.green : AppColors.primary).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    duty.status?.toUpperCase() ?? "",
+                                    style: TextStyle(
+                                      color: isToday ? AppColors.green : AppColors.primary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  duty.formattedDate ?? "",
+                                  style: TextStyle(
+                                    color: AppColors.black.withValues(alpha: 0.5),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.6)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  duty.timing ?? "",
+                                  style: TextStyle(fontSize: 12, color: AppColors.black.withValues(alpha: 0.7)),
+                                ),
+                                const Spacer(),
+                                Icon(Icons.meeting_room_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.6)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "Room: ${duty.room?.name ?? '-'}",
+                                  style: TextStyle(fontSize: 12, color: AppColors.black.withValues(alpha: 0.7)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Classes: ${duty.classes?.join(', ') ?? '-'}",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.black.withValues(alpha: 0.6),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (index < duties.length - 1)
+                        const Divider(height: 16, thickness: 0.5, indent: 14, endIndent: 14),
+                      if (index == duties.length - 1)
+                        const SizedBox(height: 6),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
   Widget _buildAttendanceCard(NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
     return Container(
       margin: margin,
@@ -732,7 +876,6 @@ class NewTeacherDashboardScreen extends StatelessWidget {
               
               final isPresent = status == "present" || isMarked || localClockedIn;
               final isAbsent = status == "absent" && statusCode != "NM";
-              final isNotMarked = statusCode == "NM" || (status == null && !isMarked && !localClockedIn);
 
               String statusText;
               Color statusColor;

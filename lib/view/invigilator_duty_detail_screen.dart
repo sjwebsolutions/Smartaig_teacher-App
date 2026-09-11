@@ -17,12 +17,26 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
       controller.fetchInvigilatorDutyDetails(dutyId);
     });
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
-      appBar: const AppTopBar(
-        title: "Duty Details",
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFB0D7FE),
+            Color(0xFFE8D8FD),
+            Color(0xFFD3E1FD),
+            Color(0xFFD7E5FD),
+          ],
+        ),
       ),
-      body: Obx(() {
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Duty Details",
+          backgroundColor: Colors.transparent,
+        ),
+        body: Obx(() {
         if (controller.isDetailLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -36,7 +50,6 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
 
         return Column(
           children: [
-            _buildHeader(data.seatingPlan),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
@@ -51,9 +64,9 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
@@ -65,7 +78,7 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
                           children: [
                             Text(
                               duty.formattedDate ?? "N/A",
-                              style: AppTextStyles.h2.copyWith(fontSize: 16),
+                              style: AppTextStyles.h2.copyWith(fontSize: 18, color: AppColors.primary),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -87,13 +100,13 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
                         const SizedBox(height: 4),
                         Text(
                           duty.dayName ?? "N/A",
-                          style: AppTextStyles.body.copyWith(color: AppColors.grey, fontSize: 13),
+                          style: AppTextStyles.body.copyWith(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                         const Divider(height: 24),
                         _buildInfoRow(Icons.access_time, "Timing", duty.timing ?? "N/A"),
                         _buildInfoRow(Icons.meeting_room_outlined, "Room", duty.room?.name ?? "N/A"),
                         _buildInfoRow(Icons.groups_outlined, "Classes", (duty.classes ?? []).join(", ")),
-                        _buildInfoRow(Icons.person_outline, "Co-Invigilators", (duty.coInvigilators ?? []).isEmpty ? "None" : duty.coInvigilators!.join(", ")),
+                        // _buildInfoRow(Icons.person_outline, "Co-Invigilators", (duty.coInvigilators ?? []).isEmpty ? "None" : duty.coInvigilators!.join(", ")),
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -104,8 +117,8 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildRoomStat("Capacity", duty.room?.capacity?.toString() ?? "0"),
-                              _buildRoomStat("Students", duty.room?.studentCount?.toString() ?? "0"),
+                              _buildRoomStat(" Room Capacity", duty.room?.capacity?.toString() ?? "0"),
+                              _buildRoomStat(" Total Students", duty.room?.studentCount?.toString() ?? "0"),
                             ],
                           ),
                         ),
@@ -118,14 +131,17 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
           ],
         );
       }),
-    );
+    ));
   }
 
   Widget _buildHeader(dynamic seatingPlan) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -154,9 +170,9 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: AppTextStyles.body.copyWith(fontSize: 13, color: AppColors.grey),
+                style: AppTextStyles.body.copyWith(fontSize: 13, color: Colors.black87),
                 children: [
-                  TextSpan(text: "$label: "),
+                  TextSpan(text: "$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
                   TextSpan(
                     text: value,
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
@@ -174,7 +190,7 @@ class InvigilatorDutyDetailScreen extends GetView<InvigilatorController> {
     return Column(
       children: [
         Text(value, style: AppTextStyles.h2.copyWith(fontSize: 16, color: AppColors.primary)),
-        Text(label, style: AppTextStyles.body.copyWith(fontSize: 10, color: AppColors.grey)),
+        Text(label, style: AppTextStyles.body.copyWith(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.bold)),
       ],
     );
   }

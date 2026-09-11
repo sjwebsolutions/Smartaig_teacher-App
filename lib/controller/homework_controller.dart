@@ -162,20 +162,28 @@ class HomeworkController extends GetxController {
 
     if (item != null) {
       selectedStreamId.value = item.streamId;
+    } else {
+      selectedStreamId.value = null;
     }
   }
 
   Future<void> pickImages([ImageSource source = ImageSource.gallery]) async {
-    if (source == ImageSource.gallery) {
-      final List<XFile> pickedFiles = await _picker.pickMultiImage();
-      if (pickedFiles.isNotEmpty) {
-        images.addAll(pickedFiles.map((file) => File(file.path)));
+    try {
+      if (source == ImageSource.gallery) {
+        final List<XFile> pickedFiles = await _picker.pickMultiImage();
+        if (pickedFiles.isNotEmpty) {
+          for (var file in pickedFiles) {
+            images.add(File(file.path));
+          }
+        }
+      } else {
+        final XFile? pickedFile = await _picker.pickImage(source: source);
+        if (pickedFile != null) {
+          images.add(File(pickedFile.path));
+        }
       }
-    } else {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
-      if (pickedFile != null) {
-        images.add(File(pickedFile.path));
-      }
+    } catch (e) {
+      print("Error picking images: $e");
     }
   }
 
@@ -362,13 +370,14 @@ class HomeworkController extends GetxController {
 
   // Helper to get subjects for selected class & section
   List<HomeworkClassData> get subjectsForSelectedSelection {
-    if (selectedClassId.value == null || selectedSectionId.value == null) return [];
+    final sectionId = selectedSectionId.value ?? (selectedSectionIds.isNotEmpty ? selectedSectionIds.first : null);
+    if (selectedClassId.value == null || sectionId == null) return [];
     final data = homeworkFormData.value?.data ?? [];
     
     // Filtering by class and section
     final filtered = data.where((item) {
       return item.classId.toString() == selectedClassId.value.toString() && 
-             item.sectionId.toString() == selectedSectionId.value.toString();
+             item.sectionId.toString() == sectionId.toString();
     }).toList();
     
     // Ensure uniqueness by subjectId AND subjectName to avoid duplicates and show all

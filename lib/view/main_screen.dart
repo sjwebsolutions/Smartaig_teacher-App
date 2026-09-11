@@ -58,33 +58,31 @@ class MainScreen extends StatelessWidget {
   }
 
   Widget _buildCustomBottomBar(MainController controller) {
-    return SafeArea(
-      child: Container( /// android phone ke liye SafeArea dena ios ke liye SafeArea nahi dena h
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 15,
-              offset: const Offset(0, -5),
-            ),
-          ],
+    return Container( /// android phone ke liye SafeArea dena ios ke liye SafeArea nahi dena h
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 0),  /// android ke liye  bottom: 0 ios ke liye bottom: 15
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(controller, 0, Icons.home_rounded, Icons.home_outlined, "Home"),
-              _buildNavItem(controller, 1, Icons.menu_book_rounded, Icons.menu_book_outlined, "Homework"),
-              _buildNavItem(controller, 2, Icons.assignment_rounded, Icons.assignment_outlined, "Marks"),
-              _buildNavItem(controller, 3, Icons.settings, Icons.settings, "Setting"),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, -5),
           ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 15),  /// android ke liye  bottom: 0 ios ke liye bottom: 15
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(controller, 0, Icons.home_rounded, Icons.home_outlined, "Home"),
+            _buildNavItem(controller, 1, Icons.menu_book_rounded, Icons.menu_book_outlined, "Homework"),
+            _buildNavItem(controller, 2, Icons.assignment_rounded, Icons.assignment_outlined, "Marks"),
+            _buildNavItem(controller, 3, Icons.settings, Icons.settings, "Setting"),
+          ],
         ),
       ),
     );

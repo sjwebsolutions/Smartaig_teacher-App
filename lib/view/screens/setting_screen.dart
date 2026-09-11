@@ -86,7 +86,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
-                    "3.0.1",
+                    "2.0.11",
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
