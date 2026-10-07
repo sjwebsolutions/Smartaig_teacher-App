@@ -21,6 +21,7 @@ class _UpdateStudentListScreenState extends State<UpdateStudentListScreen> {
   int? streamId;
   String className = "";
   String sectionName = "";
+  int? _clickedStudentId;
 
   @override
   void initState() {
@@ -152,9 +153,21 @@ class _UpdateStudentListScreenState extends State<UpdateStudentListScreen> {
                   final student = controller.studentsList[index];
                   return InkWell(
                     onTap: () async {
-                      final result = await Get.toNamed('/updateStudentDetails', arguments: student);
-                      if (result == true) {
-                        _loadStudents();
+                      if (_clickedStudentId != null) return;
+                      
+                      setState(() {
+                        _clickedStudentId = student.id;
+                      });
+
+                      try {
+                        final result = await Get.toNamed('/updateStudentDetails', arguments: student);
+                        if (result == true) {
+                          _loadStudents();
+                        }
+                      } finally {
+                        setState(() {
+                          _clickedStudentId = null;
+                        });
                       }
                     },
                     borderRadius: BorderRadius.circular(10),
@@ -170,78 +183,105 @@ class _UpdateStudentListScreenState extends State<UpdateStudentListScreen> {
                           ),
                         ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 55,
-                              height: 55,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: (student.currentProfileImage != null && student.currentProfileImage!.isNotEmpty)
-                                  ? CachedNetworkImage(
-                                      imageUrl: student.currentProfileImage!,
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => const Center(
-                                        child: Icon(Icons.person, color: AppColors.primary, size: 25),
-                                      ),
-                                      errorWidget: (context, url, error) => const Center(
-                                        child: Icon(Icons.person, color: AppColors.primary, size: 25),
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Icon(Icons.person, color: AppColors.primary, size: 25),
-                                    ),
-                            ),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    student.studentName ?? "No name",
-                                    style: AppTextStyles.body.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 55,
+                                  height: 55,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.primary.withValues(alpha: 0.1),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    "Unique ID: ${student.studentUniqueId ?? '-'}",
-                                    style: AppTextStyles.body.copyWith(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  if (student.hasPendingRequest == true)
-                                    Container(
-                                      margin: const EdgeInsets.only(top: 4),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-                                      ),
-                                      child: const Text(
-                                        "Pending Approval",
-                                        style: TextStyle(
-                                          color: Colors.orange,
-                                          fontSize: 10,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: (student.currentProfileImage != null && student.currentProfileImage!.isNotEmpty)
+                                      ? CachedNetworkImage(
+                                          imageUrl: student.currentProfileImage!,
+                                          fit: BoxFit.cover,
+                                          memCacheWidth: 160,
+                                          memCacheHeight: 160,
+                                          maxWidthDiskCache: 320,
+                                          maxHeightDiskCache: 320,
+                                          placeholder: (context, url) => const Center(
+                                            child: Icon(Icons.person, color: AppColors.primary, size: 25),
+                                          ),
+                                          errorWidget: (context, url, error) => const Center(
+                                            child: Icon(Icons.person, color: AppColors.primary, size: 25),
+                                          ),
+                                        )
+                                      : const Center(
+                                          child: Icon(Icons.person, color: AppColors.primary, size: 25),
+                                        ),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        student.studentName ?? "No name",
+                                        style: AppTextStyles.body.copyWith(
                                           fontWeight: FontWeight.bold,
+                                          fontSize: 15,
                                         ),
                                       ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        "Unique ID: ${student.studentUniqueId ?? '-'}",
+                                        style: AppTextStyles.body.copyWith(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      if (student.hasPendingRequest == true)
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 4),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                                          ),
+                                          child: const Text(
+                                            "Pending Approval",
+                                            style: TextStyle(
+                                              color: Colors.orange,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                              ],
+                            ),
+                          ),
+                          if (_clickedStudentId == student.id)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      color: AppColors.primary,
                                     ),
-                                ],
+                                  ),
+                                ),
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   );

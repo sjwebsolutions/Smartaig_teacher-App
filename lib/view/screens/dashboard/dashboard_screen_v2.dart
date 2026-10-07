@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
@@ -10,12 +9,14 @@ import 'package:path_provider/path_provider.dart';
 import '../../../controller/dashboard_controller_v2.dart';
 import '../../../controller/banner_controller.dart';
 import '../../../controller/announcement_controller.dart';
+import '../../../controller/student_leave_controller.dart';
 import '../../../themes/appColors_&_styles/app_Colors.dart';
 import '../../../themes/appColors_&_styles/text_styles.dart';
 import '../../../themes/app_bar/app_top_bar.dart';
 import '../../academic_modules_screens.dart';
-import '../../widgets/notification_action.dart';
+import '../../widgets/dashboard_shimmer.dart';
 import '../banner/banner_widget.dart';
+import '../../widgets/custom_drawer.dart';
 
 class NewTeacherDashboardScreen extends StatelessWidget {
   const NewTeacherDashboardScreen({super.key});
@@ -38,68 +39,32 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     
     return Obx(() {
       if (dashboardController.isInitialLoading.value) {
-        return Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFB0D7FE),
-                Color(0xFFE8D8FD),
-                Color(0xFFD3E1FD),
-                Color(0xFFD7E5FD),
-              ],
-            ),
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: const AppTopBar(
-              backgroundColor: Colors.transparent,
-              showBack: false,
-              showDivider: false,
-            ),
-            body: _buildShimmerDashboard(),
-          ),
-        );
+        return const DashboardShimmer();
       }
 
       return Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFB0D7FE),
-              Color(0xFFE8D8FD),
-              Color(0xFFD3E1FD),
-              Color(0xFFD7E5FD),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: AppGradients.mainGradient,
         ),
         child: Scaffold(
           backgroundColor: Colors.transparent,
+          drawerEnableOpenDragGesture: false,
           appBar: AppTopBar(
             backgroundColor: Colors.transparent,
             showBack: false,
             showDivider: false,
             centerTitle: true,
-            actions: const [
-              NotificationAction(),
-              SizedBox(width: 8),
-            ],
-            customTitle: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Dashboard", style: AppTextStyles.appbarh4),
-                    ],
-                  ),
-                ),
-              ],
+            title: "TEACHER DASHBOARD",
+            leadingWidgets: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: AppColors.primary),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
             ),
           ),
+          drawer: const CustomDrawer(),
           body: SafeArea(
             child: RefreshIndicator(
             onRefresh: () async {
@@ -108,6 +73,9 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                 await Get.find<BannerController>().fetchBanners(showLoading: false);
               }
               await announcementController.fetchAnnouncements();
+              if (Get.isRegistered<StudentLeaveController>()) {
+                await Get.find<StudentLeaveController>().fetchStudentLeaves();
+              }
             },
             color: AppColors.primary,
             child: SingleChildScrollView(
@@ -179,7 +147,10 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                     _buildTeacherInfoCard(dashboardController, kCardMargin, kCardPadding),
                     _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
                     const SizedBox(height: 10),
+                    // _buildAssignedSubjectsSection(dashboardController, kCardMargin),
+                    // const SizedBox(height: 10),
                     _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
+                    _buildStudentLeavesCard(dashboardController, kCardMargin),
                     _buildDutiesSection(dashboardController, kCardMargin),
                     const SizedBox(height: 5),
                     _buildAcademicModulesSection(),
@@ -189,162 +160,10 @@ class NewTeacherDashboardScreen extends StatelessWidget {
             ),
           ),
         ),
-      ));
-    });
-  }
-
-  Widget _buildShimmerDashboard() {
-    return Container(
-      color: Colors.transparent,
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[200]!,
-        highlightColor: Colors.white,
-        period: const Duration(milliseconds: 1500),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Banner Skeleton (Moved to top)
-              SizedBox(
-                height: 80,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  scrollDirection: Axis.horizontal,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 4,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 25),
-
-              // Profile Section Skeleton
-              Row(
-                children: [
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(height: 18, width: 160, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                      const SizedBox(height: 8),
-                      Container(height: 14, width: 100, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-
-              // Examination Duties Skeleton
-              Container(height: 18, width: 150, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-              const SizedBox(height: 15),
-              Container(
-                height: 145,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // Attendance Card Skeleton (Highly Detailed)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(height: 18, width: 140, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                        Container(height: 22, width: 80, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
-                      ],
-                    ),
-                    const SizedBox(height: 35),
-                    Row(
-                      children: List.generate(2, (index) => Expanded(
-                        child: Column(
-                          children: [
-                            Container(height: 14, width: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
-                            const SizedBox(height: 10),
-                            Container(height: 20, width: 90, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                          ],
-                        )),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    Container(height: 50, width: double.infinity, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15))),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 35),
-
-              // Academic Modules Skeleton
-              Row(
-                children: [
-                  Container(height: 20, width: 4, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
-                  const SizedBox(width: 10),
-                  Container(height: 20, width: 160, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                ],
-              ),
-              const SizedBox(height: 25),
-              
-              Builder(
-                builder: (context) {
-                  final double screenWidth = MediaQuery.of(context).size.width;
-                  final bool isTablet = screenWidth >= 600;
-                  return
-                    GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: isTablet ? 6 : 3,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isTablet ? 6 : 3,
-                      mainAxisSpacing: 25,
-                      crossAxisSpacing: 15,
-                      childAspectRatio: isTablet ? 1.0 : 0.8,
-                    ),
-                    itemBuilder: (_, __) => Column(
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 50,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(height: 10, width: 45, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(2))),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
       ),
     );
-  }
+  });
+}
 
   Widget _buildTeacherInfoCard(NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
     return Container(
@@ -378,11 +197,11 @@ class NewTeacherDashboardScreen extends StatelessWidget {
               final teacher = controller.dashboard.value?.data?.teacher;
               return Row(
                 children: [
-                  // Profile Image with Ring Effect
+                  // Profile Image in Square Box
                   Container(
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         width: 1.5,
@@ -392,7 +211,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(12),
                         color: AppColors.primary.withValues(alpha: 0.05),
                         boxShadow: [
                           BoxShadow(
@@ -408,8 +227,24 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                               imageUrl: teacher.image!,
                               fit: BoxFit.cover,
                               useOldImageOnUrlChange: true,
-                              placeholder: (context, url) => const Center(
-                                child: Icon(Icons.person, color: AppColors.primary, size: 40),
+                              fadeInDuration: Duration.zero,
+                              fadeOutDuration: Duration.zero,
+                              memCacheWidth: 240,
+                              memCacheHeight: 240,
+                              maxWidthDiskCache: 480,
+                              maxHeightDiskCache: 480,
+                              placeholder: (context, url) => Container(
+                                color: AppColors.primary.withValues(alpha: 0.05),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
                               ),
                               errorWidget: (context, url, error) => const Center(
                                 child: Icon(Icons.person, color: AppColors.primary, size: 40),
@@ -581,11 +416,26 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                               width: 110,
                               height: 110,
                               fit: BoxFit.cover,
+                              fadeInDuration: Duration.zero,
+                              fadeOutDuration: Duration.zero,
+                              memCacheWidth: 330,
+                              memCacheHeight: 330,
+                              maxWidthDiskCache: 600,
+                              maxHeightDiskCache: 600,
                               placeholder: (context, url) => Container(
                                 width: 110,
                                 height: 110,
                                 color: AppColors.primary.withValues(alpha: 0.05),
-                                child: const Center(child: CircularProgressIndicator()),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
                               ),
                               errorWidget: (context, url, error) => const SizedBox.shrink(),
                             ),
@@ -644,65 +494,76 @@ class NewTeacherDashboardScreen extends StatelessWidget {
           ),
           title: Text(title, style: AppTextStyles.appbarh4.copyWith(fontSize: 18)),
         ),
-        body: Stack(
-          children: [
-            Center(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.contain,
-                  placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                  errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 40,
-              left: 20,
-              right: 20,
-              child: Center(
-                child: InkWell(
-                  onTap: () async {
-                    try {
-                      final tempDir = await getTemporaryDirectory();
-                      final path = '${tempDir.path}/shared_image.png';
-                      await Dio().download(imageUrl, path);
-                      await Share.shareXFiles([XFile(path)]);
-                    } catch (e) {
-                      Get.snackbar("Error", "Could not share image");
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.share, color: Colors.white, size: 20),
-                        SizedBox(width: 10),
-                        Text(
-                          "Share Image",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ],
+              Positioned(
+                bottom: 40,
+                left: 20,
+                right: 20,
+                child: Center(
+                  child: InkWell(
+                    onTap: () async {
+                      try {
+                        final tempDir = await getTemporaryDirectory();
+                        final path = '${tempDir.path}/shared_image.png';
+                        await Dio().download(imageUrl, path);
+                        await Share.shareXFiles([XFile(path)]);
+                      } catch (e) {
+                        Get.snackbar("Error", "Could not share image");
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.share, color: Colors.white, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            "Share Image",
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       fullscreenDialog: false,
@@ -762,7 +623,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                 ...List.generate(duties.length, (index) {
                   final duty = duties[index];
                   final isToday = duty.status?.toLowerCase() == 'today';
-                  
+
                   return Column(
                     children: [
                       Padding(
@@ -773,27 +634,36 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: (isToday ? AppColors.green : AppColors.primary).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    duty.status?.toUpperCase() ?? "",
-                                    style: TextStyle(
-                                      color: isToday ? AppColors.green : AppColors.primary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: (isToday ? AppColors.green : AppColors.primary).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      duty.status?.toUpperCase() ?? "",
+                                      style: TextStyle(
+                                        color: isToday ? AppColors.green : AppColors.primary,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                 ),
-                                Text(
-                                  duty.formattedDate ?? "",
-                                  style: TextStyle(
-                                    color: AppColors.black.withValues(alpha: 0.5),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    duty.formattedDate ?? "",
+                                    style: TextStyle(
+                                      color: AppColors.black.withValues(alpha: 0.5),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ),
                               ],
@@ -801,29 +671,76 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                             const SizedBox(height: 10),
                             Row(
                               children: [
-                                Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.6)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  duty.timing ?? "",
-                                  style: TextStyle(fontSize: 12, color: AppColors.black.withValues(alpha: 0.7)),
+                                Expanded(
+                                  flex: 6,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.6)),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          "${duty.timing ?? ""} ${duty.session != null ? '(${duty.session})' : ''}",
+                                          style: TextStyle(fontSize: 12, color: AppColors.black.withValues(alpha: 0.7)),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const Spacer(),
-                                Icon(Icons.meeting_room_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.6)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  "Room: ${duty.room?.name ?? '-'}",
-                                  style: TextStyle(fontSize: 12, color: AppColors.black.withValues(alpha: 0.7)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 4,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Icon(Icons.meeting_room_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.6)),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          "Room: ${duty.room?.name ?? '-'}",
+                                          style: TextStyle(fontSize: 12, color: AppColors.black.withValues(alpha: 0.7)),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              "Classes: ${duty.classes?.join(', ') ?? '-'}",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.black.withValues(alpha: 0.6),
-                                fontStyle: FontStyle.italic,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "Classes: ${duty.classes?.join(', ') ?? '-'}",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.black.withValues(alpha: 0.6),
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (duty.seatingPlan != null) ...[
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      "Plan: ${duty.seatingPlan?.name ?? '-'}",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.primary.withValues(alpha: 0.7),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),
@@ -836,6 +753,115 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                   );
                 }),
               ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildAssignedSubjectsSection(NewDashboardController controller, EdgeInsets margin) {
+    return Obx(() {
+      final subjects = controller.dashboard.value?.data?.assignedSubjects ?? [];
+      if (subjects.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              "Assigned Subjects",
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.black.withValues(alpha: 0.8),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 110,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              scrollDirection: Axis.horizontal,
+              itemCount: subjects.length,
+              itemBuilder: (context, index) {
+                final item = subjects[index];
+                return Container(
+                  width: 150,
+                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      width: 1,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item.subject?.name ?? "Subject",
+                          style: AppTextStyles.body.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppColors.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.class_rounded, size: 12, color: AppColors.black.withValues(alpha: 0.5)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                "Class: ${item.classData?.name ?? '-'}",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.black.withValues(alpha: 0.6),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(Icons.grid_view_rounded, size: 12, color: AppColors.black.withValues(alpha: 0.5)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                "Section: ${item.section?.name?.toUpperCase() ?? '-'}",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.black.withValues(alpha: 0.6),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -1103,5 +1129,179 @@ class NewTeacherDashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildStudentLeavesCard(NewDashboardController controller, EdgeInsets margin) {
+    return Obx(() {
+      final studentLeaves = controller.dashboard.value?.data?.studentLeaves;
+      if (studentLeaves == null) return const SizedBox.shrink();
+
+      final totalPending = studentLeaves.totalPendingCount ?? 0;
+      final todayPending = studentLeaves.todayPendingCount ?? 0;
+
+      if (totalPending == 0 && todayPending == 0) return const SizedBox.shrink();
+
+      return Column(
+        children: [
+          const SizedBox(height: 10),
+          Container(
+            margin: margin,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE11D48).withValues(alpha: 0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: Border.all(
+                color: const Color(0xFFE11D48).withValues(alpha: 0.18),
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFE11D48).withValues(alpha: 0.15),
+                          const Color(0xFFE11D48).withValues(alpha: 0.05),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.event_note_rounded,
+                        color: Color(0xFFE11D48),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "Student Leave Requests",
+                                style: AppTextStyles.body.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: AppColors.black.withValues(alpha: 0.85),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE11D48),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFE11D48).withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                "$totalPending Pending",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE11D48),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "Today: ",
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.black.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "$todayPending pending",
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFE11D48),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "   •   Total: ",
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.black.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "$totalPending pending",
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.black.withValues(alpha: 0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 }

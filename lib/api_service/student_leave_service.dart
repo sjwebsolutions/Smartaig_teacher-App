@@ -31,7 +31,7 @@ class StudentLeaveService {
         queryParams['date'] = date;
       }
 
-      print("--- START GET STUDENT LEAVES ---");
+      print("--- START GET STUDENT LEAVE ---");
       print("URL: ${ApiUrls.studentLeaves}");
       print("PARAMS: $queryParams");
 
@@ -46,15 +46,15 @@ class StudentLeaveService {
       if (response.statusCode == 200) {
         return StudentLeaveModel.fromJson(response.data);
       } else {
-        throw "Failed to load student leaves (Status: ${response.statusCode})";
+        throw "Failed to load student leave (Status: ${response.statusCode})";
       }
     } on DioException catch (e) {
-      print("STUDENT LEAVES DIO ERROR: ${e.message}");
-      print("STUDENT LEAVES DIO RESPONSE: ${e.response?.data}");
-      throw DioClient.getErrorMessage(e, "Failed to fetch student leaves");
+      print("STUDENT LEAVE DIO ERROR: ${e.message}");
+      print("STUDENT LEAVE DIO RESPONSE: ${e.response?.data}");
+      throw DioClient.getErrorMessage(e, "Failed to fetch student leave");
     } catch (e) {
-      print("STUDENT LEAVES GENERAL ERROR: $e");
-      throw "An unexpected error occurred while fetching student leaves: $e";
+      print("STUDENT LEAVE GENERAL ERROR: $e");
+      throw "An unexpected error occurred while fetching student leave: $e";
     }
   }
 

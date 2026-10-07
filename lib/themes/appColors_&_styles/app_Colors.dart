@@ -3,15 +3,31 @@ import 'package:flutter/material.dart';
 
 class AppGradients {
   static LinearGradient primary({
-    Alignment begin = Alignment.topCenter,
-    Alignment end = Alignment.bottomCenter,
+    Alignment begin = Alignment.topLeft,
+    Alignment end = Alignment.bottomRight,
   }) {
     return LinearGradient(
-      colors: const [Color(0xFFF8F9FE), Color(0xFFF8F9FE)],
       begin: begin,
       end: end,
+      colors: const [
+        Color(0xFFB0D7FE),
+        Color(0xFFE8D8FD),
+        Color(0xFFD3E1FD),
+        Color(0xFFD7E5FD),
+      ],
     );
   }
+
+  static const LinearGradient mainGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFB0D7FE),
+      Color(0xFFE8D8FD),
+      Color(0xFFD3E1FD),
+      Color(0xFFD7E5FD),
+    ],
+  );
 }
 
 class AppColors {

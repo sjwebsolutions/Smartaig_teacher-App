@@ -21,10 +21,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: AppGradients.primary(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomCenter,
-        ),
+        gradient: AppGradients.mainGradient,
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -44,122 +41,124 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: Obx(() {
-          final teacher = dashboardController.dashboard.value?.data?.teacher;
+        body: SafeArea(
+          child: Obx(() {
+            final teacher = dashboardController.dashboard.value?.data?.teacher;
 
-          if (teacher == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (teacher == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => dashboardController.fetchDashboard(),
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  // Profile Section (Header)
-                  Center(
-                    child: Column(
-                      children: [
-                        // Profile Image with Edit option
-                        Stack(
-                          children: [
-                            Obx(() => Container(
-                              width: 110,
-                              height: 110,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                                border: Border.all(color: Colors.white, width: 4),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: profileController.isImageUpdating.value
-                                  ? const Center(child: CircularProgressIndicator())
-                                  : ClipOval(
-                                      child: (profileController.selectedImagePath.isNotEmpty)
-                                          ? Image.file(
-                                              File(profileController.selectedImagePath.value),
-                                              fit: BoxFit.cover,
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                            )
-                                          : (teacher.image != null && teacher.image!.isNotEmpty)
-                                              ? CachedNetworkImage(
-                                                  imageUrl: teacher.image!,
-                                                  fit: BoxFit.cover,
-                                                  width: double.infinity,
-                                                  height: double.infinity,
-                                                  placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 60),
-                                                  errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 60),
-                                                )
-                                              : const Icon(Icons.person, color: AppColors.primary, size: 60),
+            return RefreshIndicator(
+              onRefresh: () => dashboardController.fetchDashboard(),
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    // Profile Section (Header)
+                    Center(
+                      child: Column(
+                        children: [
+                          // Profile Image with Edit option
+                          Stack(
+                            children: [
+                              Obx(() => Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.white, width: 4),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
-                            )),
-                            Positioned(
-                              bottom: 0,
-                              right: 4,
-                              child: GestureDetector(
-                                onTap: () => _showImageSourceDialog(context, profileController),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: profileController.isImageUpdating.value
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : ClipOval(
+                                        child: (profileController.selectedImagePath.isNotEmpty)
+                                            ? Image.file(
+                                                File(profileController.selectedImagePath.value),
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                height: double.infinity,
+                                              )
+                                            : (teacher.image != null && teacher.image!.isNotEmpty)
+                                                ? CachedNetworkImage(
+                                                    imageUrl: teacher.image!,
+                                                    fit: BoxFit.cover,
+                                                    width: double.infinity,
+                                                    height: double.infinity,
+                                                    placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 60),
+                                                    errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 60),
+                                                  )
+                                                : const Icon(Icons.person, color: AppColors.primary, size: 60),
                                       ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit_rounded,
-                                    color: AppColors.primary,
-                                    size: 16,
+                              )),
+                              Positioned(
+                                bottom: 0,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => _showImageSourceDialog(context, profileController),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.1),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.edit_rounded,
+                                      color: AppColors.primary,
+                                      size: 16,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Text(
-                            teacher.name ?? "No Name",
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.body.copyWith(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.black,
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              teacher.name ?? "No Name",
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.body.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.black,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 30),
-                  
-                  // Info Section
-                  _buildInfoSection(teacher),
-                  
-                  const SizedBox(height: 50),
-                ],
+                    
+                    const SizedBox(height: 30),
+                    
+                    // Info Section
+                    _buildInfoSection(teacher),
+                    
+                    const SizedBox(height: 50),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

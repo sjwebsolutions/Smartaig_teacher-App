@@ -26,101 +26,97 @@ class SyllabusScreen extends StatelessWidget {
           showBack: true,
           backgroundColor: Colors.transparent,
           showDivider: false,
-          // actions: [
-          //   IconButton(
-          //     onPressed: () => controller.resetFilters(),
-          //     icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
-          //     tooltip: "Reset Filters",
-          //   ),
-          // ],
-        ),
-        body: Column(
-          children: [
-            _buildFilters(controller),
-            Expanded(
-              child: Obx(() {
-                if (controller.isLoading.value && !controller.hasFetched.value) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-                }
 
-                if (controller.errorMessage.isNotEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildFilters(controller),
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoading.value && !controller.hasFetched.value) {
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                  }
+
+                  if (controller.errorMessage.isNotEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline_rounded, size: 60, color: AppColors.primary),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Error Occurred",
+                              style: AppTextStyles.h2.copyWith(color: AppColors.primary),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              controller.errorMessage.value,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.body.copyWith(color: Colors.black54),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => controller.fetchTeacherSyllabus(),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (controller.teacherSyllabusList.isEmpty && controller.hasFetched.value) {
+                    return RefreshIndicator(
+                      onRefresh: () => controller.fetchTeacherSyllabus(),
+                      child: ListView(
                         children: [
-                          const Icon(Icons.error_outline_rounded, size: 60, color: AppColors.primary),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Error Occurred",
-                            style: AppTextStyles.h2.copyWith(color: AppColors.primary),
+                          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.library_books_outlined, size: 64, color: AppColors.primary),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  "No Syllabus Available",
+                                  style: TextStyle(color: Colors.black54, fontSize: 16),
+                                ),
+                                const SizedBox(height: 16),
+                                if (controller.filterTermId.value != null ||
+                                    controller.filterClassId.value != null ||
+                                    controller.filterSubjectId.value != null)
+                                  TextButton(
+                                    onPressed: () => controller.resetFilters(),
+                                    child: const Text("Clear Filters", style: TextStyle(color: AppColors.primary)),
+                                  ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            controller.errorMessage.value,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.body.copyWith(color: Colors.black54),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () => controller.fetchTeacherSyllabus(),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                            child: const Text("Retry", style: TextStyle(color: Colors.white)),
-                          )
                         ],
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                if (controller.teacherSyllabusList.isEmpty && controller.hasFetched.value) {
                   return RefreshIndicator(
                     onRefresh: () => controller.fetchTeacherSyllabus(),
-                    child: ListView(
-                      children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                        Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.library_books_outlined, size: 64, color: AppColors.primary),
-                              const SizedBox(height: 16),
-                              const Text(
-                                "No Syllabus Available",
-                                style: TextStyle(color: Colors.black54, fontSize: 16),
-                              ),
-                              const SizedBox(height: 16),
-                              if (controller.filterTermId.value != null || 
-                                  controller.filterClassId.value != null || 
-                                  controller.filterSubjectId.value != null)
-                                TextButton(
-                                  onPressed: () => controller.resetFilters(),
-                                  child: const Text("Clear Filters", style: TextStyle(color: AppColors.primary)),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: controller.teacherSyllabusList.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final syllabus = controller.teacherSyllabusList[index];
+                        return _buildSyllabusCard(context, controller, syllabus);
+                      },
                     ),
                   );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () => controller.fetchTeacherSyllabus(),
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: controller.teacherSyllabusList.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final syllabus = controller.teacherSyllabusList[index];
-                      return _buildSyllabusCard(context, controller, syllabus);
-                    },
-                  ),
-                );
-              }),
-            ),
-          ],
+                }),
+              ),
+            ],
+          ),
         ),
         floatingActionButton: Obx(() {
           if (controller.canUpload.value) {

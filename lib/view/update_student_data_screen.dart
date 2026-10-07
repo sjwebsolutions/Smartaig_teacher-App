@@ -14,6 +14,7 @@ class UpdateStudentDataScreen extends StatefulWidget {
 
 class _UpdateStudentDataScreenState extends State<UpdateStudentDataScreen> {
   late final ImageUpdateController controller;
+  String? _clickedItemId;
 
   @override
   void initState() {
@@ -148,27 +149,62 @@ class _UpdateStudentDataScreenState extends State<UpdateStudentDataScreen> {
                         ),
                       ],
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                        child: const Icon(Icons.class_outlined, color: AppColors.primary),
-                      ),
-                      title: Text(
-                        "${item.className} - ${item.sectionName}",
-                        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: item.streamName != null ? Text(item.streamName!) : null,
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
-                      onTap: () {
-                        Get.toNamed('/studentUpdateList', arguments: {
-                          'class_id': item.classId,
-                          'section_id': item.sectionId,
-                          'stream_id': item.streamId,
-                          'class_name': item.className,
-                          'section_name': item.sectionName,
-                        });
-                      },
+                    child: Stack(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                            child: const Icon(Icons.class_outlined, color: AppColors.primary),
+                          ),
+                          title: Text(
+                            "${item.className} - ${item.sectionName}",
+                            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: item.streamName != null ? Text(item.streamName!) : null,
+                          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                          onTap: () async {
+                            if (_clickedItemId != null) return;
+
+                            setState(() {
+                              _clickedItemId = "${item.classId}_${item.sectionId}";
+                            });
+
+                            try {
+                              await Get.toNamed('/updateStudentList', arguments: {
+                                'class_id': item.classId,
+                                'section_id': item.sectionId,
+                                'stream_id': item.streamId,
+                                'class_name': item.className,
+                                'section_name': item.sectionName,
+                              });
+                            } finally {
+                              setState(() {
+                                _clickedItemId = null;
+                              });
+                            }
+                          },
+                        ),
+                        if (_clickedItemId == "${item.classId}_${item.sectionId}")
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   );
                 },

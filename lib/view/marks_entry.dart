@@ -359,12 +359,23 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
           final components = selectedSubject?.components;
           final String? subName = selectedSubject?.name;
+          final bool isPunjabiSubject = subName != null &&
+              (subName.toLowerCase().contains('punjabi') ||
+               subName.toLowerCase().contains('punjabi (a)') ||
+               subName.toLowerCase().contains('punjabi (b)'));
+
+          final bool showAssessment = components != null && (
+              components.assEnabled == true ||
+              components.assMax != null ||
+              isPunjabiSubject
+          );
+
           final bool hasSubComponents = components != null && (
               components.wEnabled == true ||
               components.oEnabled == true ||
               components.aEnabled == true ||
               components.bEnabled == true ||
-              components.assEnabled == true ||
+              showAssessment ||
               components.pEnabled == true
           );
 
@@ -376,7 +387,7 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
             if (components.oEnabled == true) markFields.add(_buildMarkInput(studentId, 'o', 'Oral', subjectMarks?.oMarks, components.oMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('o', subName)));
             if (components.aEnabled == true) markFields.add(_buildMarkInput(studentId, 'a', 'A', subjectMarks?.aMarks, components.aMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('a', subName)));
             if (components.bEnabled == true) markFields.add(_buildMarkInput(studentId, 'b', 'B', subjectMarks?.bMarks, components.bMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('b', subName)));
-            if (components.assEnabled == true) markFields.add(_buildMarkInput(studentId, 'ass', 'Assessment', subjectMarks?.assMarks, components.assMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('ass', subName)));
+            if (showAssessment) markFields.add(_buildMarkInput(studentId, 'ass', 'Assessment', subjectMarks?.assMarks, components.assMax ?? 10, marksController.isLocked.value, _attendanceMap[studentId]));
             if (components.pEnabled == true) markFields.add(_buildMarkInput(studentId, 'p', 'Pract.', subjectMarks?.pMarks, components.pMax, marksController.isLocked.value, _attendanceMap[studentId], isCompDisabled: _isComponentDisabledForSubject('p', subName)));
 
             bool showTotal = components.tEnabled == true || (!isGrading && markFields.isEmpty);

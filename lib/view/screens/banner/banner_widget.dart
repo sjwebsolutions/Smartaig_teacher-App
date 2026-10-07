@@ -19,13 +19,8 @@ class BannerWidget extends StatelessWidget {
     return Obx(() {
       final bannerList = controller.banners.value?.banners ?? [];
 
-      if (controller.isLoading.value) {
-        return Container(
-          height: 160,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          child: const SpinKitFadingCircle(color: AppColors.primary, size: 30),
-        );
+      if (controller.isLoading.value && bannerList.isEmpty) {
+        return const SizedBox.shrink();
       }
 
       if (bannerList.isEmpty) return const SizedBox.shrink();
@@ -59,10 +54,14 @@ class BannerWidget extends StatelessWidget {
                     child: CachedNetworkImage(
                       imageUrl: banner.imageUrl ?? "",
                       fit: BoxFit.cover,
-                      width:75,
+                      width: 75,
                       height: 75,
-                      placeholder: (context, url) => const Center(
-                        child: SpinKitFadingCircle(color: AppColors.primary, size: 20),
+                      fadeInDuration: Duration.zero,
+                      fadeOutDuration: Duration.zero,
+                      memCacheWidth: 150,
+                      memCacheHeight: 150,
+                      placeholder: (context, url) => Container(
+                        color: AppColors.primary.withValues(alpha: 0.05),
                       ),
                       errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
                     ),
@@ -103,114 +102,118 @@ class BannerWidget extends StatelessWidget {
     Get.to(
       () => Scaffold(
         backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            Center(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: hasImage 
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl!,
-                      fit: BoxFit.contain,
-                      width: double.infinity,
-                      placeholder: (context, url) => const Center(
-                        child: SpinKitFadingCircle(color: Colors.white, size: 40),
-                      ),
-                      errorWidget: (context, url, error) => const Column(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: hasImage 
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                        placeholder: (context, url) => const Center(
+                          child: SpinKitFadingCircle(color: Colors.white, size: 40),
+                        ),
+                        errorWidget: (context, url, error) => const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image, color: Colors.white, size: 50),
+                            SizedBox(height: 10),
+                            Text("No Image Available", style: TextStyle(color: Colors.white, fontSize: 16)),
+                          ],
+                        ),
+                      )
+                    : const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.broken_image, color: Colors.white, size: 50),
-                          SizedBox(height: 10),
-                          Text("No Image Available", style: TextStyle(color: Colors.white, fontSize: 16)),
+                          Icon(Icons.image_not_supported_outlined, color: Colors.white, size: 60),
+                          SizedBox(height: 16),
+                          Text(
+                            "No Image",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
-                    )
-                  : const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.image_not_supported_outlined, color: Colors.white, size: 60),
-                        SizedBox(height: 16),
-                        Text(
-                          "No Image",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-              ),
-            ),
-            
-            // Close Button
-            Positioned(
-              top: 50,
-              left: 20,
-              child: GestureDetector(
-                onTap: () => Get.back(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 24),
                 ),
               ),
-            ),
-
-            // Share Button
-            if (hasImage)
+              
+              // Close Button
               Positioned(
-                bottom: 40,
-                left: 40,
-                right: 40,
-                child: Obx(() => GestureDetector(
-                  onTap: isSharing.value ? null : shareImage,
+                top: 10,
+                left: 20,
+                child: GestureDetector(
+                  onTap: () => Get.back(),
                   child: Container(
-                    height: 55,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                      color: Colors.black.withValues(alpha: 0.4),
+                      shape: BoxShape.circle,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        isSharing.value 
-                          ? const SizedBox(
-                              width: 20, 
-                              height: 20, 
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                            )
-                          : const Icon(Icons.share_rounded, color: Colors.white, size: 20),
-                        const SizedBox(width: 12),
-                        Text(
-                          isSharing.value ? "PREPARING..." : "SHARE BANNER",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 24),
                   ),
-                )),
+                ),
               ),
-          ],
+
+              // Share Button
+              if (hasImage)
+                Positioned(
+                  bottom: 40,
+                  left: 40,
+                  right: 40,
+                  child: Obx(() => GestureDetector(
+                    onTap: isSharing.value ? null : shareImage,
+                    child: Container(
+                      height: 55,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          isSharing.value 
+                            ? const SizedBox(
+                                width: 20, 
+                                height: 20, 
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                              )
+                            : const Icon(Icons.share_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 12),
+                          Text(
+                            isSharing.value ? "PREPARING..." : "SHARE BANNER",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+                ),
+            ],
+          ),
         ),
       ),
       fullscreenDialog: true,
+
+
     );
   }
 }

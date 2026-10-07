@@ -27,42 +27,44 @@ class ClassListScreen extends StatelessWidget {
           showDivider: false,
           customTitle: Text("Incharge Classes", style: AppTextStyles.appbarh4),
         ),
-        body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        body: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(controller.errorMessage.value),
-                ElevatedButton(
-                  onPressed: controller.fetchClasses,
-                  child: const Text("Retry"),
-                )
-              ],
-            ),
-          );
-        }
+            if (controller.errorMessage.isNotEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(controller.errorMessage.value),
+                    ElevatedButton(
+                      onPressed: controller.fetchClasses,
+                      child: const Text("Retry"),
+                    )
+                  ],
+                ),
+              );
+            }
 
-        if (controller.classList.isEmpty) {
-          return const Center(child: Text("No classes found"));
-        }
+            if (controller.classList.isEmpty) {
+              return const Center(child: Text("No classes found"));
+            }
 
-        return RefreshIndicator(
-          onRefresh: controller.fetchClasses,
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.classList.length,
-            itemBuilder: (context, index) {
-              final classData = controller.classList[index];
-              return _buildClassCard(classData);
-            },
-          ),
-        );
-      }),
+            return RefreshIndicator(
+              onRefresh: controller.fetchClasses,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: controller.classList.length,
+                itemBuilder: (context, index) {
+                  final classData = controller.classList[index];
+                  return _buildClassCard(classData);
+                },
+              ),
+            );
+          }),
+        ),
     ),
   );
 }

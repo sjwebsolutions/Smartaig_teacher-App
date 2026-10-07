@@ -61,7 +61,8 @@ class AdmitCardDetailScreen extends StatelessWidget {
             }
           },
         ),
-        body: SingleChildScrollView(
+        body: SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,6 +152,7 @@ class AdmitCardDetailScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

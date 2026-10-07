@@ -11,6 +11,9 @@ import '../controller/date_sheet_controller.dart';
 import '../controller/time_table_controller.dart';
 import '../controller/gate_pass_controller.dart';
 import '../controller/invigilator_controller.dart';
+import '../controller/leave_controller.dart';
+import '../controller/student_leave_controller.dart';
+import '../controller/dashboard_controller_v2.dart';
 import 'grid_module_item.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 
@@ -31,6 +34,8 @@ class AcademicModuleGrid extends StatelessWidget {
     final timeTableController = Get.isRegistered<TimeTableController>() ? Get.find<TimeTableController>() : Get.put(TimeTableController());
     final gatePassController = Get.isRegistered<GatePassController>() ? Get.find<GatePassController>() : Get.put(GatePassController());
     final invigilatorController = Get.isRegistered<InvigilatorController>() ? Get.find<InvigilatorController>() : Get.put(InvigilatorController());
+    final leaveController = Get.isRegistered<LeaveController>() ? Get.find<LeaveController>() : Get.put(LeaveController());
+    final studentLeaveController = Get.isRegistered<StudentLeaveController>() ? Get.find<StudentLeaveController>() : Get.put(StudentLeaveController());
 
     return Obx(() {
       final modules = [
@@ -89,12 +94,12 @@ class AcademicModuleGrid extends StatelessWidget {
               Get.toNamed('/syllabus');
             }),
         ModuleItem(
-            title: "Update Image",
-            icon: Icons.camera_alt_rounded,
+            title: "Update Student Data",
+            icon: Icons.manage_accounts_rounded,
             color: const Color(0xFFF43F5E), // Rose
             isEnabled: true,
             onTap: () {
-              Get.toNamed('/studentImageUpdate');
+              Get.toNamed('/updateStudentData');
             }),
         ModuleItem(
             title: "Date Sheet",
@@ -142,6 +147,39 @@ class AcademicModuleGrid extends StatelessWidget {
           isEnabled: true,
           onTap: () {
             Get.toNamed('/admitCardScanner');
+          },
+        ),
+        ModuleItem(
+          title: "Student Leave",
+          icon: Icons.event_note_rounded,
+          color: const Color(0xFFE11D48), // Rose / Coral
+          isEnabled: true,
+          badgeCount: studentLeaveController.leavesList.isNotEmpty
+              ? studentLeaveController.leavesList.where((l) => (l.status ?? '').toLowerCase() == 'pending').length
+              : (Get.isRegistered<NewDashboardController>()
+                  ? (Get.find<NewDashboardController>().dashboard.value?.data?.studentLeaves?.totalPendingCount ?? 0)
+                  : 0),
+          onTap: () {
+            Get.toNamed('/studentLeave');
+          },
+        ),
+        ModuleItem(
+          title: "Scan Attendance",
+          icon: Icons.qr_code_scanner_rounded,
+          color: const Color(0xFF059669), // Emerald / Green
+          isEnabled: true,
+          onTap: () {
+            Get.toNamed('/studentQrScanner');
+          },
+        ),
+        ModuleItem(
+          title: "Teacher Leave",
+          icon: Icons.time_to_leave_rounded,
+          color: const Color(0xFFD97706), // Amber / Warm Orange
+          isEnabled: true,
+          badgeCount: leaveController.leaves.where((l) => (l.status ?? '').toLowerCase() == 'pending').length,
+          onTap: () {
+            Get.toNamed('/teacherLeave');
           },
         ),
       ];

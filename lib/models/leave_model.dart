@@ -31,37 +31,86 @@ class LeaveModel {
 class LeaveData {
   final int? id;
   final String? leaveType;
-  final String? startDate;
-  final String? endDate;
-  final String? totalDays;
+  final String? leaveTypeLabel;
+  final String? dayType;
+  final String? dayTypeLabel;
+  final String? halfDayStartTime;
+  final String? halfDayEndTime;
+  final String? fromDate;
+  final String? toDate;
+  final String? fromDateFormatted;
+  final String? toDateFormatted;
+  final dynamic totalDays;
   final String? reason;
+  final String? attachmentUrl;
   final String? status;
-  final String? appliedOn;
-  final String? remarks;
+  final String? statusLabel;
+  final String? actionByRole;
+  final String? actionByName;
+  final dynamic actionViaApp;
+  final String? actionAt;
+  final String? approverRemarks;
+  final String? rejectionReason;
+  final String? createdAt;
+
+  // Convenience getters for UI compatibility
+  String get startDate => fromDateFormatted ?? fromDate ?? "N/A";
+  String get endDate => toDateFormatted ?? toDate ?? "N/A";
+  String get displayLeaveType => leaveTypeLabel ?? leaveType ?? "Leave";
+  String get displayStatus => statusLabel ?? status ?? "Pending";
+  String get remarks => approverRemarks ?? rejectionReason ?? "";
 
   LeaveData({
     this.id,
     this.leaveType,
-    this.startDate,
-    this.endDate,
+    this.leaveTypeLabel,
+    this.dayType,
+    this.dayTypeLabel,
+    this.halfDayStartTime,
+    this.halfDayEndTime,
+    this.fromDate,
+    this.toDate,
+    this.fromDateFormatted,
+    this.toDateFormatted,
     this.totalDays,
     this.reason,
+    this.attachmentUrl,
     this.status,
-    this.appliedOn,
-    this.remarks,
+    this.statusLabel,
+    this.actionByRole,
+    this.actionByName,
+    this.actionViaApp,
+    this.actionAt,
+    this.approverRemarks,
+    this.rejectionReason,
+    this.createdAt,
   });
 
   factory LeaveData.fromJson(Map<String, dynamic> json) {
     return LeaveData(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
-      leaveType: json['leave_type'] ?? json['type'] ?? json['title']?.toString() ?? "Leave",
-      startDate: json['start_date'] ?? json['from_date']?.toString() ?? "N/A",
-      endDate: json['end_date'] ?? json['to_date']?.toString() ?? "N/A",
+      leaveType: json['leave_type']?.toString(),
+      leaveTypeLabel: json['leave_type_label']?.toString() ?? json['leave_type']?.toString(),
+      dayType: json['day_type']?.toString(),
+      dayTypeLabel: json['day_type_label']?.toString(),
+      halfDayStartTime: json['half_day_start_time']?.toString(),
+      halfDayEndTime: json['half_day_end_time']?.toString(),
+      fromDate: json['from_date']?.toString() ?? json['start_date']?.toString(),
+      toDate: json['to_date']?.toString() ?? json['end_date']?.toString(),
+      fromDateFormatted: json['from_date_formatted']?.toString(),
+      toDateFormatted: json['to_date_formatted']?.toString(),
       totalDays: json['total_days']?.toString() ?? json['days']?.toString() ?? "1",
       reason: json['reason']?.toString() ?? "",
-      status: json['status']?.toString() ?? "Pending",
-      appliedOn: json['applied_on'] ?? json['created_at']?.toString() ?? "N/A",
-      remarks: json['remarks'] ?? json['admin_remarks']?.toString() ?? "",
+      attachmentUrl: json['attachment_url']?.toString(),
+      status: json['status']?.toString() ?? "pending",
+      statusLabel: json['status_label']?.toString() ?? json['status']?.toString(),
+      actionByRole: json['action_by_role']?.toString(),
+      actionByName: json['action_by_name']?.toString(),
+      actionViaApp: json['action_via_app'],
+      actionAt: json['action_at']?.toString(),
+      approverRemarks: json['approver_remarks']?.toString() ?? json['remarks']?.toString(),
+      rejectionReason: json['rejection_reason']?.toString() ?? json['rejectionReason']?.toString() ?? json['reject_reason']?.toString(),
+      createdAt: json['created_at']?.toString() ?? json['applied_on']?.toString(),
     );
   }
 
@@ -69,13 +118,27 @@ class LeaveData {
     return {
       'id': id,
       'leave_type': leaveType,
-      'start_date': startDate,
-      'end_date': endDate,
+      'leave_type_label': leaveTypeLabel,
+      'day_type': dayType,
+      'day_type_label': dayTypeLabel,
+      'half_day_start_time': halfDayStartTime,
+      'half_day_end_time': halfDayEndTime,
+      'from_date': fromDate,
+      'to_date': toDate,
+      'from_date_formatted': fromDateFormatted,
+      'to_date_formatted': toDateFormatted,
       'total_days': totalDays,
       'reason': reason,
+      'attachment_url': attachmentUrl,
       'status': status,
-      'applied_on': appliedOn,
-      'remarks': remarks,
+      'status_label': statusLabel,
+      'action_by_role': actionByRole,
+      'action_by_name': actionByName,
+      'action_via_app': actionViaApp,
+      'action_at': actionAt,
+      'approver_remarks': approverRemarks,
+      'rejection_reason': rejectionReason,
+      'created_at': createdAt,
     };
   }
 }

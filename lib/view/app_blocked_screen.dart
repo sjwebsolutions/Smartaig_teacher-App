@@ -17,7 +17,7 @@ class AppBlockedScreen extends StatelessWidget {
     Widget content = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(gradient: AppGradients.primary()),
+      decoration: BoxDecoration(gradient: AppGradients.mainGradient),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -66,7 +66,7 @@ class AppBlockedScreen extends StatelessWidget {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: content,
+        body: SafeArea(child: content),
       ),
     );
   }

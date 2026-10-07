@@ -88,79 +88,81 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           backgroundColor: Colors.transparent,
           showDivider: false,
         ),
-        body: files.isNotEmpty
-            ? Column(
-                children: [
-                  Expanded(
-                    child: PageView.builder(
-                      itemCount: files.length,
-                      onPageChanged: (index) {
-                        setState(() {
-                          currentIndex = index;
-                          isPageLoading = true;
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final file = files[index];
-                        final String url = file['url'];
-                        final bool isImage = file['isImage'];
+        body: SafeArea(
+          child: files.isNotEmpty
+              ? Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        itemCount: files.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            currentIndex = index;
+                            isPageLoading = true;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final file = files[index];
+                          final String url = file['url'];
+                          final bool isImage = file['isImage'];
 
-                        if (isImage) {
-                          return Center(
-                            child: InteractiveViewer(
-                              child: CachedNetworkImage(
-                                imageUrl: url,
-                                placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white, size: 50),
-                                imageBuilder: (context, imageProvider) {
-                                  return Image(image: imageProvider, fit: BoxFit.contain);
-                                },
+                          if (isImage) {
+                            return Center(
+                              child: InteractiveViewer(
+                                child: CachedNetworkImage(
+                                  imageUrl: url,
+                                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                  errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white, size: 50),
+                                  imageBuilder: (context, imageProvider) {
+                                    return Image(image: imageProvider, fit: BoxFit.contain);
+                                  },
+                                ),
                               ),
-                            ),
-                          );
-                        } else {
-                          return SfPdfViewer.network(
-                            url,
-                            onDocumentLoaded: (details) => setState(() => isPageLoading = false),
-                            onDocumentLoadFailed: (details) {
-                              setState(() => isPageLoading = false);
-                              Get.snackbar("Error", "Failed to load PDF: ${details.description}", backgroundColor: Colors.red, colorText: Colors.white);
-                            },
-                          );
-                        }
-                      },
+                            );
+                          } else {
+                            return SfPdfViewer.network(
+                              url,
+                              onDocumentLoaded: (details) => setState(() => isPageLoading = false),
+                              onDocumentLoadFailed: (details) {
+                                setState(() => isPageLoading = false);
+                                Get.snackbar("Error", "Failed to load PDF: ${details.description}", backgroundColor: Colors.red, colorText: Colors.white);
+                              },
+                            );
+                          }
+                        },
+                      ),
                     ),
-                  ),
-                  
-                  // Share Button
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton.icon(
-                        onPressed: isSharing ? null : _shareFile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        ),
-                        icon: isSharing 
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.share_rounded, color: Colors.white),
-                        label: Text(
-                          isSharing ? "PREPARING..." : "SHARE THIS FILE",
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    
+                    // Share Button
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton.icon(
+                          onPressed: isSharing ? null : _shareFile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                          icon: isSharing 
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.share_rounded, color: Colors.white),
+                          label: Text(
+                            isSharing ? "PREPARING..." : "SHARE THIS FILE",
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              )
-            : const Center(child: Text("No files to display", style: TextStyle(color: Colors.white))),
+                  ],
+                )
+              : const Center(child: Text("No files to display", style: TextStyle(color: Colors.white))),
+        ),
       ),
     );
   }

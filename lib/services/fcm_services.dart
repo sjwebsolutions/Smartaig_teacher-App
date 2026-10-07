@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import '../controller/announcement_controller.dart';
 import '../controller/banner_controller.dart';
+import '../controller/leave_controller.dart';
 import '../services/device_service.dart';
 import '../utils/api_url.dart';
 import '../utils/dio_client.dart';
@@ -79,7 +80,9 @@ class FcmService {
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse details) {
           print("Notification clicked: ${details.payload}");
-          if (Get.isRegistered<AnnouncementController>()) {
+          if (details.payload == "teacher_leave" || details.payload == "leave") {
+            Get.toNamed('/teacherLeave');
+          } else if (Get.isRegistered<AnnouncementController>()) {
             Get.find<AnnouncementController>().markAsRead();
           }
         },
@@ -113,7 +116,8 @@ class FcmService {
         await FirebaseMessaging.instance.subscribeToTopic("teachers");
         await FirebaseMessaging.instance.subscribeToTopic("announcements");
         await FirebaseMessaging.instance.subscribeToTopic("banners");
-        print("Subscribed to FCM topics: all, teachers, announcements, banners");
+        await FirebaseMessaging.instance.subscribeToTopic("leaves");
+        print("Subscribed to FCM topics: all, teachers, announcements, banners, leaves");
       } catch (e) {
         print("Topic subscription notice: $e");
       }
@@ -143,12 +147,12 @@ class FcmService {
         if (title != null || body != null) {
           showLocalNotification(
             title: title ?? "New Update",
-            body: body ?? "You have a new announcement.",
-            payload: message.data['type'] ?? "announcement",
+            body: body ?? "You have a new update.",
+            payload: message.data['type'] ?? message.data['notification_type'] ?? "announcement",
           );
         }
 
-        // Live refresh controllers when announcement or banner notification arrives
+        // Live refresh controllers when announcement, banner, or leave notification arrives
         if (Get.isRegistered<AnnouncementController>()) {
           Get.find<AnnouncementController>().hasNewNotifications.value = true;
           Get.find<AnnouncementController>().fetchAnnouncements();
@@ -156,15 +160,23 @@ class FcmService {
         if (Get.isRegistered<BannerController>()) {
           Get.find<BannerController>().fetchBanners(showLoading: false);
         }
+        if (Get.isRegistered<LeaveController>()) {
+          Get.find<LeaveController>().fetchLeaves();
+        }
       });
 
       // 8. Handle Notification Click when app is in background
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         print("Notification opened from background: ${message.notification?.title ?? message.data}");
-        if (Get.isRegistered<AnnouncementController>()) {
-          Get.find<AnnouncementController>().markAsRead();
+        final payloadType = message.data['type'] ?? message.data['notification_type'];
+        if (payloadType == "teacher_leave" || payloadType == "leave") {
+          Get.toNamed('/teacherLeave');
+        } else {
+          if (Get.isRegistered<AnnouncementController>()) {
+            Get.find<AnnouncementController>().markAsRead();
+          }
+          Get.toNamed('/banners');
         }
-        Get.toNamed('/banners');
       });
 
       print('FCM Initialization Complete');

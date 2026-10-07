@@ -13,6 +13,13 @@ class DashboardTeacherModel {
       data: json['data'] != null ? DashboardData.fromJson(json['data']) : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'success': success,
+      'data': data?.toJson(),
+    };
+  }
 }
 
 class DashboardData {
@@ -22,6 +29,7 @@ class DashboardData {
   final List<AssignedSubject>? assignedSubjects;
   final TodayAttendance? todayAttendance;
   final List<TodayTomorrowDuty>? todayTomorrowDuties;
+  final StudentLeaves? studentLeaves;
   final dynamic todayLeave;
   final dynamic todayHoliday;
   final bool? isWeeklyOff;
@@ -34,6 +42,7 @@ class DashboardData {
     this.assignedSubjects,
     this.todayAttendance,
     this.todayTomorrowDuties,
+    this.studentLeaves,
     this.todayLeave,
     this.todayHoliday,
     this.isWeeklyOff,
@@ -54,6 +63,9 @@ class DashboardData {
       todayTomorrowDuties: json['today_tomorrow_duties'] != null
           ? (json['today_tomorrow_duties'] as List).map((i) => TodayTomorrowDuty.fromJson(i)).toList()
           : null,
+      studentLeaves: json['student_leaves'] != null && json['student_leaves'] is Map<String, dynamic>
+          ? StudentLeaves.fromJson(json['student_leaves'])
+          : null,
       todayLeave: json['today_leave'],
       todayHoliday: json['today_holiday'],
       isWeeklyOff: json['is_weekly_off'],
@@ -61,6 +73,50 @@ class DashboardData {
           ? AttendanceSettings.fromJson(json['attendance_settings'])
           : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'teacher': teacher?.toJson(),
+      'active_session': activeSession,
+      'school': school?.toJson(),
+      'assigned_subjects': assignedSubjects?.map((i) => i.toJson()).toList(),
+      'today_attendance': todayAttendance?.toJson(),
+      'today_tomorrow_duties': todayTomorrowDuties?.map((i) => i.toJson()).toList(),
+      'student_leaves': studentLeaves?.toJson(),
+      'today_leave': todayLeave,
+      'today_holiday': todayHoliday,
+      'is_weekly_off': isWeeklyOff,
+      'attendance_settings': attendanceSettings?.toJson(),
+    };
+  }
+}
+
+class StudentLeaves {
+  final int? totalPendingCount;
+  final int? todayPendingCount;
+
+  StudentLeaves({
+    this.totalPendingCount,
+    this.todayPendingCount,
+  });
+
+  factory StudentLeaves.fromJson(Map<String, dynamic> json) {
+    return StudentLeaves(
+      totalPendingCount: json['total_pending_count'] is int
+          ? json['total_pending_count']
+          : int.tryParse(json['total_pending_count']?.toString() ?? ''),
+      todayPendingCount: json['today_pending_count'] is int
+          ? json['today_pending_count']
+          : int.tryParse(json['today_pending_count']?.toString() ?? ''),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'total_pending_count': totalPendingCount,
+      'today_pending_count': todayPendingCount,
+    };
   }
 }
 
@@ -93,9 +149,24 @@ class TodayAttendance {
       statusLabel: json['status_label']?.toString(),
       clockIn: json['clock_in']?.toString(),
       clockOut: json['clock_out']?.toString(),
-      attendanceValue: json['attendance_value'],
+      attendanceValue: json['attendance_value'] is num
+          ? json['attendance_value']
+          : num.tryParse(json['attendance_value']?.toString() ?? ''),
       remarks: json['remarks']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'is_marked': isMarked,
+      'status': status,
+      'status_code': statusCode,
+      'status_label': statusLabel,
+      'clock_in': clockIn,
+      'clock_out': clockOut,
+      'attendance_value': attendanceValue,
+      'remarks': remarks,
+    };
   }
 }
 
@@ -142,7 +213,7 @@ class Teacher {
 
   factory Teacher.fromJson(Map<String, dynamic> json) {
     return Teacher(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
       staffType: json['staff_type']?.toString(),
       whatsappNumber: json['whatsapp_number']?.toString(),
@@ -159,10 +230,33 @@ class Teacher {
       district: json['district']?.toString(),
       state: json['state']?.toString(),
       pincode: json['pincode']?.toString(),
-      experience: json['experience'] != null
+      experience: json['experience'] != null && json['experience'] is List
           ? (json['experience'] as List).map((i) => Experience.fromJson(i)).toList()
           : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'staff_type': staffType,
+      'whatsapp_number': whatsappNumber,
+      'phone': phone,
+      'email': email,
+      'school_id': schoolId,
+      'teacher_unique_id': teacherUniqueId,
+      'gender': gender,
+      'status': status,
+      'image': image,
+      'dob': dob,
+      'thumbnail': thumbnail,
+      'address': address,
+      'district': district,
+      'state': state,
+      'pincode': pincode,
+      'experience': experience?.map((i) => i.toJson()).toList(),
+    };
   }
 }
 
@@ -187,6 +281,15 @@ class Experience {
       subject: json['subject']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'school_name': schoolName,
+      'from_date': fromDate,
+      'to_date': toDate,
+      'subject': subject,
+    };
+  }
 }
 
 class School {
@@ -200,9 +303,16 @@ class School {
 
   factory School.fromJson(Map<String, dynamic> json) {
     return School(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       schoolName: json['school_name']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'school_name': schoolName,
+    };
   }
 }
 
@@ -223,12 +333,22 @@ class AssignedSubject {
 
   factory AssignedSubject.fromJson(Map<String, dynamic> json) {
     return AssignedSubject(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       classData: json['class'] != null ? ClassData.fromJson(json['class']) : null,
       section: json['section'] != null ? SectionData.fromJson(json['section']) : null,
       stream: json['stream'],
       subject: json['subject'] != null ? SubjectData.fromJson(json['subject']) : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'class': classData?.toJson(),
+      'section': section?.toJson(),
+      'stream': stream,
+      'subject': subject?.toJson(),
+    };
   }
 }
 
@@ -240,9 +360,16 @@ class ClassData {
 
   factory ClassData.fromJson(Map<String, dynamic> json) {
     return ClassData(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+    };
   }
 }
 
@@ -254,9 +381,16 @@ class SectionData {
 
   factory SectionData.fromJson(Map<String, dynamic> json) {
     return SectionData(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+    };
   }
 }
 
@@ -269,10 +403,18 @@ class SubjectData {
 
   factory SubjectData.fromJson(Map<String, dynamic> json) {
     return SubjectData(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
       code: json['code']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'code': code,
+    };
   }
 }
 
@@ -307,7 +449,7 @@ class TodayTomorrowDuty {
 
   factory TodayTomorrowDuty.fromJson(Map<String, dynamic> json) {
     return TodayTomorrowDuty(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       examDate: json['exam_date']?.toString(),
       dayName: json['day_name']?.toString(),
       formattedDate: json['formatted_date']?.toString(),
@@ -327,6 +469,23 @@ class TodayTomorrowDuty {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'exam_date': examDate,
+      'day_name': dayName,
+      'formatted_date': formattedDate,
+      'status': status,
+      'timing': timing,
+      'session': session,
+      'seating_plan': seatingPlan?.toJson(),
+      'datesheet': datesheet?.toJson(),
+      'room': room?.toJson(),
+      'classes': classes,
+      'co_invigilators': coInvigilators,
+    };
+  }
 }
 
 class SeatingPlan {
@@ -337,9 +496,16 @@ class SeatingPlan {
 
   factory SeatingPlan.fromJson(Map<String, dynamic> json) {
     return SeatingPlan(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+    };
   }
 }
 
@@ -351,9 +517,16 @@ class DateSheet {
 
   factory DateSheet.fromJson(Map<String, dynamic> json) {
     return DateSheet(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+    };
   }
 }
 
@@ -367,11 +540,24 @@ class Room {
 
   factory Room.fromJson(Map<String, dynamic> json) {
     return Room(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       name: json['name']?.toString(),
-      capacity: json['capacity'],
-      studentCount: json['student_count'],
+      capacity: json['capacity'] is int
+          ? json['capacity']
+          : int.tryParse(json['capacity']?.toString() ?? ''),
+      studentCount: json['student_count'] is int
+          ? json['student_count']
+          : int.tryParse(json['student_count']?.toString() ?? ''),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'capacity': capacity,
+      'student_count': studentCount,
+    };
   }
 }
 
@@ -406,7 +592,9 @@ class AttendanceSettings {
     return AttendanceSettings(
       latitude: json['latitude']?.toString(),
       longitude: json['longitude']?.toString(),
-      radius: json['radius'],
+      radius: json['radius'] is int
+          ? json['radius']
+          : int.tryParse(json['radius']?.toString() ?? ''),
       weeklyOffDays: json['weekly_off_days'] != null
           ? List<String>.from(json['weekly_off_days'])
           : null,
@@ -418,5 +606,21 @@ class AttendanceSettings {
       lateHalfDayTime: json['late_half_day_time']?.toString(),
       lateFullDayTime: json['late_full_day_time']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+      'radius': radius,
+      'weekly_off_days': weeklyOffDays,
+      'work_start_time': workStartTime,
+      'work_end_time': workEndTime,
+      'allow_clock_in_from': allowClockInFrom,
+      'late_one_quarter_time': lateOneQuarterTime,
+      'late_one_third_time': lateOneThirdTime,
+      'late_half_day_time': lateHalfDayTime,
+      'late_full_day_time': lateFullDayTime,
+    };
   }
 }

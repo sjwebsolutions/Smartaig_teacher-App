@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../controller/dashboard_controller_v2.dart';
 import '../../controller/auth_controller.dart';
 import '../../controller/support_controller.dart';
@@ -9,6 +10,7 @@ import '../../models/policy_model.dart';
 import '../../themes/appColors_&_styles/app_Colors.dart';
 import '../../themes/appColors_&_styles/text_styles.dart';
 import '../../utils/app_snackbar.dart';
+import '../../utils/app_update_util.dart';
 import '../profile_screen.dart';
 import 'policy_detail_screen.dart';
 
@@ -25,20 +27,30 @@ class _SettingScreenState extends State<SettingScreen> {
   final supportController = Get.find<SupportController>();
   final policyController = Get.find<PolicyController>();
 
+  String _appVersion = "...";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = info.version;
+        });
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFB0D7FE),
-            Color(0xFFE8D8FD),
-            Color(0xFFD3E1FD),
-            Color(0xFFD7E5FD),
-          ],
-        ),
+      decoration: BoxDecoration(
+        gradient: AppGradients.mainGradient,
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -52,91 +64,96 @@ class _SettingScreenState extends State<SettingScreen> {
           centerTitle: false,
           automaticallyImplyLeading: false,
         ),
-        body: Obx(() {
-          final teacher = dashboardController.dashboard.value?.data?.teacher;
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            children: [
-              // Profile Item
-              _buildSettingCard(
-                icon: Icons.person_outline_rounded,
-                title: "Profile",
-                subtitle: "View and edit your profile info",
-                onTap: () => Get.to(() => const ProfileScreen()),
-              ),
-              const SizedBox(height: 12),
+        body: SafeArea(
+          child: Obx(() {
+            final teacher = dashboardController.dashboard.value?.data?.teacher;
+            return ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              children: [
+                // Profile Item
+                _buildSettingCard(
+                  icon: Icons.person_outline_rounded,
+                  title: "Profile",
+                  subtitle: "View and edit your profile info",
+                  onTap: () => Get.to(() => const ProfileScreen()),
+                ),
+                const SizedBox(height: 12),
 
-              // Mobile Number Item
-              _buildSettingCard(
-                icon: Icons.phone_android_rounded,
-                title: "Registered Mobile",
-                subtitle: teacher?.phone ?? "Not Available",
-                onTap: () {},
-              ),
-              const SizedBox(height: 12),
+                // Mobile Number Item
+                _buildSettingCard(
+                  icon: Icons.phone_android_rounded,
+                  title: "Registered Mobile",
+                  subtitle: teacher?.phone ?? "Not Available",
+                  onTap: () {},
+                ),
+                const SizedBox(height: 12),
 
-              // App Version Item
-              _buildSettingCard(
-                icon: Icons.info_outline_rounded,
-                title: "App Version",
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    "2.0.11",
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                // App Version Item
+                _buildSettingCard(
+                  icon: Icons.info_outline_rounded,
+                  title: "App Version",
+                  subtitle: "Tap to check for updates",
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      _appVersion,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
+                  onTap: () {
+                    AppUpdateUtil.checkForUpdate(context, showToastIfLatest: true);
+                  },
                 ),
-                onTap: () {},
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // Privacy Policy Item
-              _buildSettingCard(
-                icon: Icons.alternate_email_rounded,
-                title: "Privacy Policy",
-                onTap: () => _handlePolicyTap("Privacy Policy", (data) => data.privacyPolicy),
-              ),
-              const SizedBox(height: 12),
+                // Privacy Policy Item
+                _buildSettingCard(
+                  icon: Icons.alternate_email_rounded,
+                  title: "Privacy Policy",
+                  onTap: () => _handlePolicyTap("Privacy Policy", (data) => data.privacyPolicy),
+                ),
+                const SizedBox(height: 12),
 
-              // Terms of Use Item
-              _buildSettingCard(
-                icon: Icons.assignment_outlined,
-                title: "Terms of Use",
-                onTap: () => _handlePolicyTap("Terms of Use", (data) => data.termsOfUse),
-              ),
-              const SizedBox(height: 12),
+                // Terms of Use Item
+                _buildSettingCard(
+                  icon: Icons.assignment_outlined,
+                  title: "Terms of Use",
+                  onTap: () => _handlePolicyTap("Terms of Use", (data) => data.termsOfUse),
+                ),
+                const SizedBox(height: 12),
 
-              // Contact Support Item
-              _buildSettingCard(
-                icon: Icons.headset_mic_outlined,
-                title: "Contact Support",
-                onTap: () => _showContactSupportDialog(context),
-              ),
-              const SizedBox(height: 12),
+                // Contact Support Item
+                _buildSettingCard(
+                  icon: Icons.headset_mic_outlined,
+                  title: "Contact Support",
+                  onTap: () => _showContactSupportDialog(context),
+                ),
+                const SizedBox(height: 12),
 
-              // Logout Item
-              _buildSettingCard(
-                icon: Icons.logout_rounded,
-                title: "Logout",
-                subtitle: "Sign out from this device",
-                titleColor: Colors.redAccent,
-                iconColor: Colors.redAccent,
-                onTap: () => _showLogoutDialog(context),
-              ),
-            ],
-          );
-        }),
-    ),
-  );
-}
+                // Logout Item
+                _buildSettingCard(
+                  icon: Icons.logout_rounded,
+                  title: "Logout",
+                  subtitle: "Sign out from this device",
+                  titleColor: Colors.redAccent,
+                  iconColor: Colors.redAccent,
+                  onTap: () => _showLogoutDialog(context),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
 
   Widget _buildSettingCard({
     required IconData icon,
@@ -212,13 +229,12 @@ class _SettingScreenState extends State<SettingScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         elevation: 10,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40), // Reduces dialog width
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon with soft red background
               Container(
                 width: 60,
                 height: 60,
@@ -236,7 +252,6 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Title
               const Text(
                 "Confirm Logout",
                 style: TextStyle(
@@ -247,7 +262,6 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Subtitle
               Text(
                 "Are you sure you want to log out?",
                 textAlign: TextAlign.center,
@@ -259,10 +273,8 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Buttons (Cancel & Confirm)
               Row(
                 children: [
-                  // Cancel Button
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
@@ -285,7 +297,6 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                   const SizedBox(width: 12),
 
-                  // Confirm Button
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -326,7 +337,7 @@ class _SettingScreenState extends State<SettingScreen> {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: const Color(0xFFF1EEF6), // Light lavender/purple color as seen in the image
+        backgroundColor: const Color(0xFFF1EEF6),
         child: Container(
           padding: const EdgeInsets.all(20),
           width: double.infinity,
@@ -469,7 +480,7 @@ class _SettingScreenState extends State<SettingScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -522,7 +533,6 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Future<void> _handlePolicyTap(String title, String? Function(PolicyData) selector) async {
-    // Show a loading dialog
     Get.dialog(
       const Center(
         child: CircularProgressIndicator(color: AppColors.primary),
@@ -532,7 +542,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
     try {
       await policyController.fetchPolicies();
-      Get.back(); // Dismiss loading dialog
+      Get.back();
 
       final policyData = policyController.policy.value?.data;
       if (policyData != null) {
@@ -546,7 +556,7 @@ class _SettingScreenState extends State<SettingScreen> {
         AppSnackBar.error("Failed to load policy data");
       }
     } catch (e) {
-      Get.back(); // Dismiss loading dialog if error occurs
+      Get.back();
       AppSnackBar.error("Error: $e");
     }
   }

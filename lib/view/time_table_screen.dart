@@ -21,186 +21,188 @@ class TimeTableScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF8F9FE),
         showDivider: false,
       ),
-        body: Obx(() {
-          if (controller.isLoading.value && !controller.hasFetched.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        body: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value && !controller.hasFetched.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (controller.errorMessage.isNotEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline_rounded, size: 60, color: AppColors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Error Occurred",
-                      style: AppTextStyles.h2.copyWith(color: AppColors.red),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      controller.errorMessage.value,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.body.copyWith(color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => controller.fetchTimeTable(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text("Retry", style: TextStyle(color: Colors.white)),
-                    )
-                  ],
-                ),
-              ),
-            );
-          }
-
-          final data = controller.timeTableModel.value?.data;
-
-          return RefreshIndicator(
-            onRefresh: () => controller.fetchTimeTable(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Today's Date and Day Card
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.04)),
-                  ),
-                  child: Row(
+            if (controller.errorMessage.isNotEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.calendar_today_rounded,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
+                      const Icon(Icons.error_outline_rounded, size: 60, color: AppColors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Error Occurred",
+                        style: AppTextStyles.h2.copyWith(color: AppColors.red),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _formatFullDate(data?.selectedDate),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              data?.selectedDay ?? "",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: 8),
+                      Text(
+                        controller.errorMessage.value,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.body.copyWith(color: Colors.grey[600]),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.greensuccess.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          "Today's Schedule",
-                          style: TextStyle(
-                            color: AppColors.greensuccess,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => controller.fetchTimeTable(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                      ),
+                        child: const Text("Retry", style: TextStyle(color: Colors.white)),
+                      )
                     ],
                   ),
                 ),
+              );
+            }
 
-                // Period List View
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final periods = data?.dailySchedule ?? [];
+            final data = controller.timeTableModel.value?.data;
 
-                      if (periods.isEmpty) {
-                        return ListView(
-                          children: [
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.15),
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.event_busy_rounded,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    "No periods scheduled for today",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+            return RefreshIndicator(
+              onRefresh: () => controller.fetchTimeTable(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Today's Date and Day Card
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.04)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.calendar_today_rounded,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _formatFullDate(data?.selectedDate),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
                               ),
+                              const SizedBox(height: 2),
+                              Text(
+                                data?.selectedDay ?? "",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.greensuccess.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            "Today's Schedule",
+                            style: TextStyle(
+                              color: AppColors.greensuccess,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        );
-                      }
-
-                      return ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        itemCount: periods.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final period = periods[index];
-                          final isBreak = period.type?.toLowerCase() == 'break';
-                          
-                          if (isBreak) {
-                            return _buildBreakCard(period);
-                          } else {
-                            return _buildClassCard(period);
-                          }
-                        },
-                      );
-                    },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }),
+
+                  // Period List View
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final periods = data?.dailySchedule ?? [];
+
+                        if (periods.isEmpty) {
+                          return ListView(
+                            children: [
+                              SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                              Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.event_busy_rounded,
+                                      size: 64,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      "No periods scheduled for today",
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        return ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          itemCount: periods.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final period = periods[index];
+                            final isBreak = period.type?.toLowerCase() == 'break';
+                            
+                            if (isBreak) {
+                              return _buildBreakCard(period);
+                            } else {
+                              return _buildClassCard(period);
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ),
       );
   }
 

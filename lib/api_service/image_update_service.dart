@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../models/image_update_students_model.dart';
 import '../models/image_update_classes_model.dart';
+import '../models/image_update_form_options_model.dart';
+import '../models/image_update_store_model.dart';
 import '../utils/api_url.dart';
 import '../utils/dio_client.dart';
 import 'package:dio/dio.dart';
@@ -7,60 +11,105 @@ import 'package:dio/dio.dart';
 class ImageUpdateService {
   Future<ImageUpdateClassesModel> getImageUpdateClasses() async {
     try {
+      debugPrint("--- START GET IMAGE UPDATE CLASSES ---");
+      debugPrint("URL: ${ApiUrls.studentImageUpdateClasses}");
       final response = await DioClient.dio.get(ApiUrls.studentImageUpdateClasses);
-      return ImageUpdateClassesModel.fromJson(response.data);
+      debugPrint("STATUS CODE: ${response.statusCode}");
+      debugPrint("RESPONSE DATA: ${response.data}");
+
+      if (response.data is Map<String, dynamic>) {
+        return ImageUpdateClassesModel.fromJson(response.data);
+      } else if (response.data is String) {
+        return ImageUpdateClassesModel.fromJson(jsonDecode(response.data));
+      }
+      return ImageUpdateClassesModel(success: false, data: []);
     } on DioException catch (e) {
-      throw e.response?.data["message"] ?? "Failed to fetch image update classes";
+      debugPrint("DIO ERROR: ${e.message}");
+      debugPrint("DIO RESPONSE: ${e.response?.data}");
+      throw DioClient.getErrorMessage(e, "Failed to fetch image update classes");
+    } catch (e) {
+      debugPrint("GENERAL ERROR: $e");
+      throw "An unexpected error occurred while fetching classes: $e";
+    }
+  }
+
+  Future<ImageUpdateFormOptionsModel> getImageUpdateFormOptions() async {
+    try {
+      final response = await DioClient.dio.get(ApiUrls.studentImageUpdateFormOptions);
+      if (response.data is Map<String, dynamic>) {
+        return ImageUpdateFormOptionsModel.fromJson(response.data);
+      } else if (response.data is String) {
+        return ImageUpdateFormOptionsModel.fromJson(jsonDecode(response.data));
+      }
+      return ImageUpdateFormOptionsModel(success: false);
+    } on DioException catch (e) {
+      throw DioClient.getErrorMessage(e, "Failed to fetch form options");
+    } catch (e) {
+      throw "Failed to fetch form options: $e";
     }
   }
 
   Future<ImageUpdateStudentsModel> getImageUpdateStudents(int classId, int sectionId, int? streamId) async {
     try {
+      debugPrint("--- START GET IMAGE UPDATE STUDENTS ---");
+      debugPrint("URL: ${ApiUrls.studentImageUpdateStudents}?class_id=$classId&section_id=$sectionId&stream_id=${streamId ?? ''}");
       final response = await DioClient.dio.get(
         ApiUrls.studentImageUpdateStudents,
         queryParameters: {
           'class_id': classId,
           'section_id': sectionId,
-          'stream_id': streamId ?? "",
+          if (streamId != null && streamId > 0) 'stream_id': streamId,
         },
       );
-      return ImageUpdateStudentsModel.fromJson(response.data);
+      debugPrint("STATUS CODE: ${response.statusCode}");
+      debugPrint("RESPONSE DATA: ${response.data}");
+
+      if (response.data is Map<String, dynamic>) {
+        return ImageUpdateStudentsModel.fromJson(response.data);
+      } else if (response.data is String) {
+        return ImageUpdateStudentsModel.fromJson(jsonDecode(response.data));
+      }
+      return ImageUpdateStudentsModel(success: false, data: []);
     } on DioException catch (e) {
-      throw e.response?.data["message"] ?? "Failed to fetch students";
+      debugPrint("DIO ERROR: ${e.message}");
+      throw DioClient.getErrorMessage(e, "Failed to fetch students");
+    } catch (e) {
+      debugPrint("GENERAL ERROR: $e");
+      throw "An unexpected error occurred while fetching students: $e";
     }
   }
 
-  Future<bool> storeImageUpdate({
-    required int studentId,
-    String? profileImagePath,
-    String? fatherImagePath,
-    String? motherImagePath,
-  }) async {
+  Future<ImageUpdateStoreResponse> storeImageUpdate(ImageUpdateStoreRequest request) async {
     try {
-      final Map<String, dynamic> data = {
-        'student_id': studentId,
-      };
+      final Map<String, dynamic> data = request.toMap();
+      debugPrint("==========================================");
+      debugPrint("🌐 [ImageUpdateService] POST Request to: ${ApiUrls.studentImageUpdateStore}");
+      debugPrint("Payload Map: $data");
+      debugPrint("Profile Image File: ${request.profileImage}");
+      debugPrint("Father Image File: ${request.fatherImage}");
+      debugPrint("Mother Image File: ${request.motherImage}");
+      debugPrint("==========================================");
 
       final formData = FormData.fromMap(data);
 
-      if (profileImagePath != null) {
+      if (request.profileImage != null) {
         formData.files.add(MapEntry(
           'profile_image',
-          await MultipartFile.fromFile(profileImagePath),
+          await MultipartFile.fromFile(request.profileImage!),
         ));
       }
 
-      if (fatherImagePath != null) {
+      if (request.fatherImage != null) {
         formData.files.add(MapEntry(
           'father_image',
-          await MultipartFile.fromFile(fatherImagePath),
+          await MultipartFile.fromFile(request.fatherImage!),
         ));
       }
 
-      if (motherImagePath != null) {
+      if (request.motherImage != null) {
         formData.files.add(MapEntry(
           'mother_image',
-          await MultipartFile.fromFile(motherImagePath),
+          await MultipartFile.fromFile(request.motherImage!),
         ));
       }
 
@@ -69,9 +118,16 @@ class ImageUpdateService {
         data: formData,
       );
 
-      return response.statusCode == 200 || response.statusCode == 201;
+      if (response.data is Map<String, dynamic>) {
+        return ImageUpdateStoreResponse.fromJson(response.data);
+      } else if (response.data is String) {
+        return ImageUpdateStoreResponse.fromJson(jsonDecode(response.data));
+      }
+      return ImageUpdateStoreResponse(success: false, message: "Invalid response from server");
     } on DioException catch (e) {
-      throw e.response?.data["message"] ?? "Failed to submit request";
+      throw DioClient.getErrorMessage(e, "Failed to submit request");
+    } catch (e) {
+      throw "Failed to submit request: $e";
     }
   }
 }

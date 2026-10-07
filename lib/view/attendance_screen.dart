@@ -48,132 +48,134 @@ class AttendanceScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        body: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(child: Text(controller.errorMessage.value));
-        }
+            if (controller.errorMessage.isNotEmpty) {
+              return Center(child: Text(controller.errorMessage.value));
+            }
 
-        return SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Student Roster",
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.black.withValues(alpha: 0.60),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Student Roster",
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.black.withValues(alpha: 0.60),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    ListView.builder(
+                      itemCount: controller.students.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final student = controller.students[index];
+                        final studentId = student.id ?? 0;
+
+                        return Obx(() {
+                          final status = controller.studentStatuses[studentId] ?? '';
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.black.withValues(alpha: 0.05),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  student.rollNo ?? "0",
+                                  style: AppTextStyles.body.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                CircleAvatar(
+                                  radius: 19,
+                                  backgroundColor: AppColors.grey.withValues(alpha: 0.3),
+                                  child: const Icon(Icons.person, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        student.studentName ?? "N/A",
+                                        style: AppTextStyles.body.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        "ID: ${student.studentUniqueId}",
+                                        style: AppTextStyles.body.copyWith(
+                                          fontSize: 12,
+                                          color: AppColors.grey,
+                                        ),
+                                      ),
+                                      if (student.fatherName != null && student.fatherName!.isNotEmpty) ...[
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          "Father: ${student.fatherName}",
+                                          style: AppTextStyles.body.copyWith(
+                                            fontSize: 12,
+                                            color: AppColors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    _attendanceButton("P", AppColors.green, status == 'P', () => controller.updateStatus(studentId, 'P')),
+                                    const SizedBox(width: 6),
+                                    _attendanceButton("A", AppColors.red, status == 'A', () => controller.updateStatus(studentId, 'A')),
+                                    const SizedBox(width: 6),
+                                    _attendanceButton("L", Colors.orange, status == 'L', () => controller.updateStatus(studentId, 'L')),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        });
+                      },
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 10),
-
-                ListView.builder(
-                  itemCount: controller.students.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final student = controller.students[index];
-                    final studentId = student.id ?? 0;
-
-                    return Obx(() {
-                      final status = controller.studentStatuses[studentId] ?? '';
-                      
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black.withValues(alpha: 0.05),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              student.rollNo ?? "0",
-                              style: AppTextStyles.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            CircleAvatar(
-                              radius: 19,
-                              backgroundColor: AppColors.grey.withValues(alpha: 0.3),
-                              child: const Icon(Icons.person, size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    student.studentName ?? "N/A",
-                                    style: AppTextStyles.body.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    "ID: ${student.studentUniqueId}",
-                                    style: AppTextStyles.body.copyWith(
-                                      fontSize: 12,
-                                      color: AppColors.grey,
-                                    ),
-                                  ),
-                                  if (student.fatherName != null && student.fatherName!.isNotEmpty) ...[
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      "Father: ${student.fatherName}",
-                                      style: AppTextStyles.body.copyWith(
-                                        fontSize: 12,
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                _attendanceButton("P", AppColors.green, status == 'P', () => controller.updateStatus(studentId, 'P')),
-                                const SizedBox(width: 6),
-                                _attendanceButton("A", AppColors.red, status == 'A', () => controller.updateStatus(studentId, 'A')),
-                                const SizedBox(width: 6),
-                                _attendanceButton("L", Colors.orange, status == 'L', () => controller.updateStatus(studentId, 'L')),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
+              ),
+            );
+          }),
+        ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(

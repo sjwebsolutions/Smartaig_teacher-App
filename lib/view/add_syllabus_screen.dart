@@ -35,26 +35,28 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
               ],
             ),
           ),
-          body: Column(
-            children: [
-              /// Subject List (Chips) - Persistent
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLabel("Select Subject"),
-                    _buildSubjectList(),
-                  ],
+          body: SafeArea(
+            child: Column(
+              children: [
+                /// Subject List (Chips) - Persistent
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel("Select Subject"),
+                      _buildSubjectList(),
+                    ],
+                  ),
                 ),
-              ),
 
-              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                const Divider(height: 1, color: Color(0xFFE5E7EB)),
 
-              Expanded(
-                child: _buildAddSyllabusForm(),
-              ),
-            ],
+                Expanded(
+                  child: _buildAddSyllabusForm(),
+                ),
+              ],
+            ),
           ),
         ),
       );

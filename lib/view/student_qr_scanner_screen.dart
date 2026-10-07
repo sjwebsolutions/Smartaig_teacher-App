@@ -13,7 +13,6 @@ class StudentQrScannerScreen extends StatelessWidget {
     final controller = Get.put(StudentQrScannerController());
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
     final viewfinderSize = (screenWidth * 0.70).clamp(200.0, 260.0);
 
     return Container(
@@ -40,8 +39,8 @@ class StudentQrScannerScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 38,
-                      height: 38,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -57,7 +56,7 @@ class StudentQrScannerScreen extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          size: 18,
+                          size: 16,
                           color: Color(0xFF1E293B),
                         ),
                         onPressed: () => Get.back(),
@@ -81,40 +80,9 @@ class StudentQrScannerScreen extends StatelessWidget {
                 ),
               ),
 
-              // 2. Stats Pill Card
-              Obx(() {
-                final stats = controller.qrSettings.value?.stats;
-                final scannedCount = stats?.scannedByMeToday ?? 0;
-                final totalPresent = stats?.totalPresentToday ?? 0;
+            SizedBox(height: 40,),
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem("Scanned by me", "$scannedCount", const Color(0xFF2563EB)),
-                      Container(height: 24, width: 1, color: Colors.grey.shade300),
-                      _buildStatItem("Total Present", "$totalPresent", const Color(0xFF16A34A)),
-                    ],
-                  ),
-                );
-              }),
-
-              const Spacer(),
-
-              // 3. Camera Viewfinder
+              // 2. Camera Viewfinder
               Center(
                 child: Container(
                   width: screenWidth * 0.85,
@@ -279,20 +247,20 @@ class StudentQrScannerScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Loading Overlay
+                      // Processing Spinner
                       Obx(() => controller.isLoading.value
                           ? Container(
-                              color: Colors.black.withValues(alpha: 0.4),
+                              color: Colors.black.withValues(alpha: 0.35),
                               child: Center(
                                 child: Container(
-                                  padding: const EdgeInsets.all(20),
+                                  padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: LoadingAnimationWidget.staggeredDotsWave(
                                     color: const Color(0xFF16A34A),
-                                    size: 50,
+                                    size: 44,
                                   ),
                                 ),
                               ),
@@ -303,14 +271,14 @@ class StudentQrScannerScreen extends StatelessWidget {
                 ),
               ),
 
-              const Spacer(),
 
-              // 4. Cancel Button
+
+              // 3. Done Button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton(
                     onPressed: () => Get.back(),
                     style: ElevatedButton.styleFrom(
@@ -343,29 +311,6 @@ class StudentQrScannerScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(String title, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
-          ),
-        ),
-      ],
     );
   }
 }

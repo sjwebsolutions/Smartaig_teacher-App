@@ -14,6 +14,9 @@ class ApiUrls {
   static const String inchargeClasses = "$baseUrl/student-attendance/incharge-classes";
   static const String studentList = "$baseUrl/student-attendance/students";
   static const String storeAttendance = "$baseUrl/student-attendance/store";
+  static const String qrStudentAttendanceSettings = "$baseUrl/student-attendance/qr-settings";
+  static const String qrStudentAttendanceScan = "$baseUrl/student-attendance/qr-scan";
+  static const String todayScans = "$baseUrl/student-attendance/today-scans";
   static const String marksEntries = "$baseUrl/marks-entries";
   static String marksEntryClasses(int id) => "$marksEntries/$id/classes";
   static String marksEntryStudents(int id) => "$marksEntries/$id/students";
@@ -27,6 +30,7 @@ class ApiUrls {
   static const String studentImageUpdateClasses = "$baseUrl/student-image-update-requests/classes";
   static const String studentImageUpdateStudents = "$baseUrl/student-image-update-requests/students";
   static const String studentImageUpdateStore = "$baseUrl/student-image-update-requests/store";
+  static const String studentImageUpdateFormOptions = "$baseUrl/student-image-update-requests/form-options";
   static const String dateSheets = "$baseUrl/datesheets";
   static String dateSheetDetails(int id) => "$dateSheets/$id";
   static const String timetable = "$baseUrl/timetable";
@@ -34,6 +38,14 @@ class ApiUrls {
   static const String invigilatorDuties = "$baseUrl/invigilator-duties";
   static String invigilatorDutyDetails(int id) => "$invigilatorDuties/$id";
   static const String admitCardScanVerify = "$baseUrl/admit-card/scan-verify";
+  static const String leaves = "$baseUrl/leaves";
+  static const String leavesMeta = "$baseUrl/leaves/meta";
+  static const String applyLeave = "$baseUrl/leaves/apply";
+  static const String studentLeaves = "$baseUrl/student-leaves";
+  static String approveStudentLeave(dynamic id) => "$baseUrl/student-leaves/$id/approve";
+  static String rejectStudentLeave(dynamic id) => "$baseUrl/student-leaves/$id/reject";
+  static const String approveStudentLeavePost = "$baseUrl/student-leaves/approve";
+  static const String rejectStudentLeavePost = "$baseUrl/student-leaves/reject";
 
   static String syllabus(int studentId) => "https://smartaig.com/api/v1/students/$studentId/syllabus";
 }

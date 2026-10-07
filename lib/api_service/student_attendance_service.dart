@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:teacher_app_attendance/models/class_list_model.dart';
 import 'package:teacher_app_attendance/models/student_list_model.dart';
+import 'package:teacher_app_attendance/models/qr_settings_model.dart';
+import 'package:teacher_app_attendance/models/qr_scan_model.dart';
+import 'package:teacher_app_attendance/models/today_scans_model.dart';
 import 'package:teacher_app_attendance/utils/api_url.dart';
 import 'package:teacher_app_attendance/utils/dio_client.dart';
 
@@ -62,6 +65,43 @@ class StudentAttendanceService {
       return response.data['success'] == true;
     } on DioException catch (e) {
       throw e.response?.data["message"] ?? "Failed to submit attendance";
+    }
+  }
+
+  Future<QrSettingsModel> getQrSettings() async {
+    try {
+      final response = await DioClient.dio.get(ApiUrls.qrStudentAttendanceSettings);
+      return QrSettingsModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data["message"] ?? "Failed to fetch QR settings";
+    }
+  }
+
+  Future<QrScanModel> scanStudentQr({
+    required String qrPayload,
+  }) async {
+    try {
+      final response = await DioClient.dio.post(
+        ApiUrls.qrStudentAttendanceScan,
+        data: {
+          'qr_payload': qrPayload,
+        },
+      );
+      return QrScanModel.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map<String, dynamic>) {
+        return QrScanModel.fromJson(e.response!.data);
+      }
+      throw e.response?.data["message"] ?? "Failed to mark QR attendance";
+    }
+  }
+
+  Future<TodayScansModel> getTodayScans() async {
+    try {
+      final response = await DioClient.dio.get(ApiUrls.todayScans);
+      return TodayScansModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data["message"] ?? "Failed to fetch today's scans";
     }
   }
 }

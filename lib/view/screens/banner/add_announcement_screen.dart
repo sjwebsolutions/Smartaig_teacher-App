@@ -94,160 +94,162 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
           showBack: true,
           title: "Create Announcement",
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildLabel("Announcement Title *"),
-              _buildTextField(
-                controller: _titleController,
-                hint: "Enter title",
-                icon: Icons.title_rounded,
-              ),
-              const SizedBox(height: 16),
-
-              _buildLabel("Description *"),
-              _buildTextField(
-                controller: _descController,
-                hint: "Enter details...",
-                icon: Icons.description_outlined,
-                maxLines: 4,
-              ),
-              const SizedBox(height: 16),
-
-              _buildLabel("Announcement Type *"),
-              Obx(() => _buildDropdownCard(
-                icon: Icons.category_outlined,
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _selectedTypeId,
-                    hint: const Text("Select Type"),
-                    items: controller.announcementTypes.map((type) {
-                      return DropdownMenuItem<String>(
-                        value: type['id'].toString(),
-                        child: Text(type['name'] ?? ""),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedTypeId = val),
-                  ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLabel("Announcement Title *"),
+                _buildTextField(
+                  controller: _titleController,
+                  hint: "Enter title",
+                  icon: Icons.title_rounded,
                 ),
-              )),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel("From Date"),
-                        _buildDateTile(
-                          _fromDate, 
-                          (date) => setState(() => _fromDate = date)
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel("To Date"),
-                        _buildDateTile(
-                          _toDate, 
-                          (date) => setState(() => _toDate = date)
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              _buildLabel("Target Audience"),
-              Row(
-                children: [
-                  _buildTargetChip("All School", "all"),
-                  const SizedBox(width: 10),
-                  _buildTargetChip("Specific", "specific"),
-                ],
-              ),
-              
-              if (_targetType == 'specific') ...[
                 const SizedBox(height: 16),
-                _buildLabel("Select Classes"),
-                Obx(() {
-                  final classes = controller.targetingData['classes'] as List? ?? [];
-                  return Wrap(
-                    spacing: 8,
-                    children: classes.map((c) {
-                      final id = c['id'].toString();
-                      final isSelected = _selectedClassIds.contains(id);
-                      return FilterChip(
-                        label: Text(c['name'] ?? ""),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            selected ? _selectedClassIds.add(id) : _selectedClassIds.remove(id);
-                          });
-                        },
-                        selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                        checkmarkColor: AppColors.primary,
-                      );
-                    }).toList(),
-                  );
-                }),
-              ],
 
-              const SizedBox(height: 20),
-              _buildLabel("Attachment (Optional)"),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: double.infinity,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                _buildLabel("Description *"),
+                _buildTextField(
+                  controller: _descController,
+                  hint: "Enter details...",
+                  icon: Icons.description_outlined,
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 16),
+
+                _buildLabel("Announcement Type *"),
+                Obx(() => _buildDropdownCard(
+                  icon: Icons.category_outlined,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedTypeId,
+                      hint: const Text("Select Type"),
+                      items: controller.announcementTypes.map((type) {
+                        return DropdownMenuItem<String>(
+                          value: type['id'].toString(),
+                          child: Text(type['name'] ?? ""),
+                        );
+                      }).toList(),
+                      onChanged: (val) => setState(() => _selectedTypeId = val),
+                    ),
                   ),
-                  child: _selectedImage != null 
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Image.file(_selectedImage!, fit: BoxFit.cover),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                )),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 40),
-                          const SizedBox(height: 8),
-                          Text("Click to upload image", style: TextStyle(color: Colors.grey[600])),
+                          _buildLabel("From Date"),
+                          _buildDateTile(
+                            _fromDate, 
+                            (date) => setState(() => _fromDate = date)
+                          ),
                         ],
                       ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel("To Date"),
+                          _buildDateTile(
+                            _toDate, 
+                            (date) => setState(() => _toDate = date)
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 32),
-              Obx(() => SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: controller.isCreating.value ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  ),
-                  child: controller.isCreating.value 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("CREATE ANNOUNCEMENT", 
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                _buildLabel("Target Audience"),
+                Row(
+                  children: [
+                    _buildTargetChip("All School", "all"),
+                    const SizedBox(width: 10),
+                    _buildTargetChip("Specific", "specific"),
+                  ],
                 ),
-              )),
-              const SizedBox(height: 40),
-            ],
+                
+                if (_targetType == 'specific') ...[
+                  const SizedBox(height: 16),
+                  _buildLabel("Select Classes"),
+                  Obx(() {
+                    final classes = controller.targetingData['classes'] as List? ?? [];
+                    return Wrap(
+                      spacing: 8,
+                      children: classes.map((c) {
+                        final id = c['id'].toString();
+                        final isSelected = _selectedClassIds.contains(id);
+                        return FilterChip(
+                          label: Text(c['name'] ?? ""),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              selected ? _selectedClassIds.add(id) : _selectedClassIds.remove(id);
+                            });
+                          },
+                          selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                          checkmarkColor: AppColors.primary,
+                        );
+                      }).toList(),
+                    );
+                  }),
+                ],
+
+                const SizedBox(height: 20),
+                _buildLabel("Attachment (Optional)"),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                    ),
+                    child: _selectedImage != null 
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.file(_selectedImage!, fit: BoxFit.cover),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 40),
+                            const SizedBox(height: 8),
+                            Text("Click to upload image", style: TextStyle(color: Colors.grey[600])),
+                          ],
+                        ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+                Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: controller.isCreating.value ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: controller.isCreating.value 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("CREATE ANNOUNCEMENT", 
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                )),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),

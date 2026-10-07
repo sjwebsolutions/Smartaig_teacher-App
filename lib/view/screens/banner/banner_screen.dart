@@ -39,30 +39,32 @@ class BannerScreen extends GetView<BannerController> {
           showBack: true,
           showDivider: false,
         ),
-        body: RefreshIndicator(
-          onRefresh: () => controller.fetchBanners(),
-          color: AppColors.primary,
-          child: Obx(() {
-            final bannerList = controller.banners.value?.banners ?? [];
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () => controller.fetchBanners(),
+            color: AppColors.primary,
+            child: Obx(() {
+              final bannerList = controller.banners.value?.banners ?? [];
 
-            if (controller.isLoading.value) {
-              return const Center(child: SpinKitFadingCircle(color: AppColors.primary, size: 40.0));
-            }
+              if (controller.isLoading.value) {
+                return const Center(child: SpinKitFadingCircle(color: AppColors.primary, size: 40.0));
+              }
 
-            if (bannerList.isEmpty) {
-              return _buildEmptyState("No Banners Found", "We'll notify you when new banners are available.");
-            }
+              if (bannerList.isEmpty) {
+                return _buildEmptyState("No Banners Found", "We'll notify you when new banners are available.");
+              }
 
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-              itemCount: bannerList.length,
-              itemBuilder: (context, index) {
-                final banner = bannerList[index];
-                final String heroTag = 'banner_list_${banner.id ?? index}_$index';
-                return _buildBannerCard(banner, heroTag);
-              },
-            );
-          }),
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                itemCount: bannerList.length,
+                itemBuilder: (context, index) {
+                  final banner = bannerList[index];
+                  final String heroTag = 'banner_list_${banner.id ?? index}_$index';
+                  return _buildBannerCard(banner, heroTag);
+                },
+              );
+            }),
+          ),
         ),
       ),
     );

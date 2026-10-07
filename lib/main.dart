@@ -19,9 +19,9 @@ import 'package:teacher_app_attendance/view/syllabus_tracker.dart';
 import 'package:teacher_app_attendance/view/upload_syllabus_screen.dart';
 import 'package:teacher_app_attendance/view/upload_homework_screen.dart';
 import 'package:teacher_app_attendance/view/view_marks_screen.dart';
-import 'package:teacher_app_attendance/view/student_image_update_screen.dart';
-import 'package:teacher_app_attendance/view/student_update_list_screen.dart';
-import 'package:teacher_app_attendance/view/student_image_upload_screen.dart';
+import 'package:teacher_app_attendance/view/update_student_data_screen.dart';
+import 'package:teacher_app_attendance/view/update_student_list_screen.dart';
+import 'package:teacher_app_attendance/view/update_student_details_screen.dart';
 import 'package:teacher_app_attendance/view/date_sheet_screen.dart';
 import 'package:teacher_app_attendance/view/date_sheet_detail_screen.dart';
 import 'modules/attendance_module.dart';
@@ -55,6 +55,13 @@ import 'view/invigilator_duty_detail_screen.dart';
 import 'view/admit_card_scanner_screen.dart';
 import 'view/admit_card_detail_screen.dart';
 import 'modules/admit_card_scanner_module.dart';
+import 'view/leaves_screen.dart';
+import 'modules/leave_module.dart';
+import 'view/student_leave_screen.dart';
+import 'modules/student_leave_module.dart';
+import 'view/student_qr_scanner_screen.dart';
+import 'view/teacher_leave_screen.dart';
+import 'view/apply_leave_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -115,8 +122,50 @@ Future<void> _initializeServices() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  static const screenshotChannel = MethodChannel('com.smartaig.teachers/screenshot');
+
+  @override
+  void initState() {
+    super.initState();
+    _initScreenshotListener();
+  }
+
+  void _initScreenshotListener() {
+    screenshotChannel.setMethodCallHandler((call) async {
+      if (call.method == "onScreenshotTaken") {
+        _showScreenshotSnackbar();
+      }
+    });
+  }
+
+  void _showScreenshotSnackbar() {
+    Get.rawSnackbar(
+      titleText: const Text(
+        "Security Alert",
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+      messageText: const Text(
+        "Suraksha ke liye screenshot lena mana hai.",
+        style: TextStyle(color: Colors.white, fontSize: 14),
+      ),
+      snackPosition: SnackPosition.TOP, // Ye force karega message ko top par
+      backgroundColor: const Color(0xFFEF4444), // Solid Red
+      margin: EdgeInsets.zero,
+      borderRadius: 0,
+      icon: const Icon(Icons.security_rounded, color: Colors.white, size: 28),
+      duration: const Duration(seconds: 4),
+      shouldIconPulse: true,
+      isDismissible: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -241,18 +290,18 @@ class MyApp extends StatelessWidget {
           binding: AnnouncementBinding(),
         ),
         GetPage(
-          name: '/studentImageUpdate',
-          page: () => const StudentImageUpdateScreen(),
+          name: '/updateStudentData',
+          page: () => const UpdateStudentDataScreen(),
           binding: ImageUpdateBinding(),
         ),
         GetPage(
-          name: '/studentUpdateList',
-          page: () => const StudentUpdateListScreen(),
+          name: '/updateStudentList',
+          page: () => const UpdateStudentListScreen(),
           binding: ImageUpdateBinding(),
         ),
         GetPage(
-          name: '/studentImageUpload',
-          page: () => const StudentImageUploadScreen(),
+          name: '/updateStudentDetails',
+          page: () => const UpdateStudentDetailsScreen(),
           binding: ImageUpdateBinding(),
         ),
         GetPage(
@@ -295,6 +344,35 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: '/admitCardDetail',
           page: () => const AdmitCardDetailScreen(),
+        ),
+        GetPage(
+          name: '/leaves',
+          page: () => const LeavesScreen(),
+          binding: LeaveBinding(),
+        ),
+        GetPage(
+          name: '/studentLeaves',
+          page: () => const StudentLeaveScreen(),
+          binding: StudentLeaveBinding(),
+        ),
+        GetPage(
+          name: '/studentLeave',
+          page: () => const StudentLeaveScreen(),
+          binding: StudentLeaveBinding(),
+        ),
+        GetPage(
+          name: '/studentQrScanner',
+          page: () => const StudentQrScannerScreen(),
+        ),
+        GetPage(
+          name: '/teacherLeave',
+          page: () => const TeacherLeaveScreen(),
+          binding: LeaveBinding(),
+        ),
+        GetPage(
+          name: '/applyLeave',
+          page: () => const ApplyLeaveScreen(),
+          binding: LeaveBinding(),
         ),
       ],
     );

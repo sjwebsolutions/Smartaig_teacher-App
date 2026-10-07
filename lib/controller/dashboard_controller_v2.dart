@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:teacher_app_attendance/api_service/dashboard_service.dart';
 import 'package:teacher_app_attendance/models/dashboard_model.dart';
 
 import '../api_service/attendance_scanner_service.dart';
-import '../themes/appColors_&_styles/app_Colors.dart';
+import '../services/storage_services.dart';
 
 class NewDashboardController extends GetxController {
   final AttendanceServices _attendanceServices = AttendanceServices();
@@ -29,13 +31,67 @@ class NewDashboardController extends GetxController {
   }
 
   Future<void> _handleInitialLoading() async {
-    isInitialLoading.value = true;
     try {
-      await fetchDashboard(showLoading: false);
+      final cachedJson = await StorageService.getDashboardData();
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final cachedModel = DashboardTeacherModel.fromJson(json.decode(cachedJson));
+        if (cachedModel.data != null) {
+          _processDashboardData(cachedModel);
+          isInitialLoading.value = false;
+        }
+      }
+    } catch (e) {
+      print("Error loading cached dashboard: $e");
+    }
+
+    try {
+      await fetchDashboard(showLoading: dashboard.value == null);
     } catch (e) {
       print("Initial Loading Error: $e");
     } finally {
       isInitialLoading.value = false;
+    }
+  }
+
+  void _processDashboardData(DashboardTeacherModel result) {
+    dashboard.value = result;
+
+    if (result.data?.todayAttendance != null) {
+      final attendance = result.data!.todayAttendance!;
+      
+      if (attendance.clockIn != null && attendance.clockIn!.isNotEmpty) {
+        clockInTime.value = DateTime.tryParse(attendance.clockIn!);
+      } else {
+        clockInTime.value = null;
+      }
+
+      if (attendance.clockOut != null && attendance.clockOut!.isNotEmpty) {
+        clockOutTime.value = DateTime.tryParse(attendance.clockOut!);
+      } else {
+        clockOutTime.value = null;
+      }
+
+      isMarked.value = clockInTime.value != null && clockOutTime.value == null;
+      lastMarkedTime.value = clockInTime.value;
+      attendanceStatus.value = isMarked.value ? "Clock Out" : "Clock In";
+      
+      print("[${DateTime.now().toIso8601String()}] Dashboard Processed: In=${attendance.clockIn}, Out=${attendance.clockOut}, isMarked=${isMarked.value}");
+    } else {
+      isMarked.value = false;
+      clockInTime.value = null;
+      clockOutTime.value = null;
+      attendanceStatus.value = "Clock In";
+    }
+
+    clockInTime.refresh();
+    clockOutTime.refresh();
+    isMarked.refresh();
+
+    final teacherImage = result.data?.teacher?.image;
+    if (teacherImage != null && teacherImage.isNotEmpty && Get.context != null) {
+      try {
+        precacheImage(CachedNetworkImageProvider(teacherImage), Get.context!);
+      } catch (_) {}
     }
   }
 
@@ -50,46 +106,13 @@ class NewDashboardController extends GetxController {
       
       final result = await _dashboardServices.getDashboard();
       
-      // Only update if the result is successful and contains data to avoid flickering/disappearing UI
       if (result.success == true && result.data != null) {
-        dashboard.value = result;
-
-        if (result.data?.todayAttendance != null) {
-          final attendance = result.data!.todayAttendance!;
-          
-          // Update Clock-In
-          if (attendance.clockIn != null && attendance.clockIn!.isNotEmpty) {
-            clockInTime.value = DateTime.tryParse(attendance.clockIn!);
-          } else {
-            clockInTime.value = null;
-          }
-
-          // Update Clock-Out
-          if (attendance.clockOut != null && attendance.clockOut!.isNotEmpty) {
-            clockOutTime.value = DateTime.tryParse(attendance.clockOut!);
-          } else {
-            clockOutTime.value = null;
-          }
-
-          // isMarked should represent if the teacher is currently "Clocked In"
-          // If they have clocked in but NOT clocked out yet.
-          isMarked.value = clockInTime.value != null && clockOutTime.value == null;
-          
-          lastMarkedTime.value = clockInTime.value;
-          attendanceStatus.value = isMarked.value ? "Clock Out" : "Clock In";
-          
-          print("[${DateTime.now().toIso8601String()}] Dashboard Updated: In=${attendance.clockIn}, Out=${attendance.clockOut}, isMarked=${isMarked.value}");
-        } else {
-          isMarked.value = false;
-          clockInTime.value = null;
-          clockOutTime.value = null;
-          attendanceStatus.value = "Clock In";
+        _processDashboardData(result);
+        try {
+          await StorageService.saveDashboardData(json.encode(result.toJson()));
+        } catch (e) {
+          print("Error saving dashboard to cache: $e");
         }
-        
-        // Force refresh of Rx variables just in case
-        clockInTime.refresh();
-        clockOutTime.refresh();
-        isMarked.refresh();
       }
       
     } catch (e) {
@@ -156,9 +179,12 @@ class NewDashboardController extends GetxController {
         Get.snackbar(
           "Wait",
           "You can Clock-Out after ${minutesRemainingUntilClockOut} minutes",
-          backgroundColor: AppColors.red.withValues(alpha: 0.8),
+          backgroundColor: const Color(0xFFEF4444), // Red
           colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          duration: const Duration(seconds: 3),
         );
       }
     } else {

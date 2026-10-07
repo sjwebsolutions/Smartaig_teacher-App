@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import '../controller/leave_controller.dart';
 import '../models/leave_model.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
@@ -30,7 +29,7 @@ class TeacherLeaveScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _showApplyLeaveBottomSheet(context, controller),
+          onPressed: () => Get.toNamed('/applyLeave'),
           backgroundColor: const Color(0xFF2563EB),
           icon: const Icon(Icons.add_rounded, color: Colors.white),
           label: const Text(
@@ -83,15 +82,12 @@ class TeacherLeaveScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1E293B)),
-                      onPressed: () => controller.fetchLeaves(),
-                    ),
+                    const SizedBox(width: 32),
                   ],
                 ),
               ),
 
-              // Leaves List
+              // Leaves List with Pull to Refresh
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value && controller.leaves.isEmpty) {
@@ -99,26 +95,34 @@ class TeacherLeaveScreen extends StatelessWidget {
                   }
 
                   if (controller.leaves.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.event_busy_rounded, size: 64, color: Colors.grey.shade400),
-                          const SizedBox(height: 12),
-                          Text(
-                            "No Leave Applications Found",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade700,
-                            ),
+                    return RefreshIndicator(
+                      onRefresh: () => controller.fetchLeaves(),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.event_busy_rounded, size: 64, color: Colors.grey.shade400),
+                              const SizedBox(height: 12),
+                              Text(
+                                "No Leave Applications Found",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Tap '+ Apply Leave' to submit a new leave request",
+                                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Tap '+ Apply Leave' to submit a new leave request",
-                            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                          ),
-                        ],
+                        ),
                       ),
                     );
                   }
@@ -126,6 +130,7 @@ class TeacherLeaveScreen extends StatelessWidget {
                   return RefreshIndicator(
                     onRefresh: () => controller.fetchLeaves(),
                     child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: controller.leaves.length,
                       itemBuilder: (context, index) {
@@ -144,7 +149,7 @@ class TeacherLeaveScreen extends StatelessWidget {
   }
 
   Widget _buildLeaveCard(LeaveData item) {
-    final status = (item.status ?? 'Pending').toLowerCase();
+    final status = (item.status ?? 'pending').toLowerCase();
     Color statusBgColor;
     Color statusTextColor;
 
@@ -165,6 +170,7 @@ class TeacherLeaveScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -176,17 +182,45 @@ class TeacherLeaveScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row: Leave Type + Day Type + Status Pill
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                item.leaveType ?? "Casual Leave",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      item.displayLeaveType,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    if (item.dayTypeLabel != null && item.dayTypeLabel!.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Text(
+                          item.dayTypeLabel!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -194,7 +228,7 @@ class TeacherLeaveScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  item.status ?? "Pending",
+                  item.displayStatus,
                   style: TextStyle(
                     color: statusTextColor,
                     fontWeight: FontWeight.bold,
@@ -204,232 +238,229 @@ class TeacherLeaveScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.calendar_month_rounded, size: 16, color: Colors.grey.shade600),
-              const SizedBox(width: 6),
-              Text(
-                "${item.startDate} to ${item.endDate}",
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-              const Spacer(),
-              if (item.totalDays != null)
-                Text(
-                  "${item.totalDays} Day(s)",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
-                  ),
-                ),
-            ],
-          ),
-          if (item.reason != null && item.reason!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              "Reason: ${item.reason}",
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+          const SizedBox(height: 10),
+
+          // Date Range & Total Days
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
-          if (item.remarks != null && item.remarks!.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              "Remarks: ${item.remarks}",
-              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey.shade600),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _showApplyLeaveBottomSheet(BuildContext context, LeaveController controller) {
-    final reasonController = TextEditingController();
-    String selectedType = "Casual Leave";
-    DateTime startDate = DateTime.now();
-    DateTime endDate = DateTime.now();
-
-    final DateFormat formatter = DateFormat('yyyy-MM-dd');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF2563EB)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "${item.startDate} - ${item.endDate}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Apply Leave",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                ),
+                if (item.totalDays != null) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  DropdownButtonFormField<String>(
-                    value: selectedType,
-                    decoration: InputDecoration(
-                      labelText: "Leave Type",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: "Casual Leave", child: Text("Casual Leave")),
-                      DropdownMenuItem(value: "Medical Leave", child: Text("Medical Leave")),
-                      DropdownMenuItem(value: "Earned Leave", child: Text("Earned Leave")),
-                      DropdownMenuItem(value: "Duty Leave", child: Text("Duty Leave")),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => selectedType = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: startDate,
-                              firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                              lastDate: DateTime.now().add(const Duration(days: 365)),
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                startDate = picked;
-                                if (endDate.isBefore(startDate)) endDate = startDate;
-                              });
-                            }
-                          },
-                          icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                          label: Text(formatter.format(startDate)),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: endDate,
-                              firstDate: startDate,
-                              lastDate: DateTime.now().add(const Duration(days: 365)),
-                            );
-                            if (picked != null) {
-                              setState(() => endDate = picked);
-                            }
-                          },
-                          icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                          label: Text(formatter.format(endDate)),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: reasonController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: "Reason",
-                      hintText: "Enter reason for leave...",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final reason = reasonController.text.trim();
-                        if (reason.isEmpty) {
-                          Get.snackbar("Required", "Please enter a reason",
-                              backgroundColor: Colors.red, colorText: Colors.white);
-                          return;
-                        }
-
-                        Navigator.pop(context);
-                        try {
-                          final success = await controller.applyLeave(
-                            leaveType: selectedType,
-                            startDate: formatter.format(startDate),
-                            endDate: formatter.format(endDate),
-                            reason: reason,
-                          );
-
-                          if (success) {
-                            Get.snackbar(
-                              "Success",
-                              "Leave application submitted successfully",
-                              backgroundColor: const Color(0xFF16A34A),
-                              colorText: Colors.white,
-                            );
-                          }
-                        } catch (e) {
-                          Get.snackbar(
-                            "Error",
-                            e.toString(),
-                            backgroundColor: const Color(0xFFDC2626),
-                            colorText: Colors.white,
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text(
-                        "Submit Leave Request",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    child: Text(
+                      "${item.totalDays} Day(s)",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2563EB),
                       ),
                     ),
                   ),
                 ],
+              ],
+            ),
+          ),
+
+          // Reason Box
+          if (item.reason != null && item.reason!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
               ),
-            );
-          },
-        );
-      },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Reason:",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.reason!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF1E293B),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Rejection Reason Box
+          if (item.rejectionReason != null && item.rejectionReason!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Rejection Reason:",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.rejectionReason!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF991B1B),
+                      height: 1.3,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if ((status == 'rejected' || status == 'denied') &&
+              item.approverRemarks != null &&
+              item.approverRemarks!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Rejection Reason:",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.approverRemarks!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF991B1B),
+                      height: 1.3,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Approver Remarks Box (for approved/pending cases if present)
+          if (item.approverRemarks != null &&
+              item.approverRemarks!.isNotEmpty &&
+              status != 'rejected' &&
+              status != 'denied') ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFCD34D)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Remarks:",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFD97706),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.approverRemarks!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF92400E),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Footer Info (Applied Date & Action By)
+          if (item.createdAt?.isNotEmpty == true) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    "Applied: ${item.createdAt}",
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (item.actionByName?.isNotEmpty == true) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Action By: ${item.actionByName}",
+                      textAlign: TextAlign.end,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -29,109 +29,111 @@ class InvigilatorDutiesScreen extends GetView<InvigilatorController> {
           title: "Invigilator Duties",
           backgroundColor: Colors.transparent,
         ),
-        body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        body: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        final duties = controller.duties.value?.data ?? [];
+            final duties = controller.duties.value?.data ?? [];
 
-        if (duties.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.assignment_late_outlined, size: 64, color: AppColors.grey.withValues(alpha: 0.5)),
-                const SizedBox(height: 16),
-                Text("No invigilator duties found", style: AppTextStyles.body),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchInvigilatorDuties(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: duties.length,
-            itemBuilder: (context, index) {
-              final duty = duties[index];
-              return GestureDetector(
-                onTap: () {
-                  if (duty.id != null) {
-                    Get.toNamed('/invigilatorDutyDetail', arguments: duty.id);
-                  }
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              duty.name ?? "N/A",
-                              style: AppTextStyles.h2.copyWith(fontSize: 18, color: AppColors.primary),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(duty.status).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              (duty.status ?? "N/A").toUpperCase(),
-                              style: TextStyle(
-                                color: _getStatusColor(duty.status),
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow(Icons.calendar_today_outlined, "Datesheet", duty.datesheet?.name ?? "N/A"),
-                      _buildInfoRow(Icons.history_toggle_off, "Session", duty.session ?? "N/A"),
-                      const Divider(height: 24),
-                      Row(
-                        children: [
-                          _buildStatItem("Total Duties", duty.totalDuties?.toString() ?? "0", Colors.blue),
-                          _buildStatItem("Upcoming Duties", duty.upcomingDuties?.toString() ?? "0", Colors.orange),
-                          _buildStatItem("Completed Duties", duty.completedDuties?.toString() ?? "0", Colors.green),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildDateInfo("First Duty", duty.firstDutyDate),
-                          _buildDateInfo("Last Duty", duty.lastDutyDate),
-                        ],
-                      ),
-                    ],
-                  ),
+            if (duties.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.assignment_late_outlined, size: 64, color: AppColors.grey.withValues(alpha: 0.5)),
+                    const SizedBox(height: 16),
+                    Text("No invigilator duties found", style: AppTextStyles.body),
+                  ],
                 ),
               );
-            },
-          ),
-        );
-      }),
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => controller.fetchInvigilatorDuties(),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: duties.length,
+                itemBuilder: (context, index) {
+                  final duty = duties[index];
+                  return GestureDetector(
+                    onTap: () {
+                      if (duty.id != null) {
+                        Get.toNamed('/invigilatorDutyDetail', arguments: duty.id);
+                      }
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  duty.name ?? "N/A",
+                                  style: AppTextStyles.h2.copyWith(fontSize: 18, color: AppColors.primary),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(duty.status).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  (duty.status ?? "N/A").toUpperCase(),
+                                  style: TextStyle(
+                                    color: _getStatusColor(duty.status),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(Icons.calendar_today_outlined, "Datesheet", duty.datesheet?.name ?? "N/A"),
+                          _buildInfoRow(Icons.history_toggle_off, "Session", duty.session ?? "N/A"),
+                          const Divider(height: 24),
+                          Row(
+                            children: [
+                              _buildStatItem("Total Duties", duty.totalDuties?.toString() ?? "0", Colors.blue),
+                              _buildStatItem("Upcoming Duties", duty.upcomingDuties?.toString() ?? "0", Colors.orange),
+                              _buildStatItem("Completed Duties", duty.completedDuties?.toString() ?? "0", Colors.green),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildDateInfo("First Duty", duty.firstDutyDate),
+                              _buildDateInfo("Last Duty", duty.lastDutyDate),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+        ),
     ));
   }
 

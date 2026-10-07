@@ -22,120 +22,103 @@ class GetPassScreen extends StatelessWidget {
         backgroundColor: Color(0xFFF8F9FE),
         showDivider: false,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && !controller.hasFetched.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: SafeArea(
+        child: Obx(() {
+          if (controller.isLoading.value && !controller.hasFetched.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.red.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.error_outline_rounded, size: 50, color: AppColors.red),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Error Occurred",
-                    style: AppTextStyles.h2.copyWith(color: AppColors.red, fontSize: 20),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    controller.errorMessage.value,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => controller.fetchGatePasses(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text("Retry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  )
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (controller.gatePasses.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () => controller.fetchGatePasses(),
-            child: ListView(
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.22),
-                Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.05),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.badge_outlined, size: 54, color: Colors.grey[400]),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No Gate Passes Found",
-                        style: TextStyle(color: Colors.grey[600], fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final activePass = controller.gatePasses.first;
-        final recentPasses = controller.gatePasses.skip(1).toList();
-
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchGatePasses(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildNewPassButton(context),
-                const SizedBox(height: 24),
-                Row(
+          if (controller.errorMessage.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.star_rounded, color: Colors.orange, size: 20),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Active Pass",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary.withValues(alpha: 0.9),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.red.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(Icons.error_outline_rounded, size: 50, color: AppColors.red),
                     ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Error Occurred",
+                      style: AppTextStyles.h2.copyWith(color: AppColors.red, fontSize: 20),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      controller.errorMessage.value,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => controller.fetchGatePasses(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text("Retry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    )
                   ],
                 ),
-                const SizedBox(height: 12),
-                _buildActivePassCard(activePass),
-                if (recentPasses.isNotEmpty) ...[
-                  const SizedBox(height: 28),
+              ),
+            );
+          }
+
+          if (controller.gatePasses.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () => controller.fetchGatePasses(),
+              child: ListView(
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.22),
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.badge_outlined, size: 54, color: Colors.grey[400]),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No Gate Passes Found",
+                          style: TextStyle(color: Colors.grey[600], fontSize: 15, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final activePass = controller.gatePasses.first;
+          final recentPasses = controller.gatePasses.skip(1).toList();
+
+          return RefreshIndicator(
+            onRefresh: () => controller.fetchGatePasses(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildNewPassButton(context),
+                  const SizedBox(height: 24),
                   Row(
                     children: [
-                      const Icon(Icons.history_rounded, color: AppColors.primary, size: 20),
+                      const Icon(Icons.star_rounded, color: Colors.orange, size: 20),
                       const SizedBox(width: 6),
                       Text(
-                        "Recent Passes",
+                        "Active Pass",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -145,13 +128,32 @@ class GetPassScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildRecentPassesList(recentPasses),
+                  _buildActivePassCard(activePass),
+                  if (recentPasses.isNotEmpty) ...[
+                    const SizedBox(height: 28),
+                    Row(
+                      children: [
+                        const Icon(Icons.history_rounded, color: AppColors.primary, size: 20),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Recent Passes",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRecentPassesList(recentPasses),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 

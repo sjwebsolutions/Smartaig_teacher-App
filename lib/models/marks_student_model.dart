@@ -114,7 +114,7 @@ class Components {
     aMax = json['a_max'];
     bEnabled = _parseBool(json['b_enabled']);
     bMax = json['b_max'];
-    assEnabled = _parseBool(json['ass_enabled']);
+    assEnabled = _parseBool(json['ass_enabled']) || json['ass_max'] != null;
     assMax = json['ass_max'];
     pEnabled = _parseBool(json['p_enabled']);
     pMax = json['p_max'];
@@ -215,8 +215,15 @@ class StudentMarkData {
     }
   }
 
+  StudentSubjectMark? getMarksForSubject(dynamic subjectId) {
+    if (marks == null || marks!.isEmpty || subjectId == null) return null;
+    final sIdStr = subjectId.toString().trim();
+    if (marks!.containsKey(sIdStr)) return marks![sIdStr];
+    return null;
+  }
+
   /// Checks if this student takes / is enrolled in the given subject.
-  bool hasSubject(dynamic subjectId, [String? subjectName]) {
+  bool hasSubject(dynamic subjectId, [String? subjectName, bool? isMisc]) {
     final subIdStr = subjectId?.toString().trim();
     final subNameClean = subjectName?.trim().toLowerCase();
 

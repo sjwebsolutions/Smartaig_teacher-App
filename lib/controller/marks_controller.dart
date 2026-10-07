@@ -7,6 +7,7 @@ import '../models/marks_save_model.dart';
 import '../models/marks_student_model.dart';
 import '../api_service/marks_service.dart';
 import '../services/fcm_services.dart';
+import '../services/storage_services.dart';
 import 'announcement_controller.dart';
 
 class MarksController extends GetxController {
@@ -24,6 +25,10 @@ class MarksController extends GetxController {
   var isStudentsLoading = false.obs;
   var isSaving = false.obs;
   var selectedExamTypeId = Rxn<int>();
+  var searchQuery = "".obs;
+  var searchType = "Name".obs;
+  var isAscending = true.obs;
+  String? _lastFetchKey;
 
   var selectedClassId = Rxn<String>();
   var selectedSectionId = Rxn<String>();
@@ -33,6 +38,7 @@ class MarksController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadSortPreferences();
     
     // Listen to exam type changes to fetch classes and reset previous selections
     ever(selectedExamTypeId, (int? id) {
@@ -56,8 +62,6 @@ class MarksController extends GetxController {
       }
       
       selectedSubjectId.value = null;
-      subjectList.clear();
-      studentsList.clear();
 
       // 1. Auto-select Stream if not already set or invalid
       final streams = uniqueStreamsForSelectedClass;
@@ -92,16 +96,7 @@ class MarksController extends GetxController {
 
     // Listen to selection changes to fetch students
     everAll([selectedExamTypeId, selectedClassId, selectedSectionId, selectedStreamId], (_) {
-      // If a class has streams, selectedStreamId MUST be selected
-      bool needsStream = uniqueStreamsForSelectedClass.isNotEmpty;
-      bool streamSelected = selectedStreamId.value != null;
-
-      if (selectedExamTypeId.value != null && 
-          selectedClassId.value != null && 
-          selectedSectionId.value != null &&
-          (!needsStream || streamSelected)) {
-        fetchStudents();
-      }
+      _checkAndFetchStudents();
     });
 
     // Listen to subject changes to update grade list
@@ -114,8 +109,29 @@ class MarksController extends GetxController {
       }
     });
 
+    // Save sorting preferences when they change
+    ever(searchType, (String type) {
+      StorageService.saveMarksSortType(type);
+    });
+
+    ever(isAscending, (bool val) {
+      StorageService.saveMarksSortOrder(val);
+    });
+
     // Fetch initial data
     fetchMarksEntries();
+  }
+
+  Future<void> _loadSortPreferences() async {
+    String? savedType = await StorageService.getMarksSortType();
+    if (savedType != null) {
+      searchType.value = savedType;
+    }
+
+    bool? savedOrder = await StorageService.getMarksSortOrder();
+    if (savedOrder != null) {
+      isAscending.value = savedOrder;
+    }
   }
 
   Future<void> fetchMarksEntries() async {
@@ -156,16 +172,24 @@ class MarksController extends GetxController {
       if (response.success == true && response.data != null) {
         marksEntryClasses.assignAll(response.data!);
         
-        // Validate current selection against new class list
-        if (selectedClassId.value != null && selectedSectionId.value != null) {
-          bool currentValid = marksEntryClasses.any((element) => 
-            element.classId == selectedClassId.value && 
-            element.sectionId == selectedSectionId.value
-          );
-          if (!currentValid) {
-            selectedClassId.value = null;
-            selectedSectionId.value = null;
+        // Auto-select first class and section to show data immediately
+        if (uniqueClasses.isNotEmpty) {
+          if (selectedClassId.value == null) {
+            selectedClassId.value = uniqueClasses.first.classId;
+          } else {
+            // Even if class is already selected, ensure section/students are refreshed
+            _autoSelectSection(selectedClassId.value!, selectedStreamId.value);
           }
+        }
+
+        // Validate current selection against new class list
+        bool currentValid = marksEntryClasses.any((element) =>
+            element.classId == selectedClassId.value &&
+            element.sectionId == selectedSectionId.value
+        );
+        if (!currentValid) {
+          selectedClassId.value = null;
+          selectedSectionId.value = null;
         }
       } else {
         marksEntryClasses.clear();
@@ -179,11 +203,27 @@ class MarksController extends GetxController {
     }
   }
 
-  Future<void> fetchStudents() async {
+  void _checkAndFetchStudents() {
+    bool needsStream = uniqueStreamsForSelectedClass.isNotEmpty;
+    bool streamSelected = selectedStreamId.value != null && selectedStreamId.value != "null" && selectedStreamId.value!.isNotEmpty;
+
+    if (selectedExamTypeId.value != null && 
+        selectedClassId.value != null && 
+        selectedSectionId.value != null &&
+        (!needsStream || streamSelected)) {
+      fetchStudents();
+    }
+  }
+
+  Future<void> fetchStudents({bool force = false}) async {
+    final currentKey = "${selectedExamTypeId.value}_${selectedClassId.value}_${selectedSectionId.value}_${selectedStreamId.value}";
+    if (!force && _lastFetchKey == currentKey && studentsList.isNotEmpty) return;
+    _lastFetchKey = currentKey;
+
     try {
       isStudentsLoading.value = true;
-      studentsList.clear(); // Clear immediately to trigger loader correctly
       isLocked.value = false;
+      // Note: We clear subject list to force re-selection of subject
       subjectList.clear();
       gradeList.clear();
 
@@ -214,6 +254,15 @@ class MarksController extends GetxController {
           }
         }
         if (response.students != null) studentsList.assignAll(response.students!);
+
+        debugPrint("=== MARKS API FETCH SUCCESS ===");
+        debugPrint("Fetched ${subjectList.length} subjects and ${studentsList.length} students");
+        for (var sub in subjectList) {
+          debugPrint(" -> Subject ID: ${sub.subjectId}, Name: '${sub.name}', IsMisc: ${sub.isMisc}");
+        }
+        for (var st in studentsList) {
+          debugPrint(" -> Student [ID: ${st.studentId}, Name: '${st.studentName}', AllowedSubjects: ${st.allowedSubjects}]");
+        }
         
         // Handle Grades: Priority 1: Global grades from response
         if (response.grades != null && response.grades!.isNotEmpty) {
@@ -279,16 +328,67 @@ class MarksController extends GetxController {
 
     final subject = subjectList.firstWhereOrNull((s) => s.subjectId == subId);
     final subjectName = subject?.name;
+    final isMisc = subject?.isMisc;
 
     // Check if any student has specific subject restrictions
     final hasAnyStudentWithAssignments = studentsList.any((s) =>
         (s.allowedSubjects != null && s.allowedSubjects!.isNotEmpty));
 
+    debugPrint("--- [MARKS CONTROLLER] FILTERING STUDENTS FOR SUBJECT ---");
+    debugPrint("Selected Subject ID: $subId, Name: '$subjectName', IsMisc: $isMisc");
+    debugPrint("Total students in list: ${studentsList.length}");
+
     if (!hasAnyStudentWithAssignments) {
+      debugPrint("No student subject restrictions, returning all ${studentsList.length} students.");
       return studentsList;
     }
 
-    return studentsList.where((s) => s.hasSubject(subId, subjectName)).toList();
+    final filtered = studentsList.where((s) => s.hasSubject(subId, subjectName, isMisc)).toList();
+    debugPrint("Enrolled students count for '$subjectName' (ID: $subId): ${filtered.length}");
+    for (var s in filtered) {
+      debugPrint(" -> Enrolled Student [ID: ${s.studentId}, Name: '${s.studentName}']");
+    }
+    debugPrint("----------------------------------------------------------");
+    return filtered;
+  }
+
+  /// Returns students sorted by selected type (Name or Roll No) and order
+  List<StudentMarkData> get filteredStudents {
+    final students = List<StudentMarkData>.from(studentsForSelectedSubject);
+    
+    if (searchType.value == "Roll No") {
+      students.sort((a, b) {
+        final aRoll = a.rollNo?.toString() ?? "";
+        final bRoll = b.rollNo?.toString() ?? "";
+        
+        final aInt = int.tryParse(aRoll);
+        final bInt = int.tryParse(bRoll);
+        
+        int comparison;
+        if (aInt != null && bInt != null) {
+          comparison = aInt.compareTo(bInt);
+        } else {
+          comparison = aRoll.compareTo(bRoll);
+        }
+        return isAscending.value ? comparison : -comparison;
+      });
+    } else {
+      students.sort((a, b) {
+        int comparison = (a.studentName ?? "").compareTo(b.studentName ?? "");
+        return isAscending.value ? comparison : -comparison;
+      });
+    }
+
+    if (searchQuery.value.isEmpty) return students;
+
+    final query = searchQuery.value.toLowerCase();
+    return students.where((student) {
+      if (searchType.value == "Roll No") {
+        return student.rollNo?.toString().toLowerCase().contains(query) ?? false;
+      } else {
+        return student.studentName?.toLowerCase().contains(query) ?? false;
+      }
+    }).toList();
   }
 
   /// Get total count of students enrolled in a specific subject
@@ -302,17 +402,16 @@ class MarksController extends GetxController {
       return studentsList.length;
     }
 
-    return studentsList.where((s) => s.hasSubject(subject.subjectId, subject.name)).length;
+    return studentsList.where((s) => s.hasSubject(subject.subjectId, subject.name, subject.isMisc)).length;
   }
 
   /// Check if a subject has marks/attendance entered for its enrolled students
   bool isSubjectCompleted(SubjectData subject) {
-    final subIdStr = subject.subjectId.toString();
-    final enrolledStudents = studentsList.where((s) => s.hasSubject(subject.subjectId, subject.name)).toList();
+    final enrolledStudents = studentsList.where((s) => s.hasSubject(subject.subjectId, subject.name, subject.isMisc)).toList();
     if (enrolledStudents.isEmpty) return false;
 
     for (var student in enrolledStudents) {
-      final m = student.marks?[subIdStr];
+      final m = student.getMarksForSubject(subject.subjectId);
       if (m == null) return false;
 
       bool hasMarks = (m.wMarks?.isNotEmpty == true && m.wMarks != "null") ||
@@ -336,25 +435,22 @@ class MarksController extends GetxController {
   void _autoSelectSection(String classId, String? streamId) {
     // Check if current section is still valid for this class and stream
     final sections = sectionsForSelectedClassAndStream;
-    bool isSectionValid = selectedSectionId.value != null && 
-                         sections.any((s) => s.sectionId == selectedSectionId.value);
-    
-    if (isSectionValid) return;
+    if (sections.isEmpty) return;
 
-    final sectionA = marksEntryClasses.firstWhereOrNull(
-      (element) => 
-          element.classId == classId && 
-          (streamId == null || element.streamId == streamId) &&
-          (element.sectionName?.toUpperCase() == 'A')
+    final sectionA = sections.firstWhereOrNull(
+      (element) => element.sectionName?.toUpperCase() == 'A'
     );
     
-    if (sectionA != null) {
-      selectedSectionId.value = sectionA.sectionId;
+    final targetSectionId = sectionA?.sectionId ?? sections.first.sectionId;
+
+    if (selectedSectionId.value != targetSectionId) {
+      selectedSectionId.value = targetSectionId;
     } else {
-      final firstSection = marksEntryClasses.firstWhereOrNull(
-        (element) => element.classId == classId && (streamId == null || element.streamId == streamId)
-      );
-      selectedSectionId.value = firstSection?.sectionId;
+      // If section is already set (e.g. 'A' from previous state), 
+      // explicitly trigger students fetch if list is empty
+      if (studentsList.isEmpty) {
+        _checkAndFetchStudents();
+      }
     }
   }
 
@@ -364,7 +460,7 @@ class MarksController extends GetxController {
       debugPrint("Saving Marks Request: ${request.toJson()}");
       final success = await _marksService.saveMarks(request);
       if (success) {
-        await fetchStudents();
+        await fetchStudents(force: true);
         return true;
       } else {
         Get.snackbar("Error", "Failed to save marks. Server returned success: false", 

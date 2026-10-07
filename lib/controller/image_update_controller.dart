@@ -7,8 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import '../api_service/image_update_service.dart';
 import '../models/image_update_classes_model.dart';
 import '../models/image_update_students_model.dart';
+import '../models/image_update_form_options_model.dart';
+import '../models/image_update_store_model.dart';
 import '../services/fcm_services.dart';
-import '../themes/appColors_&_styles/app_Colors.dart';
 import 'announcement_controller.dart';
 
 class ImageUpdateController extends GetxController {
@@ -19,6 +20,7 @@ class ImageUpdateController extends GetxController {
   final isSubmitting = false.obs;
   final classesList = <ImageUpdateClassData>[].obs;
   final studentsList = <ImageUpdateStudentData>[].obs;
+  final formOptions = Rxn<ImageUpdateFormOptionsData>();
   final errorMessage = "".obs;
 
   // Store image paths: { "studentId_type": "path" }
@@ -28,7 +30,19 @@ class ImageUpdateController extends GetxController {
   void onInit() {
     super.onInit();
     fetchClasses();
+    fetchFormOptions();
     _loadSavedImages();
+  }
+
+  Future<void> fetchFormOptions() async {
+    try {
+      final result = await _service.getImageUpdateFormOptions();
+      if (result.success == true) {
+        formOptions.value = result.data;
+      }
+    } catch (e) {
+      debugPrint("Error fetching form options: $e");
+    }
   }
 
   Future<void> _loadSavedImages() async {
@@ -69,7 +83,7 @@ class ImageUpdateController extends GetxController {
         
         String key = "${studentId}_$type";
         capturedImages[key] = permanentPath;
-        await _storage.write(key: 'captured_images', value: jsonEncode(capturedImages.value));
+        await _storage.write(key: 'captured_images', value: jsonEncode(Map<String, String>.from(capturedImages)));
         return permanentPath;
       }
     } catch (e) {
@@ -86,7 +100,7 @@ class ImageUpdateController extends GetxController {
     capturedImages.remove("${studentId}_profile");
     capturedImages.remove("${studentId}_father");
     capturedImages.remove("${studentId}_mother");
-    _storage.write(key: 'captured_images', value: jsonEncode(capturedImages.value));
+    _storage.write(key: 'captured_images', value: jsonEncode(Map<String, String>.from(capturedImages)));
   }
 
   Future<void> fetchClasses() async {
@@ -125,31 +139,26 @@ class ImageUpdateController extends GetxController {
   }
 
   Future<void> submitRequest({
-    required int studentId,
-    String? profileImage,
-    String? fatherImage,
-    String? motherImage,
+    required ImageUpdateStoreRequest request,
     VoidCallback? onSuccess,
   }) async {
-    if (profileImage == null && fatherImage == null && motherImage == null) {
-      Get.snackbar("Error", "Please select at least one image", backgroundColor: Colors.red, colorText: Colors.white);
-      return;
-    }
+    debugPrint("==========================================");
+    debugPrint("📡 [ImageUpdateController] Submitting Request...");
+    debugPrint("Request Map Data: ${request.toMap()}");
+    debugPrint("Profile Image Path: ${request.profileImage}");
+    debugPrint("Father Image Path: ${request.fatherImage}");
+    debugPrint("Mother Image Path: ${request.motherImage}");
+    debugPrint("==========================================");
 
     try {
       isSubmitting.value = true;
-      final success = await _service.storeImageUpdate(
-        studentId: studentId,
-        profileImagePath: profileImage,
-        fatherImagePath: fatherImage,
-        motherImagePath: motherImage,
-      );
+      final response = await _service.storeImageUpdate(request);
 
-      if (success) {
+      if (response.success == true) {
         // Trigger local notification and sound
         await FcmService.showLocalNotification(
           title: "Update Request Submitted",
-          body: "The student image update request has been successfully sent for approval.",
+          body: response.message ?? "The student image update request has been successfully sent for approval.",
         );
 
         // Update notification dot in app bar
@@ -162,25 +171,38 @@ class ImageUpdateController extends GetxController {
         Future.delayed(const Duration(milliseconds: 300), () {
           Get.snackbar(
             "Success", 
-            "Image update request submitted successfully", 
+            response.message ?? "Image update request submitted successfully", 
             backgroundColor: Colors.green, 
             colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             margin: const EdgeInsets.all(15),
+            borderRadius: 10,
             duration: const Duration(seconds: 3),
           );
         });
       } else {
         Get.snackbar(
           "Error", 
-          "Failed to submit request", 
+          response.message ?? "Failed to submit request",
           backgroundColor: Colors.red, 
           colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(15),
+          borderRadius: 10,
+          duration: const Duration(seconds: 3),
         );
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error", 
+        e.toString(), 
+        backgroundColor: Colors.red, 
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(15),
+        borderRadius: 10,
+        duration: const Duration(seconds: 3),
+      );
     } finally {
       isSubmitting.value = false;
     }

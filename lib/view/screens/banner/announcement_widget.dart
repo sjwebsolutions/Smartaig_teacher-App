@@ -116,9 +116,10 @@ class AnnouncementWidget extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: announcement.imageUrl ?? "",
                 fit: BoxFit.cover,
+                fadeInDuration: Duration.zero,
+                fadeOutDuration: Duration.zero,
                 placeholder: (context, url) => Container(
                   color: Colors.grey[100],
-                  child: const Center(child: SpinKitFadingCircle(color: AppColors.primary, size: 20)),
                 ),
                 errorWidget: (context, url, error) => Container(
                   color: AppColors.primary.withValues(alpha: 0.05),

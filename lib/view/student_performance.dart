@@ -52,146 +52,148 @@ class StudentPerformanceScreen extends StatelessWidget {
         ],
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 3,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      "Class 8A",
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    "Class 8A",
+
+                  const SizedBox(width: 10),
+
+                  Icon(Icons.arrow_forward_ios,
+                      size: 16, color: AppColors.primary),
+
+                  const SizedBox(width: 12),
+
+                  Text(
+                    "Mathematics",
                     style: AppTextStyles.body.copyWith(
-                      color: AppColors.white,
+                      color: AppColors.black,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
-
-                const SizedBox(width: 10),
-
-                Icon(Icons.arrow_forward_ios,
-                    size: 16, color: AppColors.primary),
-
-                const SizedBox(width: 12),
-
-                Text(
-                  "Mathematics",
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.black,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Text(
-              "Unit Test - 1",
-              style: AppTextStyles.body.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.black,
+                ],
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-            Row(
-              children: [
+              Text(
+                "Unit Test - 1",
+                style: AppTextStyles.body.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.black,
+                ),
+              ),
 
-                _statBox("CLASS AVERAGE", "43.5/50"),
-                const SizedBox(width: 12),
-                _statBox("HIGHEST SCORE", "49/50"),
-              ],
-            ),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
+              Row(
+                children: [
 
-            Expanded(
-              child: ListView.builder(
-                itemCount: students.length,
-                itemBuilder: (context, index) {
-                  final s = students[index];
+                  _statBox("CLASS AVERAGE", "43.5/50"),
+                  const SizedBox(width: 12),
+                  _statBox("HIGHEST SCORE", "49/50"),
+                ],
+              ),
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.grey),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+              const SizedBox(height: 16),
 
-                        /// AVATAR
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: AppColors.grey.withOpacity(0.3),
-                          child: const Icon(Icons.person),
-                        ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: students.length,
+                  itemBuilder: (context, index) {
+                    final s = students[index];
 
-                        const SizedBox(width: 12),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.grey),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
 
-                        /// NAME + ROLL
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          /// AVATAR
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppColors.grey.withOpacity(0.3),
+                            child: const Icon(Icons.person),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          /// NAME + ROLL
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  s["name"]!,
+                                  style: AppTextStyles.body.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Roll No - ${s["roll"]}",
+                                  style: AppTextStyles.body.copyWith(
+                                    fontSize: 12,
+                                    color: AppColors.black.withOpacity(0.9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          /// MARKS + STATUS
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                s["name"]!,
+                                s["marks"]!,
                                 style: AppTextStyles.body.copyWith(
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.black,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Roll No - ${s["roll"]}",
-                                style: AppTextStyles.body.copyWith(
-                                  fontSize: 12,
-                                  color: AppColors.black.withOpacity(0.9),
-                                ),
-                              ),
+                              const SizedBox(height: 6),
+
+                              _statusPill(s["status"]!),
                             ],
                           ),
-                        ),
-
-                        /// MARKS + STATUS
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              s["marks"]!,
-                              style: AppTextStyles.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-
-                            _statusPill(s["status"]!),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: Container(

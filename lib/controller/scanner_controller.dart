@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:teacher_app_attendance/api_service/attendance_scanner_service.dart';
 
 import '../view/screens/dashboard/dashboard_screen_v2.dart';
@@ -20,6 +21,8 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
   late AnimationController scanAnimation;
   final MobileScannerController mobileScannerController =
   MobileScannerController();
+
+  final RxBool isTorchOn = false.obs;
 
   bool _isProcessing = false;
 
@@ -42,6 +45,15 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
     _startClock();
   }
 
+  void toggleTorch() async {
+    try {
+      await mobileScannerController.toggleTorch();
+      isTorchOn.value = !isTorchOn.value;
+    } catch (e) {
+      debugPrint("Error toggling torch: $e");
+    }
+  }
+
   void _startClock() {
     currentTime.value =
         DateFormat('hh:mm a').format(DateTime.now());
@@ -61,53 +73,25 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
     _isProcessing = true;
     isLoading.value = true;
 
-    await mobileScannerController.stop();
-    scanAnimation.stop();
+    // await mobileScannerController.stop();
+    // scanAnimation.stop();
 
     try {
       print(" QR SCANNED ");
       print("QR TOKEN => $qrToken");
+      
+      // ... (location logic)
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw "Please enable device location/GPS";
 
-      print(" LOCATION CHECK ");
-
-      bool serviceEnabled =
-      await Geolocator.isLocationServiceEnabled();
-
-      print("Location Service Enabled => $serviceEnabled");
-
-      if (!serviceEnabled) {
-        throw "Please enable device location/GPS";
-      }
-
-      LocationPermission permission =
-      await Geolocator.checkPermission();
-
-      print("Current Permission => $permission");
-
+      LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-
-        print("Permission After Request => $permission");
       }
+      if (permission == LocationPermission.denied) throw "Location permission denied";
+      if (permission == LocationPermission.deniedForever) throw "Location permission permanently denied.";
 
-      if (permission == LocationPermission.denied) {
-        throw "Location permission denied";
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        throw "Location permission permanently denied. Please enable it from Settings.";
-      }
-
-      print("FETCHING LOCATION ");
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      print("LATITUDE => ${position.latitude}");
-      print("LONGITUDE => ${position.longitude}");
-
-      print(" MARK ATTENDANCE ");
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
       final response = await _attendanceServices.markAttendance(
         qrToken: qrToken,
@@ -115,48 +99,52 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
         longitude: position.longitude,
       );
 
-      print("ATTENDANCE RESPONSE => ${response.toString()}");
+      // Dismiss loading dialog
+      // if (Get.isDialogOpen ?? false) Get.back();
 
       if (response.success == true) {
-        print("ATTENDANCE SUCCESS");
-
-        // Trigger local notification and sound
-        await FcmService.showLocalNotification(
-          title: "Attendance Marked",
-          body: "Your attendance has been successfully marked via QR scan.",
-        );
-
-        // Update notification dot in app bar
-        if (Get.isRegistered<AnnouncementController>()) {
-          Get.find<AnnouncementController>().hasNewNotifications.value = true;
-        }
-
         final NewDashboardController dash = Get.find();
-
         dash.updateAttendanceStatus();
 
+        // Close Scanner Screen
         Get.back();
-      }
- else {
-        print("ATTENDANCE FAILED => ${response.message}");
 
+        // Show Success Snackbar on the background screen
+        Get.snackbar(
+          "Success",
+          "Attendance marked successfully",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFF16A34A),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
         Get.snackbar(
           "Failed",
           response.message ?? "Attendance failed",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFEF4444),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
         );
 
         await mobileScannerController.start();
         scanAnimation.repeat();
       }
-    } catch (e, s) {
-      print("ERROR ");
-      print("ERRORffff => $e");
-      print("STACK => $s");
+    } catch (e) {
+      // if (Get.isDialogOpen ?? false) Get.back();
 
       Get.snackbar(
         "Error",
         e.toString(),
         snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFEF4444),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
       );
 
       await mobileScannerController.start();
@@ -165,6 +153,51 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
       isLoading.value = false;
       _isProcessing = false;
     }
+  }
+
+  void _showLoadingDialog() {
+    Get.dialog(
+      PopScope(
+        canPop: false,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.all(25),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LoadingAnimationWidget.staggeredDotsWave(
+                  color: const Color(0xFF16A34A),
+                  size: 50,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Processing...",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                    decoration: TextDecoration.none,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }  void markSuccess() {
     isMarked.value = true;
     attendanceStatus.value = "Active";

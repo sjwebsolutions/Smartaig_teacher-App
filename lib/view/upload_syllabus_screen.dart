@@ -31,146 +31,148 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
             Get.back();
           },
         ),
-        body: Obx(() {
-          if (controller.isLoading.value) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-          }
+        body: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildLabel("TITLE *"),
-                _buildTextField(
-                  controller: controller.uploadTitleController,
-                  hint: "e.g. Term 1 History Syllabus",
-                  icon: Icons.title_rounded,
-                ),
-                const SizedBox(height: 20),
-
-                _buildLabel("TERM *"),
-                _buildDropdownCard(
-                  icon: Icons.calendar_today_rounded,
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      hint: Text("Select Term", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
-                      value: controller.uploadSelectedTermId.value,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      items: controller.termsList.map((term) {
-                        return DropdownMenuItem<int>(
-                          value: term.id,
-                          child: Text(term.name ?? "", style: AppTextStyles.body),
-                        );
-                      }).toList(),
-                      onChanged: (val) => controller.uploadSelectedTermId.value = val,
-                    ),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel("TITLE *"),
+                  _buildTextField(
+                    controller: controller.uploadTitleController,
+                    hint: "e.g. Term 1 History Syllabus",
+                    icon: Icons.title_rounded,
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                _buildLabel("CLASS *"),
-                _buildDropdownCard(
-                  icon: Icons.school_rounded,
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      hint: Text("Select Class", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
-                      value: controller.uploadSelectedClassId.value,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      items: controller.classesList.map((cls) {
-                        return DropdownMenuItem<int>(
-                          value: cls.id,
-                          child: Text(cls.name ?? ""),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        controller.uploadSelectedClassId.value = val;
-                        controller.uploadSelectedSectionIds.clear(); // Reset sections when class changes
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // --- NEW: SECTION SELECTION ---
-                _buildLabel("SECTIONS *"),
-                _buildSectionSelector(),
-                const SizedBox(height: 20),
-
-                _buildLabel("SUBJECT"),
-                _buildDropdownCard(
-                  icon: Icons.book_rounded,
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      hint: Text("Select Subject (Optional)", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
-                      value: controller.uploadSelectedSubjectId.value,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      items: controller.filterSubjectsList.map((sub) {
-                        return DropdownMenuItem<int>(
-                          value: sub.id,
-                          child: Text(sub.name ?? "", style: AppTextStyles.body),
-                        );
-                      }).toList(),
-                      onChanged: (val) => controller.uploadSelectedSubjectId.value = val,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                _buildLabel("DESCRIPTION"),
-                _buildTextField(
-                  controller: controller.uploadDescController,
-                  hint: "Enter description...",
-                  icon: Icons.description_rounded,
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 20),
-
-                if (controller.isUpdateMode.value && controller.existingAttachments.isNotEmpty) ...[
-                  _buildLabel("EXISTING ATTACHMENTS (CLICK TO DELETE)"),
-                  _buildExistingAttachments(),
                   const SizedBox(height: 20),
-                ],
 
-                _buildLabel("NEW ATTACHMENTS"),
-                _buildAttachmentSection(),
-                const SizedBox(height: 30),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: () => controller.storeTeacherSyllabus(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      elevation: 5,
-                    ),
-                    child: Text(
-                      controller.isUpdateMode.value ? "UPDATE SYLLABUS" : "UPLOAD SYLLABUS",
-                      style: const TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1,
-                        fontSize: 16,
+                  _buildLabel("TERM *"),
+                  _buildDropdownCard(
+                    icon: Icons.calendar_today_rounded,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        hint: Text("Select Term", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
+                        value: controller.uploadSelectedTermId.value,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        items: controller.termsList.map((term) {
+                          return DropdownMenuItem<int>(
+                            value: term.id,
+                            child: Text(term.name ?? "", style: AppTextStyles.body),
+                          );
+                        }).toList(),
+                        onChanged: (val) => controller.uploadSelectedTermId.value = val,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          );
-        }),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("CLASS *"),
+                  _buildDropdownCard(
+                    icon: Icons.school_rounded,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        hint: Text("Select Class", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
+                        value: controller.uploadSelectedClassId.value,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        items: controller.classesList.map((cls) {
+                          return DropdownMenuItem<int>(
+                            value: cls.id,
+                            child: Text(cls.name ?? ""),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          controller.uploadSelectedClassId.value = val;
+                          controller.uploadSelectedSectionIds.clear(); // Reset sections when class changes
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- NEW: SECTION SELECTION ---
+                  _buildLabel("SECTIONS *"),
+                  _buildSectionSelector(),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("SUBJECT"),
+                  _buildDropdownCard(
+                    icon: Icons.book_rounded,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        hint: Text("Select Subject (Optional)", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
+                        value: controller.uploadSelectedSubjectId.value,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        items: controller.filterSubjectsList.map((sub) {
+                          return DropdownMenuItem<int>(
+                            value: sub.id,
+                            child: Text(sub.name ?? "", style: AppTextStyles.body),
+                          );
+                        }).toList(),
+                        onChanged: (val) => controller.uploadSelectedSubjectId.value = val,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("DESCRIPTION"),
+                  _buildTextField(
+                    controller: controller.uploadDescController,
+                    hint: "Enter description...",
+                    icon: Icons.description_rounded,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+
+                  if (controller.isUpdateMode.value && controller.existingAttachments.isNotEmpty) ...[
+                    _buildLabel("EXISTING ATTACHMENTS (CLICK TO DELETE)"),
+                    _buildExistingAttachments(),
+                    const SizedBox(height: 20),
+                  ],
+
+                  _buildLabel("NEW ATTACHMENTS"),
+                  _buildAttachmentSection(),
+                  const SizedBox(height: 30),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: () => controller.storeTeacherSyllabus(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        elevation: 5,
+                      ),
+                      child: Text(
+                        controller.isUpdateMode.value ? "UPDATE SYLLABUS" : "UPLOAD SYLLABUS",
+                        style: const TextStyle(
+                          color: Colors.white, 
+                          fontWeight: FontWeight.bold, 
+                          letterSpacing: 1,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
