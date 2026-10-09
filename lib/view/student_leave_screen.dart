@@ -196,7 +196,7 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
               style: TextStyle(
                 color: Color(0xFF1E293B),
                 fontWeight: FontWeight.w900,
-                fontSize: 18,
+                fontSize: 15,
                 letterSpacing: 0.5,
               ),
             ),
@@ -323,15 +323,6 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
           Row(
             children: [
               _buildSummaryStatBox(
-                label: "Total",
-                count: "$total",
-                bgColor: const Color(0xFFEFF6FF),
-                borderColor: const Color(0xFFBFDBFE),
-                textColor: const Color(0xFF2563EB),
-                icon: Icons.assignment_rounded,
-              ),
-              const SizedBox(width: 8),
-              _buildSummaryStatBox(
                 label: "Pending",
                 count: "$pending",
                 bgColor: const Color(0xFFFFFBEB),
@@ -356,6 +347,15 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                 borderColor: const Color(0xFFFECACA),
                 textColor: const Color(0xFFDC2626),
                 icon: Icons.cancel_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildSummaryStatBox(
+                label: "Total",
+                count: "$total",
+                bgColor: const Color(0xFFEFF6FF),
+                borderColor: const Color(0xFFBFDBFE),
+                textColor: const Color(0xFF2563EB),
+                icon: Icons.assignment_rounded,
               ),
             ],
           ),
@@ -415,10 +415,10 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
   // Card 2: Filter Chips Row
   Widget _buildFilterChips() {
     final filters = [
-      {'label': 'All', 'value': 'all', 'color': const Color(0xFF2563EB)},
       {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFD97706)},
       {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF059669)},
       {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFDC2626)},
+      {'label': 'All', 'value': 'all', 'color': const Color(0xFF2563EB)},
     ];
 
     return Obx(() {

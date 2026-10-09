@@ -15,7 +15,7 @@ class StudentLeaveController extends GetxController {
   var classes = <ClassData>[].obs;
   var selectedClass = Rxn<ClassData>();
 
-  var selectedStatus = "all".obs; // 'all', 'pending', 'approved', 'rejected'
+  var selectedStatus = "pending".obs; // 'pending', 'approved', 'rejected', 'all'
   var selectedDate = "".obs; // 'YYYY-MM-DD'
 
   var studentLeavesResponse = Rxn<StudentLeaveModel>();

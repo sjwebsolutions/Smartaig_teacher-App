@@ -150,7 +150,7 @@ class MarksController extends GetxController {
         }
       }
     } catch (e) {
-      Get.snackbar("Error", "Exam Categories: ${e.toString()}");
+      print("Error fetching marks entries: $e");
     } finally {
       isLoading.value = false;
     }

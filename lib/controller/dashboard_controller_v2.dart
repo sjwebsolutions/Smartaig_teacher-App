@@ -16,6 +16,8 @@ class NewDashboardController extends GetxController {
   final isLoading = false.obs;
   final isInitialLoading = true.obs;
   final dashboard = Rxn<DashboardTeacherModel>();
+  final hasError = false.obs;
+  final errorMessage = ''.obs;
 
   var lastMarkedTime = Rxn<DateTime>();
   var clockInTime = Rxn<DateTime>();
@@ -45,7 +47,7 @@ class NewDashboardController extends GetxController {
     }
 
     try {
-      await fetchDashboard(showLoading: dashboard.value == null);
+      await fetchDashboard(showLoading: false);
     } catch (e) {
       print("Initial Loading Error: $e");
     } finally {
@@ -107,16 +109,22 @@ class NewDashboardController extends GetxController {
       final result = await _dashboardServices.getDashboard();
       
       if (result.success == true && result.data != null) {
+        hasError.value = false;
+        errorMessage.value = '';
         _processDashboardData(result);
         try {
           await StorageService.saveDashboardData(json.encode(result.toJson()));
         } catch (e) {
           print("Error saving dashboard to cache: $e");
         }
+      } else {
+        hasError.value = true;
+        errorMessage.value = "Server Error. Please try again later.";
       }
       
     } catch (e) {
-      if (showLoading) Get.snackbar("Error", e.toString());
+      hasError.value = true;
+      errorMessage.value = "Network or Server Error. Please check your connection.";
       print("Fetch Dashboard Error: $e");
     } finally {
       if (showLoading) isLoading.value = false;

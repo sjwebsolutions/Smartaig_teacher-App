@@ -52,14 +52,7 @@ class HomeworkController extends GetxController {
       final result = await _homeworkService.getHomeworkFormData();
       homeworkFormData.value = result;
     } catch (e) {
-      Get.snackbar(
-        "Message",
-        e.toString(),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
+      print("Error fetching homework form data: $e");
     } finally {
       isLoading.value = false;
     }
@@ -72,25 +65,9 @@ class HomeworkController extends GetxController {
       if (result.success == true) {
         homeworkList.assignAll(result.data ?? []);
         hasFetched.value = true; // Mark as successfully fetched
-      } else {
-        Get.snackbar(
-          "Error",
-          result.message ?? "Failed to fetch homework list",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
       }
     } catch (e) {
       print("Error fetching homework list: $e");
-      Get.snackbar(
-        "Error",
-        "Failed to fetch homework list: $e",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
-      );
     } finally {
       // Small delay to ensure UI transition is smooth and not flickering
       Future.delayed(const Duration(milliseconds: 300), () {

@@ -12,6 +12,11 @@ class LeaveController extends GetxController {
   var errorMessage = "".obs;
   var leaves = <LeaveData>[].obs;
   var leaveMeta = Rxn<LeaveMetaData>();
+  var selectedStatus = "pending".obs;
+
+  void changeStatusFilter(String status) {
+    selectedStatus.value = status;
+  }
 
   @override
   void onInit() {

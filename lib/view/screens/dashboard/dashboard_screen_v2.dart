@@ -34,13 +34,22 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     final AnnouncementController announcementController = Get.put(AnnouncementController());
     final BannerController bannerController = Get.find<BannerController>();
 
-    const EdgeInsets kCardMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 1);
-    const EdgeInsets kCardPadding = EdgeInsets.all(14);
+    final mediaQuery = MediaQuery.of(context);
+    final double screenWidth = mediaQuery.size.width;
+    final bool isSmallScreen = screenWidth < 360;
+
+    final EdgeInsets kCardMargin = EdgeInsets.symmetric(
+      horizontal: (screenWidth * 0.04).clamp(12.0, 20.0),
+      vertical: 1,
+    );
+    final EdgeInsets kCardPadding = EdgeInsets.all(isSmallScreen ? 12 : 14);
     
     return Obx(() {
       if (dashboardController.isInitialLoading.value) {
         return const DashboardShimmer();
       }
+
+      final hasError = dashboardController.hasError.value;
 
       return Container(
         decoration: BoxDecoration(
@@ -49,123 +58,138 @@ class NewTeacherDashboardScreen extends StatelessWidget {
         child: Scaffold(
           backgroundColor: Colors.transparent,
           drawerEnableOpenDragGesture: false,
-          appBar: AppTopBar(
-            backgroundColor: Colors.transparent,
-            showBack: false,
-            showDivider: false,
-            centerTitle: true,
-            title: "TEACHER DASHBOARD",
-            leadingWidgets: Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu_rounded, color: AppColors.primary),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
-            ),
-          ),
-          drawer: const CustomDrawer(),
+          appBar: hasError
+              ? null
+              : AppTopBar(
+                  backgroundColor: Colors.transparent,
+                  showBack: false,
+                  showDivider: false,
+                  centerTitle: true,
+                  title: "TEACHER DASHBOARD",
+                  leadingWidgets: Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu_rounded, color: AppColors.primary),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
+                  ),
+                ),
+          drawer: hasError ? null : const CustomDrawer(),
           body: SafeArea(
             child: RefreshIndicator(
-            onRefresh: () async {
-              await dashboardController.fetchDashboard(showLoading: false);
-              if (Get.isRegistered<BannerController>()) {
-                await Get.find<BannerController>().fetchBanners(showLoading: false);
-              }
-              await announcementController.fetchAnnouncements();
-              if (Get.isRegistered<StudentLeaveController>()) {
-                await Get.find<StudentLeaveController>().fetchStudentLeaves();
-              }
-            },
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Container(
-                width: double.infinity,
-                color: Colors.transparent,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getGreeting(),
-                            style: AppTextStyles.h2.copyWith(
-                              fontSize: 14,
-                              color: AppColors.primary.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          SizedBox(height: 2,),
-                          Obx(() => Padding(
-                            padding: const EdgeInsets.only(left: 5),
-                            child: Text.rich(
-                              TextSpan(
+              onRefresh: () async {
+                await dashboardController.fetchDashboard(showLoading: false);
+                if (Get.isRegistered<BannerController>()) {
+                  await Get.find<BannerController>().fetchBanners(showLoading: false);
+                }
+                await announcementController.fetchAnnouncements();
+                if (Get.isRegistered<StudentLeaveController>()) {
+                  await Get.find<StudentLeaveController>().fetchStudentLeaves();
+                }
+              },
+              color: AppColors.primary,
+              child: hasError
+                  ? _buildCenteredErrorView(context, dashboardController)
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Container(
+                        width: double.infinity,
+                        color: Colors.transparent,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  TextSpan(
-                                    text: dashboardController.dashboard.value?.data?.teacher?.name ?? "",
-                                    style: AppTextStyles.h1.copyWith(
-                                      fontSize: 17,
-                                      color: AppColors.primary,
+                                  Text(
+                                    _getGreeting(),
+                                    style: AppTextStyles.h2.copyWith(
+                                      fontSize: 14,
+                                      color: AppColors.primary.withValues(alpha: 0.7),
                                     ),
                                   ),
-                                  const WidgetSpan(
-                                    alignment: PlaceholderAlignment.middle,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: 4),
-                                      child: Icon(
-                                        Icons.verified,
-                                        color: Color(0xFF1892FA),
-                                        size: 18,
+                                  const SizedBox(height: 2),
+                                  Obx(() => Padding(
+                                    padding: const EdgeInsets.only(left: 5),
+                                    child: Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: dashboardController.dashboard.value?.data?.teacher?.name ?? "",
+                                            style: AppTextStyles.h1.copyWith(
+                                              fontSize: 17,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                          const WidgetSpan(
+                                            alignment: PlaceholderAlignment.middle,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(left: 4),
+                                              child: Icon(
+                                                Icons.verified,
+                                                color: Color(0xFF1892FA),
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
+                                  )),
                                 ],
                               ),
                             ),
-                          )),
-                        ],
+                            Obx(() {
+                              final banners = bannerController.banners.value?.banners ?? [];
+                              final isLoading = bannerController.isLoading.value;
+                              if (banners.isEmpty && !isLoading) {
+                                return const SizedBox(height: 10);
+                              }
+                              return const Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  BannerWidget(),
+                                  SizedBox(height: 10),
+                                ],
+                              );
+                            }),
+                            _buildTeacherInfoCard(context, dashboardController, kCardMargin, kCardPadding),
+                            _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
+                            const SizedBox(height: 10),
+                            // _buildAssignedSubjectsSection(dashboardController, kCardMargin),
+                            // const SizedBox(height: 10),
+                            _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
+                            _buildStudentLeavesCard(dashboardController, kCardMargin),
+                            _buildDutiesSection(dashboardController, kCardMargin),
+                            const SizedBox(height: 5),
+                            _buildAcademicModulesSection(),
+                          ],
+                        ),
                       ),
                     ),
-                    Obx(() {
-                      final banners = bannerController.banners.value?.banners ?? [];
-                      final isLoading = bannerController.isLoading.value;
-                      if (banners.isEmpty && !isLoading) {
-                        return const SizedBox(height: 10);
-                      }
-                      return const Column(
-                        children: [
-                          SizedBox(height: 10),
-                          BannerWidget(),
-                          SizedBox(height: 10),
-                        ],
-                      );
-                    }),
-                    _buildTeacherInfoCard(dashboardController, kCardMargin, kCardPadding),
-                    _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
-                    const SizedBox(height: 10),
-                    // _buildAssignedSubjectsSection(dashboardController, kCardMargin),
-                    // const SizedBox(height: 10),
-                    _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
-                    _buildStudentLeavesCard(dashboardController, kCardMargin),
-                    _buildDutiesSection(dashboardController, kCardMargin),
-                    const SizedBox(height: 5),
-                    _buildAcademicModulesSection(),
-                  ],
-                ),
-              ),
             ),
           ),
         ),
-      ),
-    );
-  });
-}
+      );
+    });
+  }
 
-  Widget _buildTeacherInfoCard(NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
+  Widget _buildTeacherInfoCard(BuildContext context, NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
+    final mediaQuery = MediaQuery.of(context);
+    final double screenWidth = mediaQuery.size.width;
+    final bool isSmallScreen = screenWidth < 360;
+    final bool isTablet = screenWidth > 600;
+
+    final double imageSize = isSmallScreen ? 55.0 : (isTablet ? 75.0 : 65.0);
+    final double nameFontSize = isSmallScreen ? 14.5 : (isTablet ? 18.0 : 16.0);
+    final double schoolFontSize = isSmallScreen ? 11.0 : (isTablet ? 13.0 : 12.0);
+    final double empIdFontSize = isSmallScreen ? 10.5 : (isTablet ? 12.5 : 11.5);
+    final double cardPadding = isSmallScreen ? 12.0 : 16.0;
+
     return Container(
       margin: margin,
       decoration: BoxDecoration(
@@ -180,22 +204,17 @@ class NewTeacherDashboardScreen extends StatelessWidget {
         ],
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.08), width: 1.5),
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -15,
-            bottom: -15,
-            child: Icon(
-              Icons.auto_awesome_mosaic_rounded,
-              size: 100,
-              color: AppColors.primary.withValues(alpha: 0.03),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Obx(() {
-              final teacher = controller.dashboard.value?.data?.teacher;
-              return Row(
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Obx(() {
+          final teacher = controller.dashboard.value?.data?.teacher;
+          final schoolName = controller.dashboard.value?.data?.school?.schoolName ?? "No school";
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Profile Image in Square Box
                   Container(
@@ -208,8 +227,8 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                       ),
                     ),
                     child: Container(
-                      width: 80,
-                      height: 80,
+                      width: imageSize,
+                      height: imageSize,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: AppColors.primary.withValues(alpha: 0.05),
@@ -246,16 +265,16 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              errorWidget: (context, url, error) => const Center(
-                                child: Icon(Icons.person, color: AppColors.primary, size: 40),
+                              errorWidget: (context, url, error) => Center(
+                                child: Icon(Icons.person, color: AppColors.primary, size: isSmallScreen ? 28 : 36),
                               ),
                             )
-                          : const Center(
-                              child: Icon(Icons.person, color: AppColors.primary, size: 40),
+                          : Center(
+                              child: Icon(Icons.person, color: AppColors.primary, size: isSmallScreen ? 28 : 36),
                             ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: isSmallScreen ? 10 : 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,101 +286,145 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                                 text: teacher?.name ?? "Teacher Name",
                                 style: AppTextStyles.body.copyWith(
                                   color: AppColors.primary,
-                                  fontSize: 17,
+                                  fontSize: nameFontSize,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.2,
                                 ),
                               ),
-                              const WidgetSpan(
+                              WidgetSpan(
                                 alignment: PlaceholderAlignment.middle,
                                 child: Padding(
-                                  padding: EdgeInsets.only(left: 4),
+                                  padding: const EdgeInsets.only(left: 4),
                                   child: Icon(
                                     Icons.verified,
-                                    color: Color(0xFF1892FA),
-                                    size: 16,
+                                    color: const Color(0xFF1892FA),
+                                    size: isSmallScreen ? 14 : 16,
                                   ),
                                 ),
                               ),
                             ],
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 8 : 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text(
-                            (teacher?.staffType ?? "Staff").toUpperCase(),
-                            style: const TextStyle(
+                            (teacher?.staffType ?? "Teacher").toUpperCase(),
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 9,
+                              fontSize: isSmallScreen ? 8.5 : 9.5,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.8,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        _buildInfoRow(Icons.alternate_email_rounded, "Emp ID: ${teacher?.id ?? '-'}"),
-                        const SizedBox(height: 5),
-                        _buildInfoRow(
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Divider(
+                height: 1,
+                thickness: 0.8,
+                color: AppColors.primary.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
                           Icons.location_city_rounded,
-                          controller.dashboard.value?.data?.school?.schoolName ?? "No school",
-                          isVerified: true,
+                          size: isSmallScreen ? 13 : 15,
+                          color: AppColors.primary.withValues(alpha: 0.6),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: schoolName,
+                                  style: TextStyle(
+                                    color: AppColors.black.withValues(alpha: 0.7),
+                                    fontSize: schoolFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                WidgetSpan(
+                                  alignment: PlaceholderAlignment.middle,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Icon(
+                                      Icons.verified,
+                                      color: const Color(0xFF1892FA),
+                                      size: isSmallScreen ? 12 : 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: isSmallScreen ? 6 : 10),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 6 : 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.alternate_email_rounded,
+                          size: isSmallScreen ? 11 : 13,
+                          color: AppColors.primary.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Emp ID: ${teacher?.id ?? '-'}",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: empIdFontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
-              );
-            }),
-          ),
-        ],
+              ),
+            ],
+          );
+        }),
       ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, {bool isVerified = false}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon, size: 14, color: AppColors.primary.withValues(alpha: 0.5)),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: label,
-                  style: TextStyle(
-                    color: AppColors.black.withValues(alpha: 0.6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (isVerified) ...[
-                  const WidgetSpan(
-                    alignment: PlaceholderAlignment.middle,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Icon(
-                        Icons.verified,
-                        color: Color(0xFF1892FA),
-                        size: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1111,23 +1174,9 @@ class NewTeacherDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildAcademicModulesSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Academic Modules",
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.black.withValues(alpha: 0.8),
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const AcademicModuleGrid(),
-        ],
-      ),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: AcademicModuleGrid(),
     );
   }
 
@@ -1303,5 +1352,86 @@ class NewTeacherDashboardScreen extends StatelessWidget {
         ],
       );
     });
+  }
+
+  Widget _buildCenteredErrorView(BuildContext context, NewDashboardController controller) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height * 0.75,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.wifi_off_rounded,
+                size: 40,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Server or Network Error",
+              style: AppTextStyles.h1.copyWith(
+                fontSize: 18,
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Obx(() => Text(
+              controller.errorMessage.value.isNotEmpty
+                  ? controller.errorMessage.value
+                  : "Unable to connect to server. Please check your internet connection and try again.",
+              style: AppTextStyles.body.copyWith(
+                fontSize: 13,
+                color: AppColors.black.withValues(alpha: 0.6),
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            )),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await controller.fetchDashboard(showLoading: true);
+                if (Get.isRegistered<BannerController>()) {
+                  Get.find<BannerController>().fetchBanners(showLoading: false);
+                }
+                if (Get.isRegistered<AnnouncementController>()) {
+                  Get.find<AnnouncementController>().fetchAnnouncements();
+                }
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
+              label: const Text(
+                "Refresh",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

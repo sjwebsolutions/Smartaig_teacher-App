@@ -87,6 +87,24 @@ class TeacherLeaveScreen extends StatelessWidget {
                 ),
               ),
 
+              // Summary Card & Filter Chips
+              Obx(() {
+                final allLeaves = controller.leaves;
+                final total = allLeaves.length;
+                final pending = allLeaves.where((l) => (l.status ?? '').toLowerCase() == 'pending').length;
+                final approved = allLeaves.where((l) => (l.status ?? '').toLowerCase() == 'approved').length;
+                final rejected = allLeaves.where((l) =>
+                    (l.status ?? '').toLowerCase() == 'rejected' ||
+                    (l.status ?? '').toLowerCase() == 'denied').length;
+
+                return Column(
+                  children: [
+                    _buildSummaryCard(total, pending, approved, rejected),
+                    _buildFilterChips(controller),
+                  ],
+                );
+              }),
+
               // Leaves List with Pull to Refresh
               Expanded(
                 child: Obx(() {
@@ -94,13 +112,15 @@ class TeacherLeaveScreen extends StatelessWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (controller.leaves.isEmpty) {
+                  final filteredLeaves = _getFilteredLeaves(controller);
+
+                  if (filteredLeaves.isEmpty) {
                     return RefreshIndicator(
                       onRefresh: () => controller.fetchLeaves(),
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: Container(
-                          height: MediaQuery.of(context).size.height * 0.7,
+                          height: MediaQuery.of(context).size.height * 0.5,
                           alignment: Alignment.center,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -132,9 +152,9 @@ class TeacherLeaveScreen extends StatelessWidget {
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: controller.leaves.length,
+                      itemCount: filteredLeaves.length,
                       itemBuilder: (context, index) {
-                        final item = controller.leaves[index];
+                        final item = filteredLeaves[index];
                         return _buildLeaveCard(item);
                       },
                     ),
@@ -146,6 +166,223 @@ class TeacherLeaveScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<LeaveData> _getFilteredLeaves(LeaveController controller) {
+    final status = controller.selectedStatus.value.toLowerCase();
+    if (status == 'all') {
+      return controller.leaves;
+    }
+    return controller.leaves.where((item) {
+      final itemStatus = (item.status ?? '').toLowerCase();
+      if (status == 'pending') {
+        return itemStatus == 'pending';
+      } else if (status == 'approved') {
+        return itemStatus == 'approved';
+      } else if (status == 'rejected') {
+        return itemStatus == 'rejected' || itemStatus == 'denied';
+      }
+      return true;
+    }).toList();
+  }
+
+  // Card 1: Leave Requests Summary
+  Widget _buildSummaryCard(int total, int pending, int approved, int rejected) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.pie_chart_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "Leave Requests Summary",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildSummaryStatBox(
+                label: "Pending",
+                count: "$pending",
+                bgColor: const Color(0xFFFFFBEB),
+                borderColor: const Color(0xFFFDE68A),
+                textColor: const Color(0xFFD97706),
+                icon: Icons.hourglass_top_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildSummaryStatBox(
+                label: "Approved",
+                count: "$approved",
+                bgColor: const Color(0xFFECFDF5),
+                borderColor: const Color(0xFFA7F3D0),
+                textColor: const Color(0xFF059669),
+                icon: Icons.check_circle_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildSummaryStatBox(
+                label: "Rejected",
+                count: "$rejected",
+                bgColor: const Color(0xFFFEF2F2),
+                borderColor: const Color(0xFFFECACA),
+                textColor: const Color(0xFFDC2626),
+                icon: Icons.cancel_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildSummaryStatBox(
+                label: "Total",
+                count: "$total",
+                bgColor: const Color(0xFFEFF6FF),
+                borderColor: const Color(0xFFBFDBFE),
+                textColor: const Color(0xFF2563EB),
+                icon: Icons.assignment_rounded,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryStatBox({
+    required String label,
+    required String count,
+    required Color bgColor,
+    required Color borderColor,
+    required Color textColor,
+    required IconData icon,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 13, color: textColor),
+                const SizedBox(width: 4),
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: textColor.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Card 2: Filter Chips Row
+  Widget _buildFilterChips(LeaveController controller) {
+    final filters = [
+      {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFD97706)},
+      {'label': 'Approved', 'value': 'approved', 'color': const Color(0xFF059669)},
+      {'label': 'Rejected', 'value': 'rejected', 'color': const Color(0xFFDC2626)},
+      {'label': 'All', 'value': 'all', 'color': const Color(0xFF2563EB)},
+    ];
+
+    return Obx(() {
+      final currentStatus = controller.selectedStatus.value;
+
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Row(
+          children: filters.map((f) {
+            final isSelected = currentStatus == f['value'];
+            final filterColor = f['color'] as Color;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => controller.changeStatusFilter(f['value'] as String),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? filterColor : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? filterColor : const Color(0xFFCBD5E1),
+                      width: 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: filterColor.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Text(
+                    f['label'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
   }
 
   Widget _buildLeaveCard(LeaveData item) {
