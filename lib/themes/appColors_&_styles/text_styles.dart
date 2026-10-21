@@ -37,9 +37,10 @@ class AppTextStyles{
 
   static const TextStyle appbarh4 = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
-    color: AppColors.primary,
+    fontSize: 15,
+    fontWeight: FontWeight.w900,
+    color: Color(0xFF1E293B),
+    letterSpacing: 0.5,
   );
 
 

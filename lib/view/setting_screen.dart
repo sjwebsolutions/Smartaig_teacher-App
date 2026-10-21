@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../controller/dashboard_controller_v2.dart';
-import '../../controller/auth_controller.dart';
-import '../../controller/support_controller.dart';
-import '../../controller/policy_controller.dart';
-import '../../models/policy_model.dart';
-import '../../themes/appColors_&_styles/app_Colors.dart';
-import '../../themes/appColors_&_styles/text_styles.dart';
-import '../../utils/app_snackbar.dart';
-import '../../utils/app_update_util.dart';
-import '../profile_screen.dart';
+import '../controller/dashboard_controller.dart';
+import '../controller/auth_controller.dart';
+import '../controller/support_controller.dart';
+import '../controller/policy_controller.dart';
+import '../models/policy_model.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/appColors_&_styles/text_styles.dart';
+import '../themes/app_bar/app_top_bar.dart';
+import '../utils/app_snackbar.dart';
+import '../utils/app_update_util.dart';
+import 'profile_screen.dart';
 import 'policy_detail_screen.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  final dashboardController = Get.find<NewDashboardController>();
+  final dashboardController = Get.find<DashboardController>();
   final authController = Get.find<AuthController>();
   final supportController = Get.find<SupportController>();
   final policyController = Get.find<PolicyController>();
@@ -54,15 +55,11 @@ class _SettingScreenState extends State<SettingScreen> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: Text(
-            "Settings",
-            style: AppTextStyles.h2.copyWith(color: AppColors.primary, fontSize: 24),
-          ),
+        appBar: AppTopBar(
+          showBack: false,
+          showDivider: false,
           backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: false,
-          automaticallyImplyLeading: false,
+          customTitle: Text("SETTINGS", style: AppTextStyles.appbarh4),
         ),
         body: SafeArea(
           child: Obx(() {

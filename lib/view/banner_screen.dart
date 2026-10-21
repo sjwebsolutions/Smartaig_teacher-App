@@ -4,10 +4,10 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../controller/banner_controller.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
-import '../../../themes/app_bar/app_top_bar.dart';
-import '../../../models/banner_model.dart';
+import '../controller/banner_controller.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/app_bar/app_top_bar.dart';
+import '../models/banner_model.dart';
 
 class BannerScreen extends GetView<BannerController> {
   const BannerScreen({super.key});

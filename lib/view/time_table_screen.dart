@@ -13,14 +13,21 @@ class TimeTableScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<TimeTableController>();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
-      appBar: const AppTopBar(
-        title: "Time Table",
-        showBack: true,
-        backgroundColor: const Color(0xFFF8F9FE),
-        showDivider: false,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Time Table",
+          showBack: true,
+          backgroundColor: Colors.transparent,
+          showDivider: false,
+        ),
         body: SafeArea(
           child: Obx(() {
             if (controller.isLoading.value && !controller.hasFetched.value) {
@@ -203,7 +210,8 @@ class TimeTableScreen extends StatelessWidget {
             );
           }),
         ),
-      );
+      ),
+    );
   }
 
   // Visual widget for Lunch/Breaks

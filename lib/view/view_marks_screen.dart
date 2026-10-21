@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../appColors_&_styles/app_Colors.dart';
-import '../appColors_&_styles/text_styles.dart';
+import '../utils/app_Colors.dart';
+import '../utils/text_styles.dart';
 import '../controller/marks_controller.dart';
-import '../models/marks_entry_classes_model.dart';
 import '../themes/app_bar/app_top_bar.dart';
 
 class ViewMarksScreen extends StatefulWidget {
   final VoidCallback? onBack;
-  const ViewMarksScreen({super.key, this.onBack});
+  final bool? showBack;
+  const ViewMarksScreen({super.key, this.onBack, this.showBack});
 
   @override
   State<ViewMarksScreen> createState() => _ViewMarksScreenState();
@@ -19,6 +19,9 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool canPop = Navigator.canPop(context);
+    final bool effectiveShowBack = widget.showBack ?? canPop;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -36,10 +39,10 @@ class _ViewMarksScreenState extends State<ViewMarksScreen> {
         backgroundColor: Colors.transparent, // Light greyish background for the screen
         appBar: AppTopBar(
           backgroundColor: Colors.transparent,
-          showBack: true,
+          showBack: effectiveShowBack,
           onBack: widget.onBack,
           showDivider: false,
-          customTitle: Text("Marks Screen", style: AppTextStyles.appbarh4),
+          customTitle: Text("MARKS SCREEN", style: AppTextStyles.appbarh4),
         ),
       body: Obx(() {
         if (marksController.isLoading.value) {

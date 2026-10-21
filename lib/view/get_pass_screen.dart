@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
-import '../../../themes/appColors_&_styles/text_styles.dart';
-import '../../../themes/app_bar/app_top_bar.dart';
-import '../../../controller/gate_pass_controller.dart';
-import '../../../models/gate_pass_model.dart';
-import '../../../utils/app_snackbar.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/appColors_&_styles/text_styles.dart';
+import '../themes/app_bar/app_top_bar.dart';
+import '../controller/gate_pass_controller.dart';
+import '../models/gate_pass_model.dart';
+import '../utils/app_snackbar.dart';
 
 class GetPassScreen extends StatelessWidget {
   const GetPassScreen({super.key});

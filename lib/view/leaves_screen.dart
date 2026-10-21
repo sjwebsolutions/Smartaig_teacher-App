@@ -4,6 +4,7 @@ import '../controller/student_leave_controller.dart';
 import '../models/class_list_model.dart';
 import '../models/student_leave_model.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/app_bar/app_top_bar.dart';
 import '../utils/app_snackbar.dart';
 
 class LeavesScreen extends GetView<StudentLeaveController> {
@@ -30,12 +31,15 @@ class LeavesScreen extends GetView<StudentLeaveController> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "STUDENT LEAVE REQUESTS",
+          showBack: true,
+          showDivider: false,
+          backgroundColor: Colors.transparent,
+        ),
         body: SafeArea(
           child: Column(
             children: [
-              // Header Bar
-              _buildAppBar(context),
-
               // Class Selector Row
               _buildClassSelector(),
 
@@ -161,48 +165,6 @@ class LeavesScreen extends GetView<StudentLeaveController> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // Header Bar
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 15,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              "STUDENT LEAVE REQUESTS",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF1E293B),
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(width: 38),
-        ],
       ),
     );
   }

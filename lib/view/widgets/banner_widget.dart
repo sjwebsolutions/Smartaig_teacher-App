@@ -6,8 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../../controller/banner_controller.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
+import '../../controller/banner_controller.dart';
+import '../../themes/appColors_&_styles/app_Colors.dart';
 
 class BannerWidget extends StatelessWidget {
   const BannerWidget({super.key});

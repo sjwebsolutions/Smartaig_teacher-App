@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/homework_controller.dart';
-import '../appColors_&_styles/app_Colors.dart';
-import '../appColors_&_styles/text_styles.dart';
+import '../utils/app_Colors.dart';
+import '../utils/text_styles.dart';
 import '../themes/app_bar/app_top_bar.dart';
 
 class AddHomeworkScreen extends GetView<HomeworkController> {

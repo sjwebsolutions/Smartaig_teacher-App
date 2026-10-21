@@ -1,9 +1,11 @@
 import 'package:pinput/pinput.dart';
-import '../controller/auth_controller.dart';
-import '../themes/appColors_&_styles/app_Colors.dart';
-import '../themes/appColors_&_styles/text_styles.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../../../controller/auth_controller.dart';
+import '../../../themes/appColors_&_styles/app_Colors.dart';
+import '../../../themes/appColors_&_styles/text_styles.dart';
 
 class OtpVerify extends StatelessWidget {
   OtpVerify({super.key});

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../controller/announcement_controller.dart';
 import '../controller/banner_controller.dart';
 import '../controller/leave_controller.dart';
+import '../controller/notification_controller.dart';
 import '../services/device_service.dart';
 import '../utils/api_url.dart';
 import '../utils/dio_client.dart';
@@ -152,7 +153,14 @@ class FcmService {
           );
         }
 
-        // Live refresh controllers when announcement, banner, or leave notification arrives
+        // Live refresh controllers when notification arrives
+        if (Get.isRegistered<NotificationController>()) {
+          Get.find<NotificationController>().fetchUnreadCount();
+          Get.find<NotificationController>().fetchNotifications(isRefresh: true);
+        } else {
+          final nc = Get.put(NotificationController());
+          nc.fetchUnreadCount();
+        }
         if (Get.isRegistered<AnnouncementController>()) {
           Get.find<AnnouncementController>().hasNewNotifications.value = true;
           Get.find<AnnouncementController>().fetchAnnouncements();

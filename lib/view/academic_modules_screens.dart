@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
-import '../controller/main_controller.dart';
 import '../controller/banner_controller.dart';
 import '../controller/homework_controller.dart';
 import '../controller/marks_controller.dart';
@@ -13,7 +12,7 @@ import '../controller/gate_pass_controller.dart';
 import '../controller/invigilator_controller.dart';
 import '../controller/leave_controller.dart';
 import '../controller/student_leave_controller.dart';
-import '../controller/dashboard_controller_v2.dart';
+import '../controller/dashboard_controller.dart';
 import 'grid_module_item.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 
@@ -36,8 +35,6 @@ class AcademicModuleGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mainController = Get.find<MainController>();
-    
     // Ensure controllers are registered (if not already)
     final homeworkController = Get.isRegistered<HomeworkController>() ? Get.find<HomeworkController>() : Get.put(HomeworkController());
     final marksController = Get.isRegistered<MarksController>() ? Get.find<MarksController>() : Get.put(MarksController());
@@ -83,8 +80,8 @@ class AcademicModuleGrid extends StatelessWidget {
               isEnabled: true,
               badgeCount: studentLeaveController.leavesList.isNotEmpty
                   ? studentLeaveController.leavesList.where((l) => (l.status ?? '').toLowerCase() == 'pending').length
-                  : (Get.isRegistered<NewDashboardController>()
-                      ? (Get.find<NewDashboardController>().dashboard.value?.data?.studentLeaves?.totalPendingCount ?? 0)
+                  : (Get.isRegistered<DashboardController>()
+                      ? (Get.find<DashboardController>().dashboard.value?.data?.studentLeaves?.totalPendingCount ?? 0)
                       : 0),
               onTap: () {
                 Get.toNamed('/studentLeave');
@@ -124,7 +121,7 @@ class AcademicModuleGrid extends StatelessWidget {
               isEnabled: true,
               badgeCount: homeworkController.homeworkList.length,
               onTap: () {
-                mainController.changeIndex(1);
+                Get.toNamed('/uploadHomework');
               },
             ),
             ModuleItem(
@@ -134,7 +131,7 @@ class AcademicModuleGrid extends StatelessWidget {
               isEnabled: true,
               badgeCount: marksController.marksEntries.length,
               onTap: () {
-                mainController.changeIndex(2);
+                Get.toNamed('/viewMarks');
               },
             ),
             ModuleItem(

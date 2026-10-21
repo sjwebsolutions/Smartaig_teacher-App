@@ -4,14 +4,17 @@ import '../controller/homework_controller.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 import '../themes/app_bar/app_top_bar.dart';
-import 'add_homework_screen_v2.dart';
 
 class UploadHomeworkScreen extends GetView<HomeworkController> {
   final VoidCallback? onBack;
-  const UploadHomeworkScreen({super.key, this.onBack});
+  final bool? showBack;
+  const UploadHomeworkScreen({super.key, this.onBack, this.showBack});
 
   @override
   Widget build(BuildContext context) {
+    final bool canPop = Navigator.canPop(context);
+    final bool effectiveShowBack = showBack ?? canPop;
+
     return Container(
       decoration: BoxDecoration(
         gradient: AppGradients.mainGradient,
@@ -20,7 +23,7 @@ class UploadHomeworkScreen extends GetView<HomeworkController> {
         backgroundColor: Colors.transparent,
         appBar: AppTopBar(
           title: "Homework List",
-          showBack: true,
+          showBack: effectiveShowBack,
           onBack: onBack,
           backgroundColor: Colors.transparent,
         ),

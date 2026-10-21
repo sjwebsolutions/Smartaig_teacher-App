@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../controller/scanner_controller.dart';
-import '../appColors_&_styles/app_Colors.dart';
-import '../appColors_&_styles/text_styles.dart';
+import '../utils/app_Colors.dart';
+import '../utils/text_styles.dart';
 
 class ScannerScreen extends StatelessWidget {
   const ScannerScreen({super.key});

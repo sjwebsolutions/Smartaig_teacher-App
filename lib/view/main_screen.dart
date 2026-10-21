@@ -6,11 +6,11 @@ import 'package:get/get.dart';
 import 'package:teacher_app_attendance/themes/app_bar/app_top_bar.dart';
 import 'package:teacher_app_attendance/utils/app_update_util.dart';
 import 'package:teacher_app_attendance/view/app_blocked_screen.dart';
-import 'package:teacher_app_attendance/view/screens/setting_screen.dart';
+import 'package:teacher_app_attendance/view/setting_screen.dart';
 import 'package:teacher_app_attendance/view/upload_homework_screen.dart';
 import 'package:teacher_app_attendance/view/view_marks_screen.dart';
 import '../controller/main_controller.dart';
-import 'screens/dashboard/dashboard_screen_v2.dart';
+import 'dashboard_screen.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 
 class MainScreen extends StatefulWidget {
@@ -36,9 +36,9 @@ class _MainScreenState extends State<MainScreen> {
     final controller = Get.put(MainController());
 
     final List<Widget> screens = [
-      const NewTeacherDashboardScreen(),
-      UploadHomeworkScreen(onBack: () => controller.changeIndex(0)),
-      ViewMarksScreen(onBack: () => controller.changeIndex(0)),
+      const DashboardScreen(),
+      const UploadHomeworkScreen(showBack: false),
+      const ViewMarksScreen(showBack: false),
       const SettingScreen()
     ];
 

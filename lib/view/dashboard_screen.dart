@@ -6,20 +6,22 @@ import 'package:share_plus/share_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../../controller/dashboard_controller_v2.dart';
-import '../../../controller/banner_controller.dart';
-import '../../../controller/announcement_controller.dart';
-import '../../../controller/student_leave_controller.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
-import '../../../themes/appColors_&_styles/text_styles.dart';
-import '../../../themes/app_bar/app_top_bar.dart';
-import '../../academic_modules_screens.dart';
-import '../../widgets/dashboard_shimmer.dart';
-import '../banner/banner_widget.dart';
-import '../../widgets/custom_drawer.dart';
+import '../controller/dashboard_controller.dart';
+import '../controller/banner_controller.dart';
+import '../controller/announcement_controller.dart';
+import '../controller/notification_controller.dart';
+import '../controller/student_leave_controller.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/appColors_&_styles/text_styles.dart';
+import '../themes/app_bar/app_top_bar.dart';
+import 'academic_modules_screens.dart';
+import 'widgets/dashboard_shimmer.dart';
+import 'widgets/banner_widget.dart';
+import 'widgets/custom_drawer.dart';
+import 'widgets/notification_action.dart';
 
-class NewTeacherDashboardScreen extends StatelessWidget {
-  const NewTeacherDashboardScreen({super.key});
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -30,9 +32,12 @@ class NewTeacherDashboardScreen extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    final NewDashboardController dashboardController = Get.find<NewDashboardController>();
+    final DashboardController dashboardController = Get.find<DashboardController>();
     final AnnouncementController announcementController = Get.put(AnnouncementController());
     final BannerController bannerController = Get.find<BannerController>();
+    final NotificationController notificationController = Get.isRegistered<NotificationController>()
+        ? Get.find<NotificationController>()
+        : Get.put(NotificationController());
 
     final mediaQuery = MediaQuery.of(context);
     final double screenWidth = mediaQuery.size.width;
@@ -74,6 +79,9 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                       },
                     ),
                   ),
+                  actions: const [
+                    NotificationAction(),
+                  ],
                 ),
           drawer: hasError ? null : const CustomDrawer(),
           body: SafeArea(
@@ -84,6 +92,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                   await Get.find<BannerController>().fetchBanners(showLoading: false);
                 }
                 await announcementController.fetchAnnouncements();
+                await notificationController.fetchUnreadCount();
                 if (Get.isRegistered<StudentLeaveController>()) {
                   await Get.find<StudentLeaveController>().fetchStudentLeaves();
                 }
@@ -158,11 +167,9 @@ class NewTeacherDashboardScreen extends StatelessWidget {
                               );
                             }),
                             _buildTeacherInfoCard(context, dashboardController, kCardMargin, kCardPadding),
-                            _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
                             const SizedBox(height: 10),
-                            // _buildAssignedSubjectsSection(dashboardController, kCardMargin),
-                            // const SizedBox(height: 10),
                             _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
+                            _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
                             _buildStudentLeavesCard(dashboardController, kCardMargin),
                             _buildDutiesSection(dashboardController, kCardMargin),
                             const SizedBox(height: 5),
@@ -178,7 +185,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildTeacherInfoCard(BuildContext context, NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
+  Widget _buildTeacherInfoCard(BuildContext context, DashboardController controller, EdgeInsets margin, EdgeInsets padding) {
     final mediaQuery = MediaQuery.of(context);
     final double screenWidth = mediaQuery.size.width;
     final bool isSmallScreen = screenWidth < 360;
@@ -633,7 +640,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDutiesSection(NewDashboardController controller, EdgeInsets margin) {
+  Widget _buildDutiesSection(DashboardController controller, EdgeInsets margin) {
     return Obx(() {
       final duties = controller.dashboard.value?.data?.todayTomorrowDuties ?? [];
       if (duties.isEmpty) return const SizedBox.shrink();
@@ -823,7 +830,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildAssignedSubjectsSection(NewDashboardController controller, EdgeInsets margin) {
+  Widget _buildAssignedSubjectsSection(DashboardController controller, EdgeInsets margin) {
     return Obx(() {
       final subjects = controller.dashboard.value?.data?.assignedSubjects ?? [];
       if (subjects.isEmpty) return const SizedBox.shrink();
@@ -932,7 +939,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildAttendanceCard(NewDashboardController controller, EdgeInsets margin, EdgeInsets padding) {
+  Widget _buildAttendanceCard(DashboardController controller, EdgeInsets margin, EdgeInsets padding) {
     return Container(
       margin: margin,
       width: double.infinity,
@@ -1180,7 +1187,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStudentLeavesCard(NewDashboardController controller, EdgeInsets margin) {
+  Widget _buildStudentLeavesCard(DashboardController controller, EdgeInsets margin) {
     return Obx(() {
       final studentLeaves = controller.dashboard.value?.data?.studentLeaves;
       if (studentLeaves == null) return const SizedBox.shrink();
@@ -1354,7 +1361,7 @@ class NewTeacherDashboardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildCenteredErrorView(BuildContext context, NewDashboardController controller) {
+  Widget _buildCenteredErrorView(BuildContext context, DashboardController controller) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Container(

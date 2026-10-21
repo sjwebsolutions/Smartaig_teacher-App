@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../controller/announcement_controller.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
-import '../../../themes/app_bar/app_top_bar.dart';
+import '../controller/announcement_controller.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/app_bar/app_top_bar.dart';
 
 class AnnouncementListScreen extends GetView<AnnouncementController> {
   const AnnouncementListScreen({super.key});

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../controller/auth_controller.dart';
-import '../themes/appColors_&_styles/app_Colors.dart';
-import '../themes/appColors_&_styles/text_styles.dart';
+import '../../../controller/auth_controller.dart';
+
 
 import 'package:get/get.dart';
 
+import '../../../themes/appColors_&_styles/app_Colors.dart';
+import '../../../themes/appColors_&_styles/text_styles.dart';
 import 'manual_otp_screen.dart';
 
 class LoginScreen extends StatelessWidget {

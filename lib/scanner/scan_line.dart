@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../appColors_&_styles/app_Colors.dart';
+import '../utils/app_Colors.dart';
 
 class ScanLine extends StatelessWidget {
   final double scanSize;

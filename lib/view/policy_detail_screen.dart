@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/get.dart';
-import '../../themes/appColors_&_styles/app_Colors.dart';
-import '../../themes/appColors_&_styles/text_styles.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/appColors_&_styles/text_styles.dart';
 
 class PolicyDetailScreen extends StatelessWidget {
   final String title;
@@ -27,11 +27,12 @@ class PolicyDetailScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            title,
-            style: AppTextStyles.h2.copyWith(color: AppColors.primary, fontSize: 22),
+            title.toUpperCase(),
+            style: AppTextStyles.h2.copyWith(color: AppColors.primary, fontSize: 20),
           ),
           backgroundColor: Colors.transparent,
           elevation: 0,
+          centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
             onPressed: () => Get.back(),

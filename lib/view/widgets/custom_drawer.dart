@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../controller/dashboard_controller_v2.dart';
+import '../../controller/dashboard_controller.dart';
 import '../../controller/auth_controller.dart';
 import '../../themes/appColors_&_styles/app_Colors.dart';
 import '../../themes/appColors_&_styles/text_styles.dart';
@@ -12,7 +12,7 @@ class CustomDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dashboardController = Get.find<NewDashboardController>();
+    final dashboardController = Get.find<DashboardController>();
     final authController = Get.find<AuthController>();
 
     return Drawer(
@@ -129,7 +129,7 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(NewDashboardController controller) {
+  Widget _buildHeader(DashboardController controller) {
     return Obx(() {
       final teacher = controller.dashboard.value?.data?.teacher;
       return Container(

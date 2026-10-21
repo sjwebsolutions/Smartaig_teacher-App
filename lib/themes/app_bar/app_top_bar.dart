@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../appColors_&_styles/app_Colors.dart';
 import '../appColors_&_styles/text_styles.dart';
 import 'app_bar_divider.dart';
 
@@ -39,18 +38,39 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
-      centerTitle: centerTitle,
+      centerTitle: centerTitle ?? true,
       leading: showBack || leadingWidgets != null
           ? (leadingWidgets ??
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_outlined),
-                    onPressed: onBack ?? () => Get.back(),
-                  ))
+              Center(
+                child: GestureDetector(
+                  onTap: onBack ?? () => Get.back(),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 15,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                ),
+              ))
           : null,
       title: customTitle ??
           Text(
-            title ?? "",
-            style: AppTextStyles.appbarh4,
+            (title ?? "").toUpperCase(),
+            style: const TextStyle(
+              color: Color(0xFF1E293B),
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+              letterSpacing: 0.5,
+            ),
           ),
       actions: actions,
       bottom: bottom ?? (showDivider ? const AppBarDivider() : null),

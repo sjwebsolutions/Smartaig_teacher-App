@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../../controller/announcement_controller.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
-import '../../../themes/appColors_&_styles/text_styles.dart';
-import '../../../themes/app_bar/app_top_bar.dart';
-import '../../widgets/custom_camera_screen.dart';
+import '../controller/announcement_controller.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/appColors_&_styles/text_styles.dart';
+import '../themes/app_bar/app_top_bar.dart';
+import 'widgets/custom_camera_screen.dart';
 
 class AddAnnouncementScreen extends StatefulWidget {
   const AddAnnouncementScreen({super.key});

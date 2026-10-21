@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
-import '../controller/dashboard_controller_v2.dart';
+import '../controller/dashboard_controller.dart';
 import '../controller/profile_controller.dart';
 import '../controller/auth_controller.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dashboardController = Get.find<NewDashboardController>();
+    final dashboardController = Get.find<DashboardController>();
     final profileController = Get.put(ProfileController());
     final authController = Get.find<AuthController>();
 

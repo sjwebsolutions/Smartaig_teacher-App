@@ -8,11 +8,11 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:teacher_app_attendance/api_service/attendance_scanner_service.dart';
 
-import '../view/screens/dashboard/dashboard_screen_v2.dart';
+import '../view/dashboard_screen.dart';
 import '../models/dashboard_model.dart';
 import '../services/fcm_services.dart';
 import 'announcement_controller.dart';
-import 'dashboard_controller_v2.dart';
+import 'dashboard_controller.dart';
 class ScannerController extends GetxController with GetTickerProviderStateMixin {
 
   final isLoading = false.obs;
@@ -103,7 +103,7 @@ class ScannerController extends GetxController with GetTickerProviderStateMixin 
       // if (Get.isDialogOpen ?? false) Get.back();
 
       if (response.success == true) {
-        final NewDashboardController dash = Get.find();
+        final DashboardController dash = Get.find();
         dash.updateAttendanceStatus();
 
         // Close Scanner Screen

@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../../controller/announcement_controller.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
+import '../../controller/announcement_controller.dart';
+import '../../themes/appColors_&_styles/app_Colors.dart';
 
 class AnnouncementWidget extends StatelessWidget {
   const AnnouncementWidget({super.key});

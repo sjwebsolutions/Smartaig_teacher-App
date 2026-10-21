@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../models/banner_model.dart';
-import '../../../themes/appColors_&_styles/app_Colors.dart';
-import '../../../services/share_service.dart';
+import '../models/banner_model.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../services/share_service.dart';
 
 class BannerDetailScreen extends StatelessWidget {
   const BannerDetailScreen({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../appColors_&_styles/app_Colors.dart';
+import 'app_Colors.dart';
 
 class AppSnackBar {
   static void error(String message) {

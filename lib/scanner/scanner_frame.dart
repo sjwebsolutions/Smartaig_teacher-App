@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:teacher_app_attendance/appColors_&_styles/app_Colors.dart';
+import 'package:teacher_app_attendance/utils/app_Colors.dart';
 
 class ScannerOverlayPainter extends CustomPainter {
   final double scanSize;

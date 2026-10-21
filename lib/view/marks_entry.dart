@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../appColors_&_styles/app_Colors.dart';
-import '../appColors_&_styles/text_styles.dart';
+import '../utils/app_Colors.dart';
+import '../utils/text_styles.dart';
 import '../controller/marks_controller.dart';
 import '../models/marks_model.dart';
 import '../models/marks_save_model.dart';
@@ -10,7 +10,8 @@ import '../themes/app_bar/app_top_bar.dart';
 
 
 class MarksEntryScreen extends StatefulWidget {
-  const MarksEntryScreen({super.key});
+  final bool? showBack;
+  const MarksEntryScreen({super.key, this.showBack});
 
   @override
   State<MarksEntryScreen> createState() => _MarksEntryScreenState();
@@ -144,6 +145,9 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool canPop = Navigator.canPop(context);
+    final bool effectiveShowBack = widget.showBack ?? canPop;
+
     return Container(
       decoration: BoxDecoration(
         gradient: AppGradients.primary(
@@ -155,9 +159,9 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppTopBar(
           backgroundColor: Colors.transparent,
-          showBack: true,
+          showBack: effectiveShowBack,
           showDivider: false,
-          customTitle: Text("Marks Entry", style: AppTextStyles.appbarh4),
+          customTitle: Text("MARKS ENTRY", style: AppTextStyles.appbarh4),
         ),
         body: Obx(() {
         if (marksController.isLoading.value || 

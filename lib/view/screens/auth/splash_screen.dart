@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../appColors_&_styles/text_styles.dart';
-import '../controller/splash_controller.dart';
-import '../themes/appColors_&_styles/app_Colors.dart';
+import '../../../controller/splash_controller.dart';
+import '../../../themes/appColors_&_styles/app_Colors.dart';
+import '../../../themes/appColors_&_styles/text_styles.dart';
+
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -134,7 +135,6 @@ class SplashScreen extends StatelessWidget {
                               style: AppTextStyles.h2.copyWith(
                                 fontSize: titleFontSize,
                                 color: AppColors.primary,
-                                letterSpacing: 1.0,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),

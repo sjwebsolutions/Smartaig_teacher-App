@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
-import 'package:teacher_app_attendance/appColors_&_styles/app_Colors.dart';
-import 'package:teacher_app_attendance/appColors_&_styles/text_styles.dart';
+import 'package:teacher_app_attendance/utils/app_Colors.dart';
+import 'package:teacher_app_attendance/utils/text_styles.dart';
 
 class GlassInfoCard extends StatelessWidget {
   final IconData icon;

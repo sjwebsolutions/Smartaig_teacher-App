@@ -24,6 +24,8 @@ class ApiUrls {
   static const String submitMarks = "$baseUrl/marks-entries/submit";
   static const String banners = "$baseUrl/banners";
   static const String announcements = "$baseUrl/announcements";
+  static const String notifications = "$baseUrl/notifications";
+  static const String unreadNotificationsCount = "$baseUrl/notifications/unread-count";
   static const String teacherSyllabus = "$baseUrl/syllabus";
   static const String syllabusTerms = "$teacherSyllabus/terms";
   static const String syllabusFormData = "$teacherSyllabus/form-data";

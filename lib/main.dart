@@ -13,6 +13,9 @@ import 'package:teacher_app_attendance/view/homework_detail_screen.dart';
 import 'package:teacher_app_attendance/view/main_screen.dart';
 import 'package:teacher_app_attendance/view/marks_entry.dart';
 import 'package:teacher_app_attendance/view/pdf_viewer_screen.dart';
+import 'package:teacher_app_attendance/view/screens/auth/login_screen.dart';
+import 'package:teacher_app_attendance/view/screens/auth/splash_screen.dart';
+import 'package:teacher_app_attendance/view/screens/auth/verify_otp_screen.dart';
 import 'package:teacher_app_attendance/view/student_performance.dart';
 import 'package:teacher_app_attendance/view/syllabus_screen.dart';
 import 'package:teacher_app_attendance/view/syllabus_tracker.dart';
@@ -35,14 +38,11 @@ import 'modules/syllabus_module.dart';
 import 'modules/image_update_module.dart';
 import 'services/device_service.dart';
 import 'services/fcm_services.dart';
-import 'auth/login_screen.dart';
-import 'auth/splash_screen.dart';
-import 'auth/verify_otp_screen.dart';
-import 'view/screens/banner/banner_screen.dart';
-import 'view/screens/banner/banner_detail_screen.dart';
-import 'view/screens/banner/announcement_list_screen.dart';
-import 'view/screens/banner/add_announcement_screen.dart';
-import 'view/screens/get_pass/get_pass_screen.dart';
+import 'view/banner_screen.dart';
+import 'view/banner_detail_screen.dart';
+import 'view/announcement_list_screen.dart';
+import 'view/add_announcement_screen.dart';
+import 'view/get_pass_screen.dart';
 import 'modules/banner_module.dart';
 import 'modules/announcement_module.dart';
 import 'modules/date_sheet_module.dart';
@@ -58,6 +58,8 @@ import 'modules/admit_card_scanner_module.dart';
 import 'view/leaves_screen.dart';
 import 'modules/leave_module.dart';
 import 'view/student_leave_screen.dart';
+import 'view/notification_screen.dart';
+import 'modules/notification_module.dart';
 import 'modules/student_leave_module.dart';
 import 'view/student_qr_scanner_screen.dart';
 import 'view/teacher_leave_screen.dart';
@@ -274,6 +276,11 @@ class _MyAppState extends State<MyApp> {
           name: '/announcements',
           page: () => const AnnouncementListScreen(),
           binding: AnnouncementBinding(),
+        ),
+        GetPage(
+          name: '/notifications',
+          page: () => const NotificationScreen(),
+          binding: NotificationBinding(),
         ),
         GetPage(
           name: '/bannerDetail',
