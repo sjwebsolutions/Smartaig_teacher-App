@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import '../controller/leave_controller.dart';
 import '../services/fcm_services.dart';
-import '../themes/appColors_&_styles/text_styles.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/app_bar/app_top_bar.dart';
 
 class ApplyLeaveScreen extends StatefulWidget {
   const ApplyLeaveScreen({super.key});
@@ -169,7 +170,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
@@ -181,7 +182,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 Text(
                   displayFormatted,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
                   ),
@@ -189,7 +190,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 const Icon(
                   Icons.keyboard_arrow_down_rounded,
                   color: Color(0xFF2563EB),
-                  size: 22,
+                  size: 20,
                 ),
               ],
             ),
@@ -227,683 +228,629 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     final categories = meta?.leaveCategories ?? [];
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
           begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFB0D7FE),
-            Color(0xFFE8D8FD),
-            Color(0xFFD3E1FD),
-            Color(0xFFD7E5FD),
-          ],
+          end: Alignment.bottomCenter,
         ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Apply Leave",
+          showBack: true,
+          backgroundColor: Colors.transparent,
+          showDivider: false,
+        ),
         body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 16,
-                          color: Color(0xFF1E293B),
-                        ),
-                        onPressed: () => Get.back(),
-                      ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Policy Note (Only shown when Full Day is selected)
+                if (selectedDayType == "full_day" && meta?.policyNote != null && meta!.policyNote!.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
                     ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          "APPLY LEAVE",
-                          style: AppTextStyles.h2.copyWith(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1E293B),
-                            letterSpacing: 0.5,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            meta.policyNote!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFB45309),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 32),
-                  ],
-                ),
-              ),
+                  ),
 
-              // Form Scroll Area
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  physics: const BouncingScrollPhysics(),
+                // Form Container Card
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Policy Note (Only shown when Full Day is selected)
-                      if (selectedDayType == "full_day" && meta?.policyNote != null && meta!.policyNote!.isNotEmpty)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 22),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  meta.policyNote!,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFFB45309),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                      // 1. TOP SEGMENTED BUTTONS: Full Day vs Half Day
+                      const Text(
+                        "Leave Duration",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF334155),
                         ),
-
-                      // Form Container Card
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1. TOP SEGMENTED BUTTONS: Full Day vs Half Day
-                            const Text(
-                              "Leave Duration",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => setState(() => selectedDayType = "full_day"),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: selectedDayType == "full_day"
-                                            ? const Color(0xFF2563EB)
-                                            : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: selectedDayType == "full_day"
-                                              ? const Color(0xFF2563EB)
-                                              : const Color(0xFFCBD5E1),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.wb_sunny_rounded,
-                                            size: 18,
-                                            color: selectedDayType == "full_day"
-                                                ? Colors.white
-                                                : Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "Full Day",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: selectedDayType == "full_day"
-                                                  ? Colors.white
-                                                  : Colors.grey.shade800,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => setState(() => selectedDayType = "half_day"),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: selectedDayType == "half_day"
-                                            ? const Color(0xFF2563EB)
-                                            : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: selectedDayType == "half_day"
-                                              ? const Color(0xFF2563EB)
-                                              : const Color(0xFFCBD5E1),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.contrast_rounded,
-                                            size: 18,
-                                            color: selectedDayType == "half_day"
-                                                ? Colors.white
-                                                : Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "Half Day",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: selectedDayType == "half_day"
-                                                  ? Colors.white
-                                                  : Colors.grey.shade800,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 2. IF FULL DAY IS SELECTED: Dropdown for "1 Day" vs "More Days"
-                            if (selectedDayType == "full_day") ...[
-                              const Text(
-                                "Day Option",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              DropdownButtonFormField<String>(
-                                initialValue: fullDayOption,
-                                dropdownColor: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                elevation: 4,
-                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                  ),
-                                ),
-                                items: [
-                                  DropdownMenuItem(
-                                    value: "1_day",
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEFF6FF),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(Icons.today_rounded, size: 18, color: Color(0xFF2563EB)),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        const Text("1 Day", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-                                      ],
-                                    ),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: "more_days",
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF3E8FF),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(Icons.date_range_rounded, size: 18, color: Color(0xFF7C3AED)),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        const Text("More Days", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setState(() => fullDayOption = val);
-                                },
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Date Selection for Full Day ONLY if "more_days" is selected!
-                              if (fullDayOption == "more_days") ...[
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildDateSelectorTile(
-                                        label: "From Date",
-                                        date: startDate,
-                                        onDatePicked: (picked) {
-                                          setState(() {
-                                            startDate = picked;
-                                            if (endDate.isBefore(startDate)) endDate = startDate;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildDateSelectorTile(
-                                        label: "To Date",
-                                        date: endDate,
-                                        onDatePicked: (picked) {
-                                          setState(() => endDate = picked);
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                            ],
-
-                            // 3. IF HALF DAY IS SELECTED
-                            if (selectedDayType == "half_day") ...[
-                              const Text(
-                                "Half Day Hours",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () async {
-                                        final picked = await showTimePicker(
-                                          context: context,
-                                          initialTime: halfDayStart ?? const TimeOfDay(hour: 9, minute: 0),
-                                        );
-                                        if (picked != null) {
-                                          setState(() => halfDayStart = picked);
-                                        }
-                                      },
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              halfDayStart != null
-                                                  ? "Start: ${halfDayStart!.format(context)}"
-                                                  : "Start Time",
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: halfDayStart != null ? FontWeight.w600 : FontWeight.normal,
-                                                color: halfDayStart != null ? const Color(0xFF0F172A) : Colors.grey.shade500,
-                                              ),
-                                            ),
-                                            const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF2563EB)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () async {
-                                        final picked = await showTimePicker(
-                                          context: context,
-                                          initialTime: halfDayEnd ?? const TimeOfDay(hour: 13, minute: 0),
-                                        );
-                                        if (picked != null) {
-                                          setState(() => halfDayEnd = picked);
-                                        }
-                                      },
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              halfDayEnd != null
-                                                  ? "End: ${halfDayEnd!.format(context)}"
-                                                  : "End Time",
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: halfDayEnd != null ? FontWeight.w600 : FontWeight.normal,
-                                                color: halfDayEnd != null ? const Color(0xFF0F172A) : Colors.grey.shade500,
-                                              ),
-                                            ),
-                                            const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF2563EB)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-
-                            // 4. Leave Category Dropdown
-                            const Text(
-                              "Leave Category",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              initialValue: selectedLeaveType,
-                              dropdownColor: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              elevation: 4,
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                ),
-                              ),
-                              items: categories.isNotEmpty
-                                  ? categories
-                                      .map((c) => DropdownMenuItem(
-                                            value: c.key ?? "casual",
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  padding: const EdgeInsets.all(6),
-                                                  decoration: BoxDecoration(
-                                                    color: _getCategoryColor(c.key ?? "casual").withValues(alpha: 0.12),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: Icon(
-                                                    _getCategoryIcon(c.key ?? "casual"),
-                                                    size: 18,
-                                                    color: _getCategoryColor(c.key ?? "casual"),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                Text(
-                                                  c.label ?? "Casual Leave",
-                                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
-                                                ),
-                                              ],
-                                            ),
-                                          ))
-                                      .toList()
-                                  : [
-                                      DropdownMenuItem(
-                                        value: "casual",
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFFEF3C7),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Icon(Icons.beach_access_rounded, size: 18, color: Color(0xFFD97706)),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            const Text("Casual Leave", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-                                          ],
-                                        ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "sick",
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFFEE2E2),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Icon(Icons.local_hospital_rounded, size: 18, color: Color(0xFFDC2626)),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            const Text("Sick Leave", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-                                          ],
-                                        ),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "other",
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFEFF6FF),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Icon(Icons.event_note_rounded, size: 18, color: Color(0xFF2563EB)),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            const Text("Other / Special Leave", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                              onChanged: (val) {
-                                if (val != null) setState(() => selectedLeaveType = val);
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 5. Reason Field
-                            const Text(
-                              "Reason for Leave",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: _reasonController,
-                              maxLines: 4,
-                              style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
-                              decoration: InputDecoration(
-                                hintText: "Enter detailed reason...",
-                                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                                filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
-                                contentPadding: const EdgeInsets.all(14),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 6. Attachment Field
-                            const Text(
-                              "Attachment (Optional)",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            InkWell(
-                              onTap: _pickAttachment,
-                              borderRadius: BorderRadius.circular(12),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => selectedDayType = "full_day"),
                               child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(14),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: selectedDayType == "full_day"
+                                      ? const Color(0xFF2563EB)
+                                      : const Color(0xFFF1F5F9),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: selectedAttachmentPath != null
+                                    color: selectedDayType == "full_day"
                                         ? const Color(0xFF2563EB)
                                         : const Color(0xFFCBD5E1),
                                   ),
                                 ),
                                 child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      selectedAttachmentPath != null
-                                          ? Icons.insert_drive_file_rounded
-                                          : Icons.attach_file_rounded,
-                                      color: selectedAttachmentPath != null
-                                          ? const Color(0xFF2563EB)
-                                          : Colors.grey.shade600,
+                                      Icons.wb_sunny_rounded,
+                                      size: 18,
+                                      color: selectedDayType == "full_day"
+                                          ? Colors.white
+                                          : Colors.grey.shade700,
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        selectedAttachmentName ?? "Attach document or medical proof",
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Full Day",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: selectedDayType == "full_day"
+                                            ? Colors.white
+                                            : Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => selectedDayType = "half_day"),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: selectedDayType == "half_day"
+                                      ? const Color(0xFF2563EB)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: selectedDayType == "half_day"
+                                        ? const Color(0xFF2563EB)
+                                        : const Color(0xFFCBD5E1),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.contrast_rounded,
+                                      size: 18,
+                                      color: selectedDayType == "half_day"
+                                          ? Colors.white
+                                          : Colors.grey.shade700,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Half Day",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: selectedDayType == "half_day"
+                                            ? Colors.white
+                                            : Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // 2. IF FULL DAY IS SELECTED: Dropdown for "1 Day" vs "More Days"
+                      if (selectedDayType == "full_day") ...[
+                        const Text(
+                          "Day Option",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<String>(
+                          initialValue: fullDayOption,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          elevation: 4,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            ),
+                          ),
+                          items: [
+                            DropdownMenuItem(
+                              value: "1_day",
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.today_rounded, size: 18, color: Color(0xFF2563EB)),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text("1 Day", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: "more_days",
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3E8FF),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.date_range_rounded, size: 18, color: Color(0xFF7C3AED)),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text("More Days", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                ],
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setState(() => fullDayOption = val);
+                          },
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Date Selection for Full Day ONLY if "more_days" is selected!
+                        if (fullDayOption == "more_days") ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDateSelectorTile(
+                                  label: "From Date",
+                                  date: startDate,
+                                  onDatePicked: (picked) {
+                                    setState(() {
+                                      startDate = picked;
+                                      if (endDate.isBefore(startDate)) endDate = startDate;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildDateSelectorTile(
+                                  label: "To Date",
+                                  date: endDate,
+                                  onDatePicked: (picked) {
+                                    setState(() => endDate = picked);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                      ],
+
+                      // 3. IF HALF DAY IS SELECTED
+                      if (selectedDayType == "half_day") ...[
+                        const Text(
+                          "Half Day Hours",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: halfDayStart ?? const TimeOfDay(hour: 9, minute: 0),
+                                  );
+                                  if (picked != null) {
+                                    setState(() => halfDayStart = picked);
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        halfDayStart != null
+                                            ? "Start: ${halfDayStart!.format(context)}"
+                                            : "Start Time",
                                         style: TextStyle(
                                           fontSize: 13,
-                                          fontWeight: selectedAttachmentPath != null
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                          color: selectedAttachmentPath != null
-                                              ? const Color(0xFF2563EB)
-                                              : Colors.grey.shade600,
+                                          fontWeight: halfDayStart != null ? FontWeight.w600 : FontWeight.normal,
+                                          color: halfDayStart != null ? const Color(0xFF0F172A) : Colors.grey.shade500,
                                         ),
                                       ),
-                                    ),
-                                    if (selectedAttachmentPath != null)
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            selectedAttachmentPath = null;
-                                            selectedAttachmentName = null;
-                                          });
-                                        },
-                                        child: const Icon(Icons.cancel_rounded, color: Colors.red, size: 20),
+                                      const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF2563EB)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: halfDayEnd ?? const TimeOfDay(hour: 13, minute: 0),
+                                  );
+                                  if (picked != null) {
+                                    setState(() => halfDayEnd = picked);
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        halfDayEnd != null
+                                            ? "End: ${halfDayEnd!.format(context)}"
+                                            : "End Time",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: halfDayEnd != null ? FontWeight.w600 : FontWeight.normal,
+                                          color: halfDayEnd != null ? const Color(0xFF0F172A) : Colors.grey.shade500,
+                                        ),
                                       ),
-                                  ],
+                                      const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF2563EB)),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 14),
+                      ],
+
+                      // 4. Leave Category Dropdown
+                      const Text(
+                        "Leave Category",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF334155),
+                        ),
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // Submit Button
-                      Obx(() {
-                        final isSubmitting = controller.isLoading.value;
-
-                        return SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: isSubmitting ? null : _submitForm,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              elevation: 4,
-                              shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: isSubmitting
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                                  )
-                                : const Text(
-                                    "Submit Leave Request",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedLeaveType,
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        elevation: 4,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                           ),
-                        );
-                      }),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          ),
+                        ),
+                        items: categories.isNotEmpty
+                            ? categories
+                                .map((c) => DropdownMenuItem(
+                                      value: c.key ?? "casual",
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: _getCategoryColor(c.key ?? "casual").withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              _getCategoryIcon(c.key ?? "casual"),
+                                              size: 18,
+                                              color: _getCategoryColor(c.key ?? "casual"),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            c.label ?? "Casual Leave",
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                                          ),
+                                        ],
+                                      ),
+                                    ))
+                                .toList()
+                            : [
+                                DropdownMenuItem(
+                                  value: "casual",
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(Icons.beach_access_rounded, size: 18, color: Color(0xFFD97706)),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Text("Casual Leave", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: "sick",
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEE2E2),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(Icons.local_hospital_rounded, size: 18, color: Color(0xFFDC2626)),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Text("Sick Leave", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: "other",
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(Icons.event_note_rounded, size: 18, color: Color(0xFF2563EB)),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Text("Other / Special Leave", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => selectedLeaveType = val);
+                        },
+                      ),
+                      const SizedBox(height: 14),
 
-                      const SizedBox(height: 20),
+                      // 5. Reason Field
+                      const Text(
+                        "Reason for Leave",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _reasonController,
+                        maxLines: 4,
+                        style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
+                        decoration: InputDecoration(
+                          hintText: "Enter detailed reason...",
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.all(12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // 6. Attachment Field
+                      const Text(
+                        "Attachment (Optional)",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      InkWell(
+                        onTap: _pickAttachment,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selectedAttachmentPath != null
+                                  ? const Color(0xFF2563EB)
+                                  : const Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                selectedAttachmentPath != null
+                                    ? Icons.insert_drive_file_rounded
+                                    : Icons.attach_file_rounded,
+                                color: selectedAttachmentPath != null
+                                    ? const Color(0xFF2563EB)
+                                    : Colors.grey.shade600,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  selectedAttachmentName ?? "Attach document or medical proof",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: selectedAttachmentPath != null
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: selectedAttachmentPath != null
+                                        ? const Color(0xFF2563EB)
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ),
+                              if (selectedAttachmentPath != null)
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedAttachmentPath = null;
+                                      selectedAttachmentName = null;
+                                    });
+                                  },
+                                  child: const Icon(Icons.cancel_rounded, color: Colors.red, size: 20),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 14),
+
+                // Submit Button
+                Obx(() {
+                  final isSubmitting = controller.isLoading.value;
+
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting ? null : _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        elevation: 3,
+                        shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                            )
+                          : const Text(
+                              "Submit Leave Request",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../controller/image_update_controller.dart';
 import '../models/image_update_students_model.dart';
 import '../models/image_update_store_model.dart';
@@ -9,6 +10,7 @@ import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 import '../themes/app_bar/app_top_bar.dart';
 import 'widgets/custom_camera_screen.dart';
+import 'widgets/custom_crop_screen.dart';
 import 'widgets/punjabi_keyboard_helper.dart';
 
 class UpdateStudentDetailsScreen extends StatefulWidget {
@@ -102,10 +104,184 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
     super.dispose();
   }
 
-  Future<void> _pickImage(String type) async {
-    final result = await Get.to(() => const CustomCameraScreen());
-    if (result != null) {
+  void _showImageSourceSheet(String type, String title) {
+    String cleanTitle = title.replaceAll("'s Image", " Photo").replaceAll(" Profile", " Profile Photo");
+    if (!cleanTitle.toLowerCase().contains("photo")) {
+      cleanTitle = "$cleanTitle Photo";
+    }
+    final String sheetTitle = cleanTitle.startsWith("Select") ? cleanTitle : "Select $cleanTitle";
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              sheetTitle,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Get.back();
+                      _pickImageFromCamera(type);
+                    },
+                    child: Container(
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFC7D2FE),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF6366F1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Camera",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Get.back();
+                      _pickImageFromGallery(type);
+                    },
+                    child: Container(
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFA7F3D0),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.insert_photo_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Gallery",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImageFromCamera(String type) async {
+    String cameraTitle = "Capture Photo";
+    if (type == 'profile') {
+      cameraTitle = "Student Profile Photo";
+    } else if (type == 'father') {
+      cameraTitle = "Father's Photo";
+    } else if (type == 'mother') {
+      cameraTitle = "Mother's Photo";
+    }
+
+    final result = await Get.to(() => CustomCameraScreen(title: cameraTitle));
+    if (result != null && result is String && result.isNotEmpty) {
       await controller.saveCapturedImage(student.id!, type, result);
+    }
+  }
+
+  Future<void> _pickImageFromGallery(String type) async {
+    String cropTitle = "Crop Photo";
+    if (type == 'profile') {
+      cropTitle = "Student Profile Photo";
+    } else if (type == 'father') {
+      cropTitle = "Father's Photo";
+    } else if (type == 'mother') {
+      cropTitle = "Mother's Photo";
+    }
+
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (image != null) {
+      final croppedResult = await Get.to(() => ImageCropScreen(
+        imageFile: File(image.path),
+        title: cropTitle,
+      ));
+      if (croppedResult != null && croppedResult is XFile) {
+        await controller.saveCapturedImage(student.id!, type, croppedResult.path);
+      }
     }
   }
 
@@ -129,12 +305,12 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
         body: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildStudentHeader(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 
                 // Section 1: Photos
                 _buildSectionCard(
@@ -283,7 +459,7 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
                   width: double.infinity,
                   height: 52,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.primary.withValues(alpha: 0.3),
@@ -358,7 +534,7 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.8)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
                   ),
@@ -374,10 +550,10 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
 
   Widget _buildStudentHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),
@@ -393,7 +569,7 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
             height: 52,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
             ),
             child: Center(
@@ -477,10 +653,10 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
     required List<Widget> children,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),
@@ -490,7 +666,7 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -545,80 +721,84 @@ class _UpdateStudentDetailsScreenState extends State<UpdateStudentDetailsScreen>
   Widget _buildImagePickerRow(String title, String type) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showImageSourceSheet(type, title),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Obx(() {
-                    String? path = controller.getCapturedImage(student.id!, type);
-                    bool hasImage = path != null && File(path).existsSync();
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: hasImage ? Colors.green.shade50 : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        hasImage ? "Captured" : "Not Selected",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: hasImage ? Colors.green.shade700 : Colors.grey.shade600,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E293B),
                         ),
                       ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: () => _pickImage(type),
-              child: Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Obx(() {
+                        String? path = controller.getCapturedImage(student.id!, type);
+                        bool hasImage = path != null && File(path).existsSync();
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: hasImage ? Colors.green.shade50 : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            hasImage ? "Captured" : "Not Selected",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: hasImage ? Colors.green.shade700 : Colors.grey.shade600,
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
-                child: Obx(() {
-                  String? path = controller.getCapturedImage(student.id!, type);
-                  if (path != null && File(path).existsSync()) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(File(path), fit: BoxFit.cover),
-                    );
-                  }
-                  return const Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 24);
-                }),
-              ),
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Obx(() {
+                    String? path = controller.getCapturedImage(student.id!, type);
+                    if (path != null && File(path).existsSync()) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(File(path), fit: BoxFit.cover),
+                      );
+                    }
+                    return const Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 24);
+                  }),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

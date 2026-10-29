@@ -1,13 +1,18 @@
 import 'dart:io';
-import 'dart:math' as Math;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import '../../themes/appColors_&_styles/app_Colors.dart';
+import '../../themes/app_bar/app_top_bar.dart';
 
 class CustomCameraScreen extends StatefulWidget {
-  const CustomCameraScreen({super.key});
+  final String title;
+
+  const CustomCameraScreen({
+    super.key,
+    this.title = "Camera",
+  });
 
   @override
   State<CustomCameraScreen> createState() => _CustomCameraScreenState();
@@ -52,49 +57,47 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     if (_controller == null || !_controller!.value.isInitialized) return;
 
     try {
+      final Size screenSize = MediaQuery.of(context).size;
       setState(() {
         _isProcessing = true;
       });
 
       final XFile imageFile = await _controller!.takePicture();
 
-      // Load and Crop
       final bytes = await File(imageFile.path).readAsBytes();
       img.Image? capturedImage = img.decodeImage(bytes);
 
       if (capturedImage != null) {
         capturedImage = img.bakeOrientation(capturedImage);
 
-        final Size screenSize = MediaQuery.of(context).size;
         double frameSize = screenSize.width * 0.85;
-
-        double screenAspect = screenSize.width / screenSize.height;
-        double imageAspect = capturedImage.width / capturedImage.height;
 
         double scale;
         double offsetX = 0;
         double offsetY = 0;
 
-        if (imageAspect > screenAspect) {
-          scale = capturedImage.height / screenSize.height;
-          offsetX = (capturedImage.width - screenSize.width * scale) / 2;
+        double imageW = capturedImage.width.toDouble();
+        double imageH = capturedImage.height.toDouble();
+
+        if (imageH > imageW) {
+          scale = imageW / frameSize;
+          offsetY = (imageH - frameSize * scale) / 2;
         } else {
-          scale = capturedImage.width / screenSize.width;
-          offsetY = (capturedImage.height - screenSize.height * scale) / 2;
+          scale = imageH / frameSize;
+          offsetX = (imageW - frameSize * scale) / 2;
         }
 
         int cropSize = (frameSize * scale).toInt();
-        int cropX = (offsetX + (screenSize.width - frameSize) / 2 * scale).toInt();
-        int cropY = (offsetY + (screenSize.height - frameSize) / 2 * scale).toInt();
+        int cropX = offsetX.toInt();
+        int cropY = offsetY.toInt();
 
         img.Image croppedImage = img.copyCrop(
           capturedImage,
-          x: cropX,
-          y: cropY,
-          width: cropSize,
-          height: cropSize,
+          x: cropX.clamp(0, capturedImage.width - 1),
+          y: cropY.clamp(0, capturedImage.height - 1),
+          width: cropSize.clamp(1, capturedImage.width - cropX),
+          height: cropSize.clamp(1, capturedImage.height - cropY),
         );
-
 
         final String path = imageFile.path.replaceAll('.jpg', '_processed.jpg');
         await File(path).writeAsBytes(img.encodeJpg(croppedImage, quality: 90));
@@ -104,174 +107,173 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
         Get.back(result: imageFile.path);
       }
     } catch (e) {
-      print("Error: $e");
-      setState(() {
-        _isProcessing = false;
-      });
+      debugPrint("Error taking picture: $e");
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized || _controller == null) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: const Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppTopBar(
+            title: "Camera",
+            showBack: true,
+            backgroundColor: Colors.transparent,
+            showDivider: false,
+          ),
+          body: Center(
+            child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+          ),
+        ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Camera Preview
-            Center(
-              child: CameraPreview(_controller!),
-            ),
+    final Size screenSize = MediaQuery.of(context).size;
+    final double frameSize = screenSize.width * 0.85;
 
-            // Grid Overlay
-            _buildGridOverlay(),
+    final previewSize = _controller!.value.previewSize;
+    final double previewW = previewSize != null ? previewSize.height : 3.0;
+    final double previewH = previewSize != null ? previewSize.width : 4.0;
 
-            // Loading Overlay
-            if (_isProcessing)
-              Container(
-                color: Colors.black.withOpacity(0.5),
-                child: const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppTopBar(
+          title: widget.title,
+          showBack: true,
+          backgroundColor: Colors.transparent,
+          showDivider: false,
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+
+              // Camera Frame Container
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: frameSize,
+                    height: frameSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Camera Live Feed inside rounded frame
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: previewW,
+                                height: previewH,
+                                child: CameraPreview(_controller!),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Grid & Silhouette Overlay
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: FaceChestOutlinePainter(),
+                          ),
+                        ),
+
+                        // Processing Overlay
+                        if (_isProcessing)
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Container(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                child: const Center(
+                                  child: CircularProgressIndicator(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 
-            // Back Button
-            Positioned(
-              top: 20,
-              left: 20,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                onPressed: () => Get.back(),
-              ),
-            ),
+              const SizedBox(height: 16),
 
-            // Capture Button
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: _takePicture,
-                  child: Container(
-                    height: 80,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
-                    ),
-                    child: Center(
-                      child: Container(
-                        height: 60,
-                        width: 60,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+              // Capture Button
+              Padding(
+                padding: const EdgeInsets.only(bottom: 28),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _takePicture,
+                    child: Container(
+                      height: 76,
+                      width: 76,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4F46E5).withValues(alpha: 0.35),
+                            blurRadius: 14,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Container(
+                          height: 58,
+                          width: 58,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF4F46E5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildGridOverlay() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double width = constraints.maxWidth;
-        double height = constraints.maxHeight;
-
-        // Square frame for Face and Chest (exactly matching the provided grid image)
-        double frameWidth = width * 0.85;
-        double frameHeight = frameWidth; // Square ratio
-        double top = (height - frameHeight) / 2;
-
-        return Stack(
-          children: [
-            // Dark dimmed overlay with transparent hole
-            ColorFiltered(
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.75),
-                BlendMode.srcOut,
-              ),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.black,
-                      backgroundBlendMode: BlendMode.dstOut,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: frameWidth,
-                      height: frameHeight,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Frame Border & Grid & Silhouette
-            Center(
-              child: SizedBox(
-                width: frameWidth,
-                height: frameHeight,
-                child: CustomPaint(
-                  painter: FaceChestOutlinePainter(),
-                ),
-              ),
-            ),
-
-            // Instructional Text
-            Positioned(
-              top: top - 70,
-              width: width,
-              child: const Center(
-                child: Column(
-                  children: [
-                    Text(
-                      "FACE & CHEST ALIGNMENT",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        letterSpacing: 1.2
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      "Please align student's face and upper body within the grid",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -290,15 +292,15 @@ class FaceChestOutlinePainter extends CustomPainter {
 
     // 1. Draw outer rounded frame border
     final borderPaint = Paint()
-      ..color = Colors.white
+      ..color = const Color(0xFF4F46E5)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+      ..strokeWidth = 3.0;
 
     canvas.drawRRect(rrect, borderPaint);
 
     // 2. Draw 3x3 grid lines
     final gridPaint = Paint()
-      ..color = Colors.white.withOpacity(0.8)
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -317,7 +319,7 @@ class FaceChestOutlinePainter extends CustomPainter {
 
     // 3. Draw Silhouette (Head & Shoulders)
     final silhouettePaint = Paint()
-      ..color = Colors.black
+      ..color = const Color(0xFF2C3E50)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round

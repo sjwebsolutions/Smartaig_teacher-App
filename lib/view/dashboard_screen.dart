@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -43,8 +44,8 @@ class DashboardScreen extends StatelessWidget {
     final double screenWidth = mediaQuery.size.width;
     final bool isSmallScreen = screenWidth < 360;
 
-    final EdgeInsets kCardMargin = EdgeInsets.symmetric(
-      horizontal: (screenWidth * 0.04).clamp(12.0, 20.0),
+    const EdgeInsets kCardMargin = EdgeInsets.symmetric(
+      horizontal: 12,
       vertical: 1,
     );
     final EdgeInsets kCardPadding = EdgeInsets.all(isSmallScreen ? 12 : 14);
@@ -156,24 +157,25 @@ class DashboardScreen extends StatelessWidget {
                               final banners = bannerController.banners.value?.banners ?? [];
                               final isLoading = bannerController.isLoading.value;
                               if (banners.isEmpty && !isLoading) {
-                                return const SizedBox(height: 10);
+                                return const SizedBox.shrink();
                               }
-                              return const Column(
+                              return Column(
                                 children: [
-                                  SizedBox(height: 10),
-                                  BannerWidget(),
-                                  SizedBox(height: 10),
+                                  const SizedBox(height: 8),
+                                  BannerWidget(margin: kCardMargin),
                                 ],
                               );
                             }),
-                            _buildTeacherInfoCard(context, dashboardController, kCardMargin, kCardPadding),
-                            const SizedBox(height: 10),
-                            _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
                             _buildAnnouncementDropdownCard(context, announcementController, kCardMargin),
+                            const SizedBox(height: 8),
+                            _buildTeacherInfoCard(context, dashboardController, kCardMargin, kCardPadding),
+                            const SizedBox(height: 8),
+                            _buildAttendanceCard(dashboardController, kCardMargin, kCardPadding),
                             _buildStudentLeavesCard(dashboardController, kCardMargin),
                             _buildDutiesSection(dashboardController, kCardMargin),
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 8),
                             _buildAcademicModulesSection(),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),
@@ -191,28 +193,27 @@ class DashboardScreen extends StatelessWidget {
     final bool isSmallScreen = screenWidth < 360;
     final bool isTablet = screenWidth > 600;
 
-    final double imageSize = isSmallScreen ? 55.0 : (isTablet ? 75.0 : 65.0);
-    final double nameFontSize = isSmallScreen ? 14.5 : (isTablet ? 18.0 : 16.0);
+    final double imageSize = isSmallScreen ? 62.0 : (isTablet ? 88.0 : 75.0);
+    final double nameFontSize = isSmallScreen ? 14.5 : (isTablet ? 17.0 : 15.5);
     final double schoolFontSize = isSmallScreen ? 11.0 : (isTablet ? 13.0 : 12.0);
-    final double empIdFontSize = isSmallScreen ? 10.5 : (isTablet ? 12.5 : 11.5);
-    final double cardPadding = isSmallScreen ? 12.0 : 16.0;
 
     return Container(
       margin: margin,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
-            blurRadius: 25,
-            offset: const Offset(0, 12),
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.08), width: 1.5),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
       ),
       child: Padding(
-        padding: EdgeInsets.all(cardPadding),
+        padding: const EdgeInsets.all(14),
         child: Obx(() {
           final teacher = controller.dashboard.value?.data?.teacher;
           final schoolName = controller.dashboard.value?.data?.school?.schoolName ?? "No school";
@@ -248,8 +249,32 @@ class DashboardScreen extends StatelessWidget {
                         ],
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: (teacher?.image != null && teacher!.image!.isNotEmpty)
-                          ? CachedNetworkImage(
+                      child: Builder(
+                        builder: (context) {
+                          final localPath = controller.localProfileImagePath.value;
+                          if (localPath.isNotEmpty && File(localPath).existsSync()) {
+                            return Image.file(
+                              File(localPath),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (context, error, stackTrace) {
+                                if (teacher?.image != null && teacher!.image!.isNotEmpty) {
+                                  return CachedNetworkImage(
+                                    imageUrl: teacher.image!,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, err) => Center(
+                                      child: Icon(Icons.person, color: AppColors.primary, size: isSmallScreen ? 28 : 36),
+                                    ),
+                                  );
+                                }
+                                return Center(
+                                  child: Icon(Icons.person, color: AppColors.primary, size: isSmallScreen ? 28 : 36),
+                                );
+                              },
+                            );
+                          } else if (teacher?.image != null && teacher!.image!.isNotEmpty) {
+                            return CachedNetworkImage(
                               imageUrl: teacher.image!,
                               fit: BoxFit.cover,
                               useOldImageOnUrlChange: true,
@@ -275,16 +300,21 @@ class DashboardScreen extends StatelessWidget {
                               errorWidget: (context, url, error) => Center(
                                 child: Icon(Icons.person, color: AppColors.primary, size: isSmallScreen ? 28 : 36),
                               ),
-                            )
-                          : Center(
+                            );
+                          } else {
+                            return Center(
                               child: Icon(Icons.person, color: AppColors.primary, size: isSmallScreen ? 28 : 36),
-                            ),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ),
                   SizedBox(width: isSmallScreen ? 10 : 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text.rich(
                           TextSpan(
@@ -311,117 +341,58 @@ class DashboardScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isSmallScreen ? 8 : 10,
-                            vertical: 4,
+                        const SizedBox(height: 3),
+                        Text(
+                          teacher?.staffType ?? "Teacher",
+                          style: TextStyle(
+                            color: AppColors.primary.withValues(alpha: 0.85),
+                            fontSize: isSmallScreen ? 11.5 : 12.5,
+                            fontWeight: FontWeight.w600,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            (teacher?.staffType ?? "Teacher").toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: isSmallScreen ? 8.5 : 9.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Divider(
-                height: 1,
-                thickness: 0.8,
-                color: AppColors.primary.withValues(alpha: 0.1),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.location_city_rounded,
-                          size: isSmallScreen ? 13 : 15,
-                          color: AppColors.primary.withValues(alpha: 0.6),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: schoolName,
-                                  style: TextStyle(
-                                    color: AppColors.black.withValues(alpha: 0.7),
-                                    fontSize: schoolFontSize,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                WidgetSpan(
-                                  alignment: PlaceholderAlignment.middle,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 4),
-                                    child: Icon(
-                                      Icons.verified,
-                                      color: const Color(0xFF1892FA),
-                                      size: isSmallScreen ? 12 : 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: isSmallScreen ? 6 : 10),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 6 : 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.alternate_email_rounded,
-                          size: isSmallScreen ? 11 : 13,
-                          color: AppColors.primary.withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(width: 4),
+                        const SizedBox(height: 2),
                         Text(
                           "Emp ID: ${teacher?.id ?? '-'}",
                           style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: empIdFontSize,
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.black.withValues(alpha: 0.65),
+                            fontSize: isSmallScreen ? 11.0 : 12.0,
+                            fontWeight: FontWeight.w500,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: schoolName,
+                                style: TextStyle(
+                                  color: AppColors.black.withValues(alpha: 0.7),
+                                  fontSize: schoolFontSize,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Icon(
+                                    Icons.verified,
+                                    color: const Color(0xFF1892FA),
+                                    size: isSmallScreen ? 11 : 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -440,203 +411,236 @@ class DashboardScreen extends StatelessWidget {
       final announcementList = controller.announcements.value?.data ?? [];
       if (announcementList.isEmpty) return const SizedBox.shrink();
 
-      if (controller.selectedAnnouncement.value == null && announcementList.isNotEmpty) {
-        controller.selectedAnnouncement.value = announcementList.first;
-      }
-
-      final selected = controller.selectedAnnouncement.value;
-      if (selected == null) return const SizedBox.shrink();
-
       return Column(
         children: [
-          const SizedBox(height: 9),
+          const SizedBox(height: 8),
           Container(
             margin: margin,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (selected.imageUrl != null && selected.imageUrl!.isNotEmpty) ...[
-                        GestureDetector(
-                          onTap: () => _showFullScreenImage(
-                            context,
-                            selected.imageUrl!,
-                            selected.title ?? "Announcement",
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: CachedNetworkImage(
-                              imageUrl: selected.imageUrl!,
-                              width: 110,
-                              height: 110,
-                              fit: BoxFit.cover,
-                              fadeInDuration: Duration.zero,
-                              fadeOutDuration: Duration.zero,
-                              memCacheWidth: 330,
-                              memCacheHeight: 330,
-                              maxWidthDiskCache: 600,
-                              maxHeightDiskCache: 600,
-                              placeholder: (context, url) => Container(
-                                width: 110,
-                                height: 110,
-                                color: AppColors.primary.withValues(alpha: 0.05),
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => const SizedBox.shrink(),
-                            ),
-                          ),
+          ],
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                "Announcements",
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.black.withValues(alpha: 0.8),
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 74,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                scrollDirection: Axis.horizontal,
+                itemCount: announcementList.length,
+                itemBuilder: (context, index) {
+                  final item = announcementList[index];
+                  final hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+
+                  return GestureDetector(
+                    onTap: () => _showAnnouncementDetail(context, item, index),
+                    child: Container(
+                      margin: EdgeInsets.only(right: index == announcementList.length - 1 ? 0 : 10),
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          width: 1.5,
                         ),
-                        const SizedBox(width: 16),
-                      ],
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              selected.title ?? "",
-                              style: AppTextStyles.body.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              selected.description ?? "",
-                              style: AppTextStyles.body.copyWith(
-                                color: AppColors.black.withValues(alpha: 0.6),
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
+                      ),
+                      child: Container(
+                        width: 66,
+                        height: 66,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
+                        clipBehavior: Clip.antiAlias,
+                        child: hasImage
+                            ? CachedNetworkImage(
+                                imageUrl: item.imageUrl!,
+                                fit: BoxFit.cover,
+                                width: 66,
+                                height: 66,
+                                fadeInDuration: Duration.zero,
+                                fadeOutDuration: Duration.zero,
+                                memCacheWidth: 140,
+                                memCacheHeight: 120,
+                                placeholder: (context, url) => Container(
+                                  color: AppColors.primary.withValues(alpha: 0.05),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => const Icon(
+                                  Icons.campaign_rounded,
+                                  color: AppColors.primary,
+                                  size: 28,
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.campaign_rounded,
+                                  color: AppColors.primary,
+                                  size: 28,
+                                ),
+                              ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        ),
+      ),
+    ],
+  );
+});
   }
 
-  void _showFullScreenImage(BuildContext context, String imageUrl, String title) {
+  void _showAnnouncementDetail(BuildContext context, dynamic announcement, int index) {
+    final RxBool isSharing = false.obs;
+    final String? imageUrl = announcement.imageUrl;
+    final bool hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+    Future<void> shareAnnouncement() async {
+      try {
+        isSharing.value = true;
+        if (hasImage) {
+          final directory = await getTemporaryDirectory();
+          final filePath = "${directory.path}/announcement_${announcement.id ?? index}.png";
+          await Dio().download(imageUrl!, filePath);
+          await Share.shareXFiles([XFile(filePath)], text: "${announcement.title ?? ''}\n${announcement.description ?? ''}");
+        } else {
+          await Share.share("${announcement.title ?? ''}\n\n${announcement.description ?? ''}");
+        }
+      } catch (e) {
+        Get.snackbar("Error", "Failed to share: $e",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      } finally {
+        isSharing.value = false;
+      }
+    }
+
     Get.to(
-      () => Scaffold(
-        backgroundColor: const Color(0xFFF8F9FE),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF8F9FE),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_outlined, color: AppColors.primary),
-            onPressed: () => Get.back(),
+      () => Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomCenter,
           ),
-          title: Text(title, style: AppTextStyles.appbarh4.copyWith(fontSize: 18)),
         ),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Center(
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) => const Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppTopBar(
+            title: announcement.title ?? "Announcement",
+            showBack: true,
+            backgroundColor: Colors.transparent,
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasImage)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.broken_image_rounded,
                           color: AppColors.primary,
+                          size: 50,
                         ),
                       ),
                     ),
-                    errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 40,
-                left: 20,
-                right: 20,
-                child: Center(
-                  child: InkWell(
-                    onTap: () async {
-                      try {
-                        final tempDir = await getTemporaryDirectory();
-                        final path = '${tempDir.path}/shared_image.png';
-                        await Dio().download(imageUrl, path);
-                        await Share.shareXFiles([XFile(path)]);
-                      } catch (e) {
-                        Get.snackbar("Error", "Could not share image");
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.share, color: Colors.white, size: 20),
-                          SizedBox(width: 10),
-                          Text(
-                            "Share Image",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ],
-                      ),
+                  if (hasImage) const SizedBox(height: 16),
+                  Text(
+                    announcement.title ?? "",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.black,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    announcement.description ?? "",
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: AppColors.black.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Obx(() => ElevatedButton.icon(
+                        onPressed: isSharing.value ? null : shareAnnouncement,
+                        icon: isSharing.value
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Icon(Icons.share_rounded, color: Colors.white, size: 18),
+                        label: Text(
+                          isSharing.value ? "PREPARING..." : "SHARE ANNOUNCEMENT",
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      )),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-      fullscreenDialog: false,
     );
   }
 
@@ -1182,7 +1186,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildAcademicModulesSection() {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 12),
       child: AcademicModuleGrid(),
     );
   }
@@ -1199,9 +1203,11 @@ class DashboardScreen extends StatelessWidget {
 
       return Column(
         children: [
-          const SizedBox(height: 10),
-          Container(
-            margin: margin,
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => Get.toNamed('/studentLeave'),
+            child: Container(
+              margin: margin,
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12),
@@ -1356,10 +1362,11 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      );
-    });
-  }
+        ),
+      ],
+    );
+  });
+}
 
   Widget _buildCenteredErrorView(BuildContext context, DashboardController controller) {
     return SingleChildScrollView(

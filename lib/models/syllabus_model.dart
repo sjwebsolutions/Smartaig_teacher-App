@@ -67,6 +67,16 @@ class SyllabusData {
       this.uploadedAt,
       this.updatedAt});
 
+  static int parseStatus(dynamic val, {int defaultValue = 1}) {
+    if (val == null) return defaultValue;
+    if (val is int) return val;
+    if (val is bool) return val ? 1 : 0;
+    final s = val.toString().trim().toLowerCase();
+    if (s == '1' || s == 'active' || s == 'true') return 1;
+    if (s == '0' || s == 'inactive' || s == 'false') return 0;
+    return int.tryParse(s) ?? defaultValue;
+  }
+
   SyllabusData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     title = json['title'];
@@ -93,7 +103,7 @@ class SyllabusData {
         targets!.add(Targets.fromJson(v));
       });
     }
-    status = json['status'];
+    status = parseStatus(json['status']);
     uploadedBy = json['uploaded_by'];
     isMyUpload = json['is_my_upload'];
     uploadedAt = json['uploaded_at'];

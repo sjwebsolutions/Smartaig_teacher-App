@@ -65,7 +65,7 @@ class _SettingScreenState extends State<SettingScreen> {
           child: Obx(() {
             final teacher = dashboardController.dashboard.value?.data?.teacher;
             return ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               children: [
                 // Profile Item
                 _buildSettingCard(
@@ -74,7 +74,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   subtitle: "View and edit your profile info",
                   onTap: () => Get.to(() => const ProfileScreen()),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Mobile Number Item
                 _buildSettingCard(
@@ -83,7 +83,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   subtitle: teacher?.phone ?? "Not Available",
                   onTap: () {},
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // App Version Item
                 _buildSettingCard(
@@ -109,7 +109,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     AppUpdateUtil.checkForUpdate(context, showToastIfLatest: true);
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Privacy Policy Item
                 _buildSettingCard(
@@ -117,7 +117,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   title: "Privacy Policy",
                   onTap: () => _handlePolicyTap("Privacy Policy", (data) => data.privacyPolicy),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Terms of Use Item
                 _buildSettingCard(
@@ -125,7 +125,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   title: "Terms of Use",
                   onTap: () => _handlePolicyTap("Terms of Use", (data) => data.termsOfUse),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Contact Support Item
                 _buildSettingCard(
@@ -133,7 +133,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   title: "Contact Support",
                   onTap: () => _showContactSupportDialog(context),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Logout Item
                 _buildSettingCard(
@@ -164,7 +164,7 @@ class _SettingScreenState extends State<SettingScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),

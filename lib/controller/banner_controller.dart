@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../api_service/banner_service.dart';
@@ -20,7 +21,27 @@ class BannerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchBanners();
+    _handleInitialLoading();
+  }
+
+  Future<void> _handleInitialLoading() async {
+    try {
+      final cachedJson = await StorageService.getBannerData();
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final cachedModel = BannerModel.fromJson(json.decode(cachedJson));
+        if (cachedModel.banners != null && cachedModel.banners!.isNotEmpty) {
+          banners.value = cachedModel;
+        }
+      }
+    } catch (e) {
+      print("Error loading cached banners: $e");
+    }
+
+    try {
+      await fetchBanners(showLoading: false);
+    } catch (e) {
+      print("Fetch Banners Error: $e");
+    }
   }
 
   void _startBannerAutoSlider() {
@@ -45,7 +66,7 @@ class BannerController extends GetxController {
 
   Future<void> fetchBanners({bool showLoading = true}) async {
     try {
-      if (showLoading) isLoading.value = true;
+      if (showLoading && banners.value == null) isLoading.value = true;
       final result = await _bannerServices.getBanners();
       
       if (result.banners != null) {
@@ -60,6 +81,12 @@ class BannerController extends GetxController {
           }
         }
         result.banners = uniqueBanners;
+
+        try {
+          await StorageService.saveBannerData(json.encode(result.toJson()));
+        } catch (e) {
+          print("Error saving banners to cache: $e");
+        }
       }
 
       // Check for new banners to show notification dot and trigger sound

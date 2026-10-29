@@ -26,7 +26,7 @@ class SyllabusFormData {
   String? message;
   List<SyllabusTerm>? terms;
   List<SyllabusClass>? classes;
-  List<dynamic>? streams;
+  List<SyllabusStream>? streams;
   List<SyllabusSection>? sections;
   List<SyllabusSubject>? subjects;
   List<AllowedCombination>? allowedCombinations;
@@ -61,7 +61,14 @@ class SyllabusFormData {
         classes!.add(SyllabusClass.fromJson(v));
       });
     }
-    streams = json['streams'] != null ? List<dynamic>.from(json['streams']) : null;
+    if (json['streams'] != null) {
+      streams = <SyllabusStream>[];
+      json['streams'].forEach((v) {
+        if (v is Map<String, dynamic>) {
+          streams!.add(SyllabusStream.fromJson(v));
+        }
+      });
+    }
     if (json['sections'] != null) {
       sections = <SyllabusSection>[];
       json['sections'].forEach((v) {
@@ -137,6 +144,25 @@ class SyllabusClass {
 
   SyllabusClass.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    name = json['name'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['name'] = name;
+    return data;
+  }
+}
+
+class SyllabusStream {
+  int? id;
+  String? name;
+
+  SyllabusStream({this.id, this.name});
+
+  SyllabusStream.fromJson(Map<String, dynamic> json) {
+    id = json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '');
     name = json['name'];
   }
 

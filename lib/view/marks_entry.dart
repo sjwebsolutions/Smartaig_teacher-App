@@ -885,7 +885,16 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
     }
 
     if (entries.isEmpty) {
-      Get.snackbar("Error", "Please enter marks for at least one student");
+      Get.snackbar(
+        "Error", 
+        "Please enter marks for at least one student",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(15),
+        borderRadius: 10,
+        duration: const Duration(seconds: 3),
+      );
       return;
     }
 

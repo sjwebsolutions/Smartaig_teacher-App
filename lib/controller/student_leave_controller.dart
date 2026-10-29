@@ -19,8 +19,15 @@ class StudentLeaveController extends GetxController {
   var selectedDate = "".obs; // 'YYYY-MM-DD'
 
   var studentLeavesResponse = Rxn<StudentLeaveModel>();
+  var allLeavesList = <StudentLeaveData>[].obs;
   var leavesList = <StudentLeaveData>[].obs;
   var canApprove = false.obs;
+
+  // Reactive counters for Leave Requests Summary
+  var pendingCount = 0.obs;
+  var approvedCount = 0.obs;
+  var rejectedCount = 0.obs;
+  var totalCount = 0.obs;
 
   @override
   void onInit() {
@@ -59,17 +66,64 @@ class StudentLeaveController extends GetxController {
         classId: cls.classId,
         sectionId: cls.sectionId,
         streamId: cls.streamId,
-        status: selectedStatus.value,
+        status: "all",
         date: selectedDate.value,
       );
 
       studentLeavesResponse.value = response;
       canApprove.value = response.canApprove ?? false;
-      leavesList.assignAll(response.data ?? []);
+
+      final fetchedData = response.data ?? [];
+      allLeavesList.assignAll(fetchedData);
+
+      updateCounts();
+      _filterLeavesList();
     } catch (e) {
       errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  void updateCounts() {
+    int p = 0;
+    int a = 0;
+    int r = 0;
+
+    for (var leave in allLeavesList) {
+      final st = (leave.status ?? '').toLowerCase();
+      if (st == 'pending') {
+        p++;
+      } else if (st == 'approved') {
+        a++;
+      } else if (st == 'rejected' || st == 'denied') {
+        r++;
+      }
+    }
+
+    pendingCount.value = p;
+    approvedCount.value = a;
+    rejectedCount.value = r;
+    totalCount.value = allLeavesList.length;
+
+    print("--- UPDATED LEAVE COUNTS ---");
+    print("Pending: $p, Approved: $a, Rejected: $r, Total: ${allLeavesList.length}");
+  }
+
+  void _filterLeavesList() {
+    final status = selectedStatus.value.toLowerCase();
+    if (status == "all") {
+      leavesList.assignAll(allLeavesList);
+    } else {
+      leavesList.assignAll(
+        allLeavesList.where((l) {
+          final st = (l.status ?? '').toLowerCase();
+          if (status == 'pending') return st == 'pending';
+          if (status == 'approved') return st == 'approved';
+          if (status == 'rejected') return st == 'rejected' || st == 'denied';
+          return true;
+        }).toList(),
+      );
     }
   }
 
@@ -80,7 +134,7 @@ class StudentLeaveController extends GetxController {
 
   void changeStatusFilter(String status) {
     selectedStatus.value = status;
-    fetchStudentLeaves();
+    _filterLeavesList();
   }
 
   void setDateFilter(String dateStr) {

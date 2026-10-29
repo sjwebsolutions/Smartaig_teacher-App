@@ -38,7 +38,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
             }
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -48,7 +48,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                     hint: "e.g. Term 1 History Syllabus",
                     icon: Icons.title_rounded,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   _buildLabel("TERM *"),
                   _buildDropdownCard(
@@ -71,7 +71,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   _buildLabel("CLASS *"),
                   _buildDropdownCard(
@@ -92,17 +92,49 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                         }).toList(),
                         onChanged: (val) {
                           controller.uploadSelectedClassId.value = val;
-                          controller.uploadSelectedSectionIds.clear(); // Reset sections when class changes
+                          controller.uploadSelectedStreamId.value = null; // Reset stream
+                          controller.uploadSelectedSectionIds.clear(); // Reset sections
+                          controller.uploadSelectedSubjectId.value = null; // Reset subject
                         },
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
-                  // --- NEW: SECTION SELECTION ---
+                  // --- DYNAMIC STREAM SELECTION (For Class 11 / 12) ---
+                  if (controller.availableStreamsForSelectedClass.isNotEmpty) ...[
+                    _buildLabel("STREAM *"),
+                    _buildDropdownCard(
+                      icon: Icons.alt_route_rounded,
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          hint: Text("Select Stream", style: AppTextStyles.body.copyWith(color: Colors.grey.shade600)),
+                          value: controller.uploadSelectedStreamId.value,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          items: controller.availableStreamsForSelectedClass.map((st) {
+                            return DropdownMenuItem<int>(
+                              value: st.id,
+                              child: Text(st.name ?? "", style: AppTextStyles.body),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            controller.uploadSelectedStreamId.value = val;
+                            controller.uploadSelectedSectionIds.clear();
+                            controller.uploadSelectedSubjectId.value = null;
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // --- SECTION SELECTION ---
                   _buildLabel("SECTIONS *"),
                   _buildSectionSelector(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   _buildLabel("SUBJECT"),
                   _buildDropdownCard(
@@ -115,7 +147,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
                         dropdownColor: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        items: controller.filterSubjectsList.map((sub) {
+                        items: controller.availableSubjectsForSelectedClassAndStream.map((sub) {
                           return DropdownMenuItem<int>(
                             value: sub.id,
                             child: Text(sub.name ?? "", style: AppTextStyles.body),
@@ -125,7 +157,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   _buildLabel("DESCRIPTION"),
                   _buildTextField(
@@ -134,27 +166,27 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                     icon: Icons.description_rounded,
                     maxLines: 3,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   if (controller.isUpdateMode.value && controller.existingAttachments.isNotEmpty) ...[
                     _buildLabel("EXISTING ATTACHMENTS (CLICK TO DELETE)"),
                     _buildExistingAttachments(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                   ],
 
                   _buildLabel("NEW ATTACHMENTS"),
                   _buildAttachmentSection(),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
 
                   SizedBox(
                     width: double.infinity,
-                    height: 55,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: () => controller.storeTeacherSyllabus(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        elevation: 5,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 4,
                       ),
                       child: Text(
                         controller.isUpdateMode.value ? "UPDATE SYLLABUS" : "UPLOAD SYLLABUS",
@@ -162,12 +194,12 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                           color: Colors.white, 
                           fontWeight: FontWeight.bold, 
                           letterSpacing: 1,
-                          fontSize: 16,
+                          fontSize: 15,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -179,14 +211,14 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsets.only(left: 4, bottom: 6),
       child: Text(
         text,
         style: TextStyle(
           color: AppColors.primary.withValues(alpha: 0.8),
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          letterSpacing: 1,
+          letterSpacing: 0.8,
         ),
       ),
     );
@@ -201,7 +233,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -217,7 +249,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
           hintText: hint,
           prefixIcon: Icon(icon, color: AppColors.primary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
+          contentPadding: const EdgeInsets.all(14),
         ),
       ),
     );
@@ -225,11 +257,11 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
 
   Widget _buildDropdownCard({required IconData icon, required Widget child}) {
     return Container(
-      height: 58,
+      height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
@@ -260,17 +292,30 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
     if (controller.uploadSelectedClassId.value == null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
         child: const Text("Select a class first", style: TextStyle(color: Colors.grey)),
       );
     }
 
-    final sections = controller.sectionsList;
+    if (controller.availableStreamsForSelectedClass.isNotEmpty && controller.uploadSelectedStreamId.value == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: const Text("Select a stream first", style: TextStyle(color: Colors.grey)),
+      );
+    }
+
+    final sections = controller.availableSectionsForSelectedClassAndStream;
 
     if (sections.isEmpty) {
       return const Text("No sections available", style: TextStyle(color: Colors.red));
@@ -280,7 +325,7 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -324,9 +369,9 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isMarkedForDelete ? Colors.red.withOpacity(0.05) : Colors.white,
+            color: isMarkedForDelete ? Colors.red.withValues(alpha: 0.05) : Colors.white,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isMarkedForDelete ? Colors.red.withOpacity(0.3) : Colors.grey.shade200),
+            border: Border.all(color: isMarkedForDelete ? Colors.red.withValues(alpha: 0.3) : Colors.grey.shade200),
           ),
           child: Row(
             children: [
@@ -375,7 +420,6 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
       children: [
         InkWell(
           onTap: () async {
-            print("--- OPENING FILE PICKER ---");
             try {
               FilePickerResult? result = await FilePicker.platform.pickFiles(
                 allowMultiple: true,
@@ -384,8 +428,6 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
               );
 
               if (result != null) {
-                print("Files selected: ${result.paths.length}");
-                
                 final int maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
                 List<File> validFiles = [];
                 List<String> largeFiles = [];
@@ -413,26 +455,23 @@ class UploadSyllabusScreen extends GetView<SyllabusController> {
                     duration: const Duration(seconds: 5),
                   );
                 }
-              } else {
-                print("No files selected (User canceled)");
               }
             } catch (e) {
-              print("ERROR PICKING FILES: $e");
               Get.snackbar("Picker Error", e.toString());
             }
           },
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), style: BorderStyle.solid),
             ),
             child: Column(
               children: [
-                Icon(Icons.cloud_upload_rounded, size: 40, color: AppColors.primary),
-                const SizedBox(height: 8),
+                Icon(Icons.cloud_upload_rounded, size: 36, color: AppColors.primary),
+                const SizedBox(height: 6),
                 const Text("Tap to select files", style: TextStyle(fontWeight: FontWeight.bold)),
                 Text("(PDF, DOC, JPG, PNG)", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
               ],

@@ -20,7 +20,7 @@ import 'package:teacher_app_attendance/view/student_performance.dart';
 import 'package:teacher_app_attendance/view/syllabus_screen.dart';
 import 'package:teacher_app_attendance/view/syllabus_tracker.dart';
 import 'package:teacher_app_attendance/view/upload_syllabus_screen.dart';
-import 'package:teacher_app_attendance/view/upload_homework_screen.dart';
+import 'package:teacher_app_attendance/view/homework_screen.dart';
 import 'package:teacher_app_attendance/view/view_marks_screen.dart';
 import 'package:teacher_app_attendance/view/update_student_data_screen.dart';
 import 'package:teacher_app_attendance/view/update_student_list_screen.dart';
@@ -43,6 +43,7 @@ import 'view/banner_detail_screen.dart';
 import 'view/announcement_list_screen.dart';
 import 'view/add_announcement_screen.dart';
 import 'view/get_pass_screen.dart';
+import 'view/request_gate_pass_screen.dart';
 import 'modules/banner_module.dart';
 import 'modules/announcement_module.dart';
 import 'modules/date_sheet_module.dart';
@@ -220,7 +221,7 @@ class _MyAppState extends State<MyApp> {
         ),
         GetPage(
           name: '/uploadHomework',
-          page: () => const UploadHomeworkScreen(),
+          page: () => const HomeworkScreen(),
           binding: HomeworkBinding(),
         ),
         GetPage(
@@ -289,6 +290,11 @@ class _MyAppState extends State<MyApp> {
         GetPage(
           name: '/getPass',
           page: () => const GetPassScreen(),
+          binding: GatePassBinding(),
+        ),
+        GetPage(
+          name: '/requestGatePass',
+          page: () => const RequestGatePassScreen(),
           binding: GatePassBinding(),
         ),
         GetPage(

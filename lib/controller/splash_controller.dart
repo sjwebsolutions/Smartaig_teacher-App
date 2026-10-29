@@ -2,6 +2,9 @@ import 'package:flutter/animation.dart';
 import 'package:get/get.dart';
 
 import '../services/storage_services.dart';
+import 'dashboard_controller.dart';
+import 'banner_controller.dart';
+
 class SplashController extends GetxController with GetSingleTickerProviderStateMixin {
   late AnimationController animationController;
   late Animation<double> scaleAnimation;
@@ -48,13 +51,35 @@ class SplashController extends GetxController with GetSingleTickerProviderStateM
   }
 
   void _navigate() async {
-    // Animation 2s chalta hai, 3s delay dene se settle hone ka time milega
-    await Future.delayed(const Duration(seconds: 3));
+    final splashDelay = Future.delayed(const Duration(seconds: 3));
+
+    // Pre-load token, cached dashboard, profile path and banner data in parallel
+    final tokenFuture = StorageService.getToken();
+    final profilePathFuture = StorageService.getProfileImagePath();
+    final dashboardDataFuture = StorageService.getDashboardData();
+    final bannerDataFuture = StorageService.getBannerData();
+
+    await Future.wait([
+      tokenFuture,
+      profilePathFuture,
+      dashboardDataFuture,
+      bannerDataFuture,
+    ]);
 
     final token = await StorageService.getToken();
-
     final actualToken = token?.contains('|') == true ? token!.split('|').last : token;
     print("SPLASH TOKEN => $actualToken");
+
+    if (actualToken != null && actualToken.isNotEmpty) {
+      if (!Get.isRegistered<DashboardController>()) {
+        Get.put(DashboardController());
+      }
+      if (!Get.isRegistered<BannerController>()) {
+        Get.put(BannerController());
+      }
+    }
+
+    await splashDelay;
 
     if (actualToken != null && actualToken.isNotEmpty) {
       Get.offAllNamed('/dashboard');

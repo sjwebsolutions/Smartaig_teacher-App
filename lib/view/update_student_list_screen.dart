@@ -146,7 +146,7 @@ class _UpdateStudentListScreenState extends State<UpdateStudentListScreen> {
               onRefresh: () async => _loadStudents(),
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 itemCount: controller.studentsList.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 15),
                 itemBuilder: (context, index) {
@@ -193,7 +193,7 @@ class _UpdateStudentListScreenState extends State<UpdateStudentListScreen> {
                                   width: 55,
                                   height: 55,
                                   decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
+                                    borderRadius: BorderRadius.circular(10),
                                     color: AppColors.primary.withValues(alpha: 0.1),
                                     border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
                                   ),

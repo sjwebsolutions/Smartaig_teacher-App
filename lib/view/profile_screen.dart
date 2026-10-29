@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../controller/dashboard_controller.dart';
 import '../controller/profile_controller.dart';
 import '../controller/auth_controller.dart';
+import '../models/dashboard_model.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 import '../themes/app_bar/app_top_bar.dart';
@@ -17,7 +18,6 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final dashboardController = Get.find<DashboardController>();
     final profileController = Get.put(ProfileController());
-    final authController = Get.find<AuthController>();
 
     return Container(
       decoration: BoxDecoration(
@@ -46,7 +46,7 @@ class ProfileScreen extends StatelessWidget {
             final teacher = dashboardController.dashboard.value?.data?.teacher;
 
             if (teacher == null) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
 
             return RefreshIndicator(
@@ -54,9 +54,10 @@ class ProfileScreen extends StatelessWidget {
               color: AppColors.primary,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Column(
                   children: [
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     // Profile Section (Header)
                     Center(
                       child: Column(
@@ -65,24 +66,25 @@ class ProfileScreen extends StatelessWidget {
                           Stack(
                             children: [
                               Obx(() => Container(
-                                width: 110,
-                                height: 110,
+                                width: 100,
+                                height: 100,
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(16),
                                   color: Colors.white,
-                                  border: Border.all(color: Colors.white, width: 4),
+                                  border: Border.all(color: Colors.white, width: 3),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
+                                      color: Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 clipBehavior: Clip.antiAlias,
                                 child: profileController.isImageUpdating.value
-                                    ? const Center(child: CircularProgressIndicator())
-                                    : ClipOval(
+                                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                                    : ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
                                         child: (profileController.selectedImagePath.isNotEmpty)
                                             ? Image.file(
                                                 File(profileController.selectedImagePath.value),
@@ -90,21 +92,42 @@ class ProfileScreen extends StatelessWidget {
                                                 width: double.infinity,
                                                 height: double.infinity,
                                               )
-                                            : (teacher.image != null && teacher.image!.isNotEmpty)
-                                                ? CachedNetworkImage(
-                                                    imageUrl: teacher.image!,
+                                            : (dashboardController.localProfileImagePath.value.isNotEmpty &&
+                                                    File(dashboardController.localProfileImagePath.value).existsSync())
+                                                ? Image.file(
+                                                    File(dashboardController.localProfileImagePath.value),
                                                     fit: BoxFit.cover,
                                                     width: double.infinity,
                                                     height: double.infinity,
-                                                    placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 60),
-                                                    errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 60),
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      if (teacher.image != null && teacher.image!.isNotEmpty) {
+                                                        return CachedNetworkImage(
+                                                          imageUrl: teacher.image!,
+                                                          fit: BoxFit.cover,
+                                                          width: double.infinity,
+                                                          height: double.infinity,
+                                                          placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 50),
+                                                          errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 50),
+                                                        );
+                                                      }
+                                                      return const Icon(Icons.person, color: AppColors.primary, size: 50);
+                                                    },
                                                   )
-                                                : const Icon(Icons.person, color: AppColors.primary, size: 60),
+                                                : (teacher.image != null && teacher.image!.isNotEmpty)
+                                                    ? CachedNetworkImage(
+                                                        imageUrl: teacher.image!,
+                                                        fit: BoxFit.cover,
+                                                        width: double.infinity,
+                                                        height: double.infinity,
+                                                        placeholder: (context, url) => const Icon(Icons.person, color: AppColors.primary, size: 50),
+                                                        errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 50),
+                                                      )
+                                                    : const Icon(Icons.person, color: AppColors.primary, size: 50),
                                       ),
                               )),
                               Positioned(
                                 bottom: 0,
-                                right: 4,
+                                right: 0,
                                 child: GestureDetector(
                                   onTap: () => _showImageSourceDialog(context, profileController),
                                   child: Container(
@@ -115,8 +138,8 @@ class ProfileScreen extends StatelessWidget {
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withValues(alpha: 0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
                                         ),
                                       ],
                                     ),
@@ -132,12 +155,12 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               teacher.name ?? "No Name",
                               textAlign: TextAlign.center,
                               style: AppTextStyles.body.copyWith(
-                                fontSize: 24,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.black,
                               ),
@@ -147,12 +170,12 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 16),
                     
                     // Info Section
                     _buildInfoSection(teacher),
                     
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -163,37 +186,34 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoSection(var teacher) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          _buildInfoCard(Icons.email_outlined, "Email Address", teacher.email ?? "Not Available"),
-          const SizedBox(height: 5),
-          _buildInfoCard(Icons.phone_iphone_rounded, "Phone Number", teacher.phone ?? "Not Available"),
-          const SizedBox(height: 5),
-          _buildInfoCard(Icons.assignment_ind_outlined, "Designation", teacher.staffType ?? "Not Available"),
-          const SizedBox(height: 5),
-          _buildInfoCard(Icons.account_balance_outlined, "School ID", teacher.schoolId?.toString() ?? "Not Available"),
-          const SizedBox(height: 5),
-          _buildInfoCard(Icons.tag_rounded, "Teacher ID", teacher.teacherUniqueId?.toString() ?? "Not Available"),
-          const SizedBox(height: 5),
-          _buildInfoCard(Icons.badge_outlined, "Employee ID", teacher.id?.toString() ?? "Not Available"),
-        ],
-      ),
+  Widget _buildInfoSection(Teacher teacher) {
+    return Column(
+      children: [
+        _buildInfoCard(Icons.email_outlined, "Email Address", teacher.email ?? "Not Available"),
+        const SizedBox(height: 8),
+        _buildInfoCard(Icons.phone_iphone_rounded, "Phone Number", teacher.phone ?? "Not Available"),
+        const SizedBox(height: 8),
+        _buildInfoCard(Icons.assignment_ind_outlined, "Designation", teacher.staffType ?? "Not Available"),
+        const SizedBox(height: 8),
+        _buildInfoCard(Icons.account_balance_outlined, "School ID", teacher.schoolId?.toString() ?? "Not Available"),
+        const SizedBox(height: 8),
+        _buildInfoCard(Icons.tag_rounded, "Teacher ID", teacher.teacherUniqueId?.toString() ?? "Not Available"),
+        const SizedBox(height: 8),
+        _buildInfoCard(Icons.badge_outlined, "Employee ID", teacher.id?.toString() ?? "Not Available"),
+      ],
     );
   }
 
   Widget _buildInfoCard(IconData icon, String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.05), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -202,14 +222,14 @@ class ProfileScreen extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppColors.primary, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,12 +243,12 @@ class ProfileScreen extends StatelessWidget {
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: const TextStyle(
                     color: AppColors.black,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -240,17 +260,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _divider() {
-    return const SizedBox.shrink();
-  }
-
   void _showImageSourceDialog(BuildContext context, ProfileController controller) {
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -303,24 +319,24 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: AppColors.primary, size: 32),
+            child: Icon(icon, color: AppColors.primary, size: 28),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
         ],
       ),
     );
   }
 
-  void _showMyQRCode(BuildContext context, var teacher) {
+  void _showMyQRCode(BuildContext context, Teacher teacher) {
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -328,7 +344,7 @@ class ProfileScreen extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.15),
@@ -340,16 +356,15 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Top Header with Gradient
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.primary, Color(0xFF3D4E81)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -358,7 +373,7 @@ class ProfileScreen extends StatelessWidget {
                       "Teacher ID Pass",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -371,7 +386,7 @@ class ProfileScreen extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
                       ),
                     ),
                   ],
@@ -379,38 +394,37 @@ class ProfileScreen extends StatelessWidget {
               ),
 
               Padding(
-                padding: const EdgeInsets.all(30),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // QR Code Area
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: AppColors.primary.withValues(alpha: 0.08), width: 1.5),
                       ),
                       child: Column(
                         children: [
                           const Icon(
                             Icons.qr_code_2_rounded,
-                            size: 180,
+                            size: 160,
                             color: AppColors.primary,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               teacher.teacherUniqueId ?? "ID-N/A",
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 3,
+                                letterSpacing: 2,
                               ),
                             ),
                           ),
@@ -418,45 +432,43 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 18),
 
-                    // Teacher Info
                     Text(
                       teacher.name?.toUpperCase() ?? "TEACHER NAME",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
                         color: AppColors.primary,
-                        letterSpacing: 1,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       teacher.staffType ?? "Department",
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Colors.grey[600],
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
-                    // Footer Tip
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: AppColors.green.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.green),
-                          const SizedBox(width: 8),
-                          const Text(
+                          Icon(Icons.info_outline_rounded, size: 14, color: AppColors.green),
+                          SizedBox(width: 6),
+                          Text(
                             "Scan for Daily Attendance",
                             style: TextStyle(
                               fontSize: 12,
@@ -474,110 +486,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context, AuthController authController) {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Colors.white,
-        elevation: 10,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.logout_rounded,
-                    color: Colors.redAccent,
-                    size: 34,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                "Confirm Logout",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Are you sure you want to log out from your account?",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        Get.back();
-                        authController.logout();
-                      },
-                      child: const Text(
-                        "Confirm",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: true,
     );
   }
 }

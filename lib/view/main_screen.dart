@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -7,7 +6,7 @@ import 'package:teacher_app_attendance/themes/app_bar/app_top_bar.dart';
 import 'package:teacher_app_attendance/utils/app_update_util.dart';
 import 'package:teacher_app_attendance/view/app_blocked_screen.dart';
 import 'package:teacher_app_attendance/view/setting_screen.dart';
-import 'package:teacher_app_attendance/view/upload_homework_screen.dart';
+import 'package:teacher_app_attendance/view/homework_screen.dart';
 import 'package:teacher_app_attendance/view/view_marks_screen.dart';
 import '../controller/main_controller.dart';
 import 'dashboard_screen.dart';
@@ -37,7 +36,7 @@ class _MainScreenState extends State<MainScreen> {
 
     final List<Widget> screens = [
       const DashboardScreen(),
-      const UploadHomeworkScreen(showBack: false),
+      const HomeworkScreen(showBack: false),
       const ViewMarksScreen(showBack: false),
       const SettingScreen()
     ];

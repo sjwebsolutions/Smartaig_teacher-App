@@ -25,22 +25,14 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
           appBar: AppTopBar(
             showBack: true,
             backgroundColor: Colors.transparent,
-            customTitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(subjectName.isNotEmpty ? subjectName : "Add Syllabus",
-                  style: AppTextStyles.appbarh4.copyWith(fontSize: 18),
-                ),
-              ],
-            ),
+            title: subjectName.isNotEmpty ? subjectName : "Add Syllabus",
           ),
           body: SafeArea(
             child: Column(
               children: [
                 /// Subject List (Chips) - Persistent
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -65,7 +57,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
 
   Widget _buildAddSyllabusForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -80,7 +72,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
                 value: controller.selectedClassId.value,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
                 dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(12),
                 menuMaxHeight: 300,
                 items: controller.uniqueClasses.map((item) {
                   return DropdownMenuItem<String>(
@@ -108,7 +100,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
                 value: controller.selectedSectionId.value,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
                 dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(12),
                 menuMaxHeight: 300,
                 items: controller.sectionsForSelectedClass.map((item) {
                   return DropdownMenuItem<String>(
@@ -142,21 +134,21 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
             icon: Icons.topic_outlined,
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            height: 55,
+            height: 52,
             child: ElevatedButton(
               onPressed: () => controller.saveSyllabusTopic(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text("SAVE TOPIC",
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -189,7 +181,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
             final item = subjects[index];
             final isSelected = controller.selectedSubject.value == item;
             return Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 label: Text(item),
                 selected: isSelected,
@@ -200,7 +192,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
                 backgroundColor: Colors.white,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : AppColors.primary,
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 ),
                 shape: StadiumBorder(
@@ -226,7 +218,7 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
       child: Text(
         text.toUpperCase(),
         style: const TextStyle(
-          color: Color(0xFF6B7280), // Grayish color from screenshot
+          color: Color(0xFF6B7280),
           fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.8,
@@ -237,10 +229,10 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
 
   Widget _buildDropdownCard({required IconData icon, required Widget child}) {
     return Container(
-      height: 55,
+      height: 52,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.05),
@@ -272,10 +264,10 @@ class AddSyllabusScreen extends GetView<SyllabusController> {
 
   Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon}) {
     return Container(
-      height: 55,
+      height: 52,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.05),

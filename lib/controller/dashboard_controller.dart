@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:teacher_app_attendance/api_service/dashboard_service.dart';
 import 'package:teacher_app_attendance/models/dashboard_model.dart';
@@ -19,6 +22,8 @@ class DashboardController extends GetxController {
   final hasError = false.obs;
   final errorMessage = ''.obs;
 
+  final localProfileImagePath = ''.obs;
+
   var lastMarkedTime = Rxn<DateTime>();
   var clockInTime = Rxn<DateTime>();
   var clockOutTime = Rxn<DateTime>();
@@ -33,6 +38,20 @@ class DashboardController extends GetxController {
   }
 
   Future<void> _handleInitialLoading() async {
+    try {
+      final savedPath = await StorageService.getProfileImagePath();
+      if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
+        localProfileImagePath.value = savedPath;
+        if (Get.context != null) {
+          try {
+            precacheImage(FileImage(File(savedPath)), Get.context!);
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      print("Error loading local profile image path: $e");
+    }
+
     try {
       final cachedJson = await StorageService.getDashboardData();
       if (cachedJson != null && cachedJson.isNotEmpty) {
@@ -90,10 +109,51 @@ class DashboardController extends GetxController {
     isMarked.refresh();
 
     final teacherImage = result.data?.teacher?.image;
-    if (teacherImage != null && teacherImage.isNotEmpty && Get.context != null) {
-      try {
-        precacheImage(CachedNetworkImageProvider(teacherImage), Get.context!);
-      } catch (_) {}
+    if (teacherImage != null && teacherImage.isNotEmpty) {
+      _cacheProfileImageLocally(teacherImage);
+    }
+  }
+
+  Future<void> _cacheProfileImageLocally(String imageUrl) async {
+    try {
+      final savedUrl = await StorageService.getProfileImageUrl();
+      final savedPath = await StorageService.getProfileImagePath();
+
+      if (savedUrl == imageUrl && savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
+        if (localProfileImagePath.value != savedPath) {
+          localProfileImagePath.value = savedPath;
+        }
+        if (Get.context != null) {
+          try {
+            precacheImage(FileImage(File(savedPath)), Get.context!);
+          } catch (_) {}
+        }
+        return;
+      }
+
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/teacher_profile_cache.jpg';
+
+      final dio = Dio();
+      final response = await dio.download(imageUrl, filePath);
+
+      if (response.statusCode == 200 && File(filePath).existsSync()) {
+        await StorageService.saveProfileImageUrl(imageUrl);
+        await StorageService.saveProfileImagePath(filePath);
+        localProfileImagePath.value = filePath;
+        if (Get.context != null) {
+          try {
+            precacheImage(FileImage(File(filePath)), Get.context!);
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      print("Error caching profile image locally: $e");
+      if (Get.context != null) {
+        try {
+          precacheImage(CachedNetworkImageProvider(imageUrl), Get.context!);
+        } catch (_) {}
+      }
     }
   }
 

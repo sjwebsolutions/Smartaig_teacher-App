@@ -4,6 +4,7 @@ import '../controller/student_leave_controller.dart';
 import '../models/class_list_model.dart';
 import '../models/student_leave_model.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/app_bar/app_top_bar.dart';
 import '../utils/app_snackbar.dart';
 
 class StudentLeaveScreen extends GetView<StudentLeaveController> {
@@ -11,30 +12,29 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is registered
     Get.isRegistered<StudentLeaveController>()
         ? Get.find<StudentLeaveController>()
         : Get.put(StudentLeaveController());
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
+          begin: Alignment.topLeft,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE0EAFC),
-            Color(0xFFCFDEF3),
-            Color(0xFFF3E8FF),
-          ],
         ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Student Leave Requests",
+          showBack: true,
+          showDivider: false,
+          backgroundColor: Colors.transparent,
+        ),
         body: SafeArea(
           child: Column(
             children: [
-              // Header Bar
-              _buildAppBar(context),
+              const SizedBox(height: 4),
 
               // Class Selector Row
               _buildClassSelector(),
@@ -42,44 +42,44 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
               Expanded(
                 child: Obx(() {
                   if (controller.isClassesLoading.value ||
-                      (controller.isLoading.value && controller.leavesList.isEmpty)) {
-                    return const Center(child: CircularProgressIndicator());
+                      (controller.isLoading.value && controller.allLeavesList.isEmpty)) {
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                   }
 
-                  if (controller.errorMessage.isNotEmpty && controller.leavesList.isEmpty) {
+                  if (controller.errorMessage.isNotEmpty && controller.allLeavesList.isEmpty) {
                     return Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: AppColors.red.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.red),
+                              child: const Icon(Icons.error_outline_rounded, size: 40, color: AppColors.red),
                             ),
-                            const SizedBox(height: 16),
-                            Text(
+                            const SizedBox(height: 12),
+                            const Text(
                               "Error Occurred",
-                              style: TextStyle(color: AppColors.red, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: AppColors.red, fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               controller.errorMessage.value,
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                              style: TextStyle(color: Colors.grey[700], fontSize: 12),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () => controller.fetchInchargeClasses(),
-                              icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+                              icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 16),
                               label: const Text("Retry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF2563EB),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                             ),
                           ],
@@ -89,50 +89,56 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                   }
 
                   final leaves = controller.leavesList;
-                  final total = leaves.length;
-                  final pending = leaves.where((l) => (l.status ?? '').toLowerCase() == 'pending').length;
-                  final approved = leaves.where((l) => (l.status ?? '').toLowerCase() == 'approved').length;
-                  final rejected = leaves.where((l) => (l.status ?? '').toLowerCase() == 'rejected' || (l.status ?? '').toLowerCase() == 'denied').length;
 
                   return RefreshIndicator(
                     onRefresh: () => controller.fetchStudentLeaves(),
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // 1. Leave Requests Summary Card
-                          _buildSummaryCard(total, pending, approved, rejected),
+                          _buildSummaryCard(
+                            controller.pendingCount.value,
+                            controller.approvedCount.value,
+                            controller.rejectedCount.value,
+                            controller.totalCount.value,
+                          ),
+
+                          const SizedBox(height: 4),
 
                           // 2. Horizontal Status Filter Chips
                           _buildFilterChips(),
+
+                          const SizedBox(height: 4),
 
                           // 3. Student Leave Cards List
                           if (leaves.isEmpty)
                             Container(
                               width: double.infinity,
-                              margin: const EdgeInsets.all(16),
-                              padding: const EdgeInsets.all(30),
+                              margin: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.03),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.rule_folder_outlined, size: 54, color: Colors.grey[400]),
-                                  const SizedBox(height: 14),
+                                  Icon(Icons.rule_folder_outlined, size: 48, color: Colors.grey[400]),
+                                  const SizedBox(height: 10),
                                   const Text(
                                     "No Student Leave Found",
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
                                   Text(
                                     "No leave requests match the selected filter.",
                                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
@@ -144,9 +150,9 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                             ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              padding: const EdgeInsets.only(top: 4, bottom: 16),
                               itemCount: leaves.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 12),
+                              separatorBuilder: (context, index) => const SizedBox(height: 10),
                               itemBuilder: (context, index) {
                                 final leave = leaves[index];
                                 return _buildStudentLeaveCard(context, leave);
@@ -165,48 +171,6 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
     );
   }
 
-  // Header Bar
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 15,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              "STUDENT LEAVE REQUESTS",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF1E293B),
-                fontWeight: FontWeight.w900,
-                fontSize: 15,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(width: 38),
-        ],
-      ),
-    );
-  }
-
   // Class Selector Dropdown Bar
   Widget _buildClassSelector() {
     return Obx(() {
@@ -216,17 +180,17 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
       if (classes.isEmpty) return const SizedBox.shrink();
 
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
             ],
@@ -235,10 +199,25 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
             child: DropdownButton<ClassData>(
               value: selected,
               isExpanded: true,
-              borderRadius: BorderRadius.circular(10),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              menuMaxHeight: 320,
+              icon: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
+              ),
               items: classes.map((cls) {
+                final isCurrent = selected == cls;
                 final label = cls.displayName ?? "${cls.className ?? ''}-${cls.sectionName ?? ''}";
+
                 return DropdownMenuItem<ClassData>(
                   value: cls,
                   child: Row(
@@ -246,18 +225,28 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+                          color: isCurrent
+                              ? const Color(0xFF2563EB).withValues(alpha: 0.12)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.class_rounded, size: 14, color: Color(0xFF2563EB)),
+                        child: Icon(
+                          Icons.class_rounded,
+                          size: 16,
+                          color: isCurrent ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                        ),
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        "Class: $label",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                      Expanded(
+                        child: Text(
+                          "Class: $label",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+                            color: isCurrent ? const Color(0xFF2563EB) : const Color(0xFF1E293B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -275,51 +264,39 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
   }
 
   // Card 1: Leave Requests Summary
-  Widget _buildSummaryCard(int total, int pending, int approved, int rejected) {
+  Widget _buildSummaryCard(int pending, int approved, int rejected, int total) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.pie_chart_rounded,
-                  color: Color(0xFF2563EB),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
+              Icon(Icons.directions_bus_filled_rounded, color: Color(0xFF10B981), size: 18),
+              SizedBox(width: 6),
+              Text(
                 "Leave Requests Summary",
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1E293B),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Row(
             children: [
               _buildSummaryStatBox(
@@ -374,7 +351,7 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(10),
@@ -385,23 +362,23 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 13, color: textColor),
+                Icon(icon, size: 12, color: textColor),
                 const SizedBox(width: 4),
                 Text(
                   count,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10.5,
                 color: textColor.withValues(alpha: 0.85),
                 fontWeight: FontWeight.w600,
               ),
@@ -412,7 +389,7 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
     );
   }
 
-  // Card 2: Filter Chips Row
+  // Filter Chips Row
   Widget _buildFilterChips() {
     final filters = [
       {'label': 'Pending', 'value': 'pending', 'color': const Color(0xFFD97706)},
@@ -426,53 +403,48 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
 
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(
           children: filters.map((f) {
             final isSelected = currentStatus == f['value'];
             final filterColor = f['color'] as Color;
 
             return Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 6),
               child: GestureDetector(
                 onTap: () => controller.changeStatusFilter(f['value'] as String),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isSelected ? filterColor : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isSelected ? filterColor : const Color(0xFFCBD5E1),
-                      width: 1.2,
+                      color: isSelected ? filterColor : filterColor.withValues(alpha: 0.3),
+                      width: 1,
                     ),
                     boxShadow: [
-                      if (isSelected)
-                        BoxShadow(
-                          color: filterColor.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        )
-                      else
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
+                      BoxShadow(
+                        color: isSelected
+                            ? filterColor.withValues(alpha: 0.25)
+                            : Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
                   child: Row(
                     children: [
                       if (isSelected) ...[
-                        const Icon(Icons.check_rounded, color: Colors.white, size: 14),
-                        const SizedBox(width: 5),
+                        const Icon(Icons.check_rounded, color: Colors.white, size: 12),
+                        const SizedBox(width: 4),
                       ],
                       Text(
                         f['label'] as String,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF475569),
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                          fontSize: 12,
+                          color: isSelected ? Colors.white : filterColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11.5,
                         ),
                       ),
                     ],
@@ -486,88 +458,70 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
     });
   }
 
-  // Card 3: Student Leave Card
+  // Student Leave Card
   Widget _buildStudentLeaveCard(BuildContext context, StudentLeaveData leave) {
     final status = (leave.status ?? 'pending').toLowerCase();
 
     Color statusBg = const Color(0xFFFEF3C7);
-    Color statusBorder = const Color(0xFFFDE68A);
     Color statusTextColor = const Color(0xFFD97706);
-    IconData statusIcon = Icons.hourglass_top_rounded;
     String statusText = leave.statusLabel ?? "Pending";
 
     if (status == 'approved') {
       statusBg = const Color(0xFFD1FAE5);
-      statusBorder = const Color(0xFFA7F3D0);
       statusTextColor = const Color(0xFF059669);
-      statusIcon = Icons.check_circle_rounded;
     } else if (status == 'rejected' || status == 'denied') {
       statusBg = const Color(0xFFFEE2E2);
-      statusBorder = const Color(0xFFFECACA);
       statusTextColor = const Color(0xFFDC2626);
-      statusIcon = Icons.cancel_rounded;
     }
 
     final isPending = status == 'pending';
     final studentInitial = (leave.studentName != null && leave.studentName!.isNotEmpty)
         ? leave.studentName![0].toUpperCase()
-        : 'S';
+        : 'A';
 
-    final classNameFormatted = (leave.className != null && leave.sectionName != null && leave.className!.isNotEmpty)
+    final classNameFormatted = (leave.className != null && leave.sectionName != null)
         ? "${leave.className}-${leave.sectionName}"
         : (leave.className ?? '');
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Student Avatar, Name, Details, Status Badge
+          // Row 1: Avatar, Name, Details, Status
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: const Color(0xFFE0F2FE),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
                   child: Text(
                     studentInitial,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFF0284C7),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,155 +529,108 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                     Text(
                       leave.studentName ?? "Student Name",
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 2,
-                      children: [
-                        if (leave.admissionNumber != null && leave.admissionNumber!.isNotEmpty)
-                          Text(
-                            "Adm: ${leave.admissionNumber}",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        if (leave.rollNo != null && leave.rollNo!.isNotEmpty)
-                          Text(
-                            "Roll: ${leave.rollNo}",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        if (classNameFormatted.isNotEmpty)
-                          Text(
-                            "Class: $classNameFormatted",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      "Adm: ${leave.admissionNumber ?? 'N/A'} • Roll: ${leave.rollNo ?? 'N/A'} • Class: $classNameFormatted",
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: statusBg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: statusBorder),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(statusIcon, size: 12, color: statusTextColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      statusText,
-                      style: TextStyle(
-                        color: statusTextColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  statusText,
+                  style: TextStyle(
+                    color: statusTextColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10.5,
+                  ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
+          Divider(height: 1, color: Colors.grey[200]),
+          const SizedBox(height: 6),
 
           // Row 2: Date Range & Duration Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF2563EB)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "${leave.fromDateFormatted ?? leave.fromDate ?? ''} - ${leave.toDateFormatted ?? leave.toDate ?? ''}",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+          Row(
+            children: [
+              const Icon(Icons.calendar_month_rounded, size: 15, color: Color(0xFF6366F1)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  "${leave.fromDateFormatted ?? leave.fromDate ?? ''} - ${leave.toDateFormatted ?? leave.toDate ?? ''} (${leave.totalDays ?? 1} Days)",
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    "${leave.totalDays ?? 1} Day${(leave.totalDays ?? 1) > 1 ? 's' : ''} (${leave.dayTypeLabel ?? 'Full Day'})",
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF2563EB),
-                      fontWeight: FontWeight.bold,
-                    ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  leave.dayTypeLabel ?? "Full Day",
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
-          // Row 3: Reason Container
+          // Row 3: Reason Box
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.notes_rounded, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Reason for Leave:",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
                 Text(
-                  (leave.reason != null && leave.reason!.trim().isNotEmpty)
+                  "Reason for Leave:",
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  (leave.reason != null && leave.reason!.isNotEmpty)
                       ? leave.reason!
-                      : "No reason provided",
+                      : "N/A",
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 11.5,
                     color: Color(0xFF1E293B),
                     fontWeight: FontWeight.w500,
                   ),
@@ -732,119 +639,73 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
             ),
           ),
 
-          if (leave.approverRemarks != null && leave.approverRemarks!.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.comment_rounded, size: 14, color: Color(0xFF059669)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      "Remarks: ${leave.approverRemarks}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF065F46),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          if (leave.approverRemarks != null && leave.approverRemarks!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              "Remarks: ${leave.approverRemarks}",
+              style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: Colors.grey[700]),
             ),
           ],
 
-          if (leave.rejectionReason != null && leave.rejectionReason!.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFECACA)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFDC2626)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      "Rejection Reason: ${leave.rejectionReason}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF991B1B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          if (leave.rejectionReason != null && leave.rejectionReason!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              "Rejection Reason: ${leave.rejectionReason}",
+              style: const TextStyle(fontSize: 10.5, color: AppColors.red, fontWeight: FontWeight.bold),
             ),
           ],
 
           // Row 4: Action Buttons (Approve & Reject)
           if (isPending && leave.id != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
             Row(
               children: [
-                // Approve Button (Green)
+                // Approve Button (Green Solid)
                 Expanded(
                   child: SizedBox(
-                    height: 42,
+                    height: 36,
                     child: ElevatedButton.icon(
                       onPressed: () => _showApproveDialog(context, leave.id!),
-                      icon: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 16),
+                      icon: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 15),
                       label: const Text(
                         "Approve",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
-                        elevation: 2,
-                        shadowColor: const Color(0xFF10B981).withValues(alpha: 0.3),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                // Reject Button (Red)
+                const SizedBox(width: 8),
+                // Reject Button (Red Solid)
                 Expanded(
                   child: SizedBox(
-                    height: 42,
+                    height: 36,
                     child: ElevatedButton.icon(
                       onPressed: () => _showRejectDialog(context, leave.id!),
-                      icon: const Icon(Icons.cancel_rounded, color: Colors.white, size: 16),
+                      icon: const Icon(Icons.cancel_rounded, color: Colors.white, size: 15),
                       label: const Text(
                         "Reject",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEF4444),
-                        elevation: 2,
-                        shadowColor: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
@@ -863,12 +724,12 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
 
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Row(
           children: [
-            Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
+            Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22),
             SizedBox(width: 8),
-            Text("Approve Leave", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 18)),
+            Text("Approve Leave", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 17)),
           ],
         ),
         content: Column(
@@ -877,9 +738,9 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
           children: [
             const Text(
               "Are you sure you want to approve this student leave request?",
-              style: TextStyle(fontSize: 13, color: Colors.black87),
+              style: TextStyle(fontSize: 12.5, color: Colors.black87),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             TextField(
               controller: remarksController,
               decoration: InputDecoration(
@@ -888,10 +749,10 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                 filled: true,
                 fillColor: Colors.grey[50],
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
             ),
           ],
@@ -921,8 +782,8 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF10B981),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             child: const Text("Approve Now", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
@@ -937,12 +798,12 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
 
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Row(
           children: [
-            Icon(Icons.cancel_rounded, color: Color(0xFFEF4444), size: 24),
+            Icon(Icons.cancel_rounded, color: Color(0xFFEF4444), size: 22),
             SizedBox(width: 8),
-            Text("Reject Leave", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444), fontSize: 18)),
+            Text("Reject Leave", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444), fontSize: 17)),
           ],
         ),
         content: Form(
@@ -953,9 +814,9 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
             children: [
               const Text(
                 "Please enter a reason for rejecting this leave request:",
-                style: TextStyle(fontSize: 13, color: Colors.black87),
+                style: TextStyle(fontSize: 12.5, color: Colors.black87),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: reasonController,
                 validator: (val) => (val == null || val.trim().isEmpty) ? "Reason is required" : null,
@@ -965,10 +826,10 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
                   filled: true,
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
             ],
@@ -997,8 +858,8 @@ class StudentLeaveScreen extends GetView<StudentLeaveController> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             child: const Text("Reject Now", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),

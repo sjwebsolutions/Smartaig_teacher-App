@@ -21,12 +21,11 @@ class SyllabusScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppTopBar(
+        appBar: const AppTopBar(
           title: "Syllabus",
           showBack: true,
           backgroundColor: Colors.transparent,
           showDivider: false,
-
         ),
         body: SafeArea(
           child: Column(
@@ -60,7 +59,10 @@ class SyllabusScreen extends StatelessWidget {
                             const SizedBox(height: 24),
                             ElevatedButton(
                               onPressed: () => controller.fetchTeacherSyllabus(),
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
                               child: const Text("Retry", style: TextStyle(color: Colors.white)),
                             )
                           ],
@@ -104,9 +106,9 @@ class SyllabusScreen extends StatelessWidget {
                   return RefreshIndicator(
                     onRefresh: () => controller.fetchTeacherSyllabus(),
                     child: ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       itemCount: controller.teacherSyllabusList.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      separatorBuilder: (context, index) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final syllabus = controller.teacherSyllabusList[index];
                         return _buildSyllabusCard(context, controller, syllabus);
@@ -135,8 +137,8 @@ class SyllabusScreen extends StatelessWidget {
 
   Widget _buildFilters(SyllabusController controller) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
@@ -255,15 +257,15 @@ class SyllabusScreen extends StatelessWidget {
 
   Widget _buildSyllabusCard(BuildContext context, SyllabusController controller, dynamic syllabus) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -281,11 +283,11 @@ class SyllabusScreen extends StatelessWidget {
                       syllabus.title ?? "No Title",
                       style: AppTextStyles.h2.copyWith(
                         color: AppColors.primary, 
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       syllabus.session ?? "N/A",
                       style: TextStyle(
@@ -299,7 +301,7 @@ class SyllabusScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             syllabus.description ?? "No Description",
             style: AppTextStyles.body.copyWith(
@@ -308,14 +310,14 @@ class SyllabusScreen extends StatelessWidget {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, thickness: 0.5),
           ),
           _buildInfoRow(Icons.people_alt_rounded, "Target", syllabus.targetAudience ?? "N/A", isMultiLine: true),
           _buildInfoRow(Icons.person_outline_rounded, "Uploaded By", syllabus.uploadedBy ?? "N/A"),
           _buildInfoRow(Icons.calendar_today_rounded, "Uploaded At", _formatDate(syllabus.uploadedAt)),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             children: [
               if (syllabus.isMyUpload == true) ...[
@@ -324,20 +326,28 @@ class SyllabusScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.1),
+                      color: Colors.amber.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.edit_note_rounded, color: Colors.amber, size: 20),
                   ),
                 ),
                 const SizedBox(width: 4),
-                Transform.scale(
-                  scale: 0.7,
-                  child: Switch(
-                    value: syllabus.status == 1,
-                    onChanged: (val) => controller.toggleSyllabusStatus(syllabus.id!),
-                    activeColor: AppColors.primary,
-                    activeTrackColor: AppColors.primary.withValues(alpha: 0.2),
+                GestureDetector(
+                  onTap: () {
+                    _showStatusConfirmationDialog(context, controller, syllabus);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: AbsorbPointer(
+                    child: Transform.scale(
+                      scale: 0.7,
+                      child: Switch(
+                        value: syllabus.status == 1,
+                        onChanged: (_) {},
+                        activeThumbColor: AppColors.primary,
+                        activeTrackColor: AppColors.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -345,7 +355,7 @@ class SyllabusScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (syllabus.status == 1 ? Colors.green : Colors.red).withOpacity(0.1),
+                  color: (syllabus.status == 1 ? Colors.green : Colors.red).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -361,7 +371,7 @@ class SyllabusScreen extends StatelessWidget {
           ),
 
           if (syllabus.fileUrl != null || (syllabus.attachments != null && syllabus.attachments!.isNotEmpty)) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Builder(builder: (context) {
               final String? mainUrl = syllabus.fileUrl;
               final List<Map<String, dynamic>> allFiles = [];
@@ -405,7 +415,7 @@ class SyllabusScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10),
@@ -420,7 +430,7 @@ class SyllabusScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(firstIsImage ? Icons.image_rounded : Icons.picture_as_pdf_rounded, color: Colors.white, size: 20),
+                      Icon(firstIsImage ? Icons.image_rounded : Icons.picture_as_pdf_rounded, color: Colors.white, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         allFiles.length > 1 
@@ -446,7 +456,7 @@ class SyllabusScreen extends StatelessWidget {
 
   Widget _buildInfoRow(IconData icon, String label, String value, {bool isMultiLine = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
@@ -487,5 +497,121 @@ class SyllabusScreen extends StatelessWidget {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  void _showStatusConfirmationDialog(BuildContext context, SyllabusController controller, dynamic syllabus) {
+    final bool isCurrentlyActive = syllabus.status == 1;
+
+    final String title = isCurrentlyActive ? "Deactivate Syllabus?" : "Activate Syllabus?";
+    final String message = isCurrentlyActive
+        ? "Are you sure you want to deactivate this syllabus?\nOnce inactive, this data will no longer be visible on the UI."
+        : "Are you sure you want to activate this syllabus?\nThis data will now be visible on the UI.";
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        elevation: 10,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 36),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: (isCurrentlyActive ? Colors.orange : AppColors.primary).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    isCurrentlyActive ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded,
+                    color: isCurrentlyActive ? Colors.orange : AppColors.primary,
+                    size: 30,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isCurrentlyActive ? Colors.orange : AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Get.back();
+                        if (syllabus.id != null) {
+                          syllabus.status = (syllabus.status == 1) ? 0 : 1;
+                          controller.teacherSyllabusList.refresh();
+                          controller.toggleSyllabusStatus(syllabus.id!);
+                        }
+                      },
+                      child: const Text(
+                        "Confirm",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

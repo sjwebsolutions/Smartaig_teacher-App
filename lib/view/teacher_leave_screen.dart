@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/leave_controller.dart';
 import '../models/leave_model.dart';
-import '../themes/appColors_&_styles/text_styles.dart';
+import '../themes/appColors_&_styles/app_Colors.dart';
+import '../themes/app_bar/app_top_bar.dart';
 
 class TeacherLeaveScreen extends StatelessWidget {
   const TeacherLeaveScreen({super.key});
@@ -14,20 +15,20 @@ class TeacherLeaveScreen extends StatelessWidget {
         : Get.put(LeaveController());
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary(
           begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFB0D7FE),
-            Color(0xFFE8D8FD),
-            Color(0xFFD3E1FD),
-            Color(0xFFD7E5FD),
-          ],
+          end: Alignment.bottomCenter,
         ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Teacher Leaves",
+          showBack: true,
+          backgroundColor: Colors.transparent,
+          showDivider: false,
+        ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => Get.toNamed('/applyLeave'),
           backgroundColor: const Color(0xFF2563EB),
@@ -40,52 +41,7 @@ class TeacherLeaveScreen extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 16,
-                          color: Color(0xFF1E293B),
-                        ),
-                        onPressed: () => Get.back(),
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          "TEACHER LEAVES",
-                          style: AppTextStyles.h2.copyWith(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1E293B),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 32),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 4),
 
               // Summary Card & Filter Chips
               Obx(() {
@@ -100,7 +56,9 @@ class TeacherLeaveScreen extends StatelessWidget {
                 return Column(
                   children: [
                     _buildSummaryCard(total, pending, approved, rejected),
+                    const SizedBox(height: 2),
                     _buildFilterChips(controller),
+                    const SizedBox(height: 4),
                   ],
                 );
               }),
@@ -109,7 +67,7 @@ class TeacherLeaveScreen extends StatelessWidget {
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value && controller.leaves.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                   }
 
                   final filteredLeaves = _getFilteredLeaves(controller);
@@ -151,7 +109,7 @@ class TeacherLeaveScreen extends StatelessWidget {
                     onRefresh: () => controller.fetchLeaves(),
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       itemCount: filteredLeaves.length,
                       itemBuilder: (context, index) {
                         final item = filteredLeaves[index];
@@ -189,11 +147,11 @@ class TeacherLeaveScreen extends StatelessWidget {
   // Card 1: Leave Requests Summary
   Widget _buildSummaryCard(int total, int pending, int approved, int rejected) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
@@ -231,7 +189,7 @@ class TeacherLeaveScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             children: [
               _buildSummaryStatBox(
@@ -286,7 +244,7 @@ class TeacherLeaveScreen extends StatelessWidget {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(10),
@@ -338,7 +296,7 @@ class TeacherLeaveScreen extends StatelessWidget {
 
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         child: Row(
           children: filters.map((f) {
             final isSelected = currentStatus == f['value'];
@@ -402,11 +360,11 @@ class TeacherLeaveScreen extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(

@@ -30,6 +30,7 @@ class SyllabusController extends GetxController {
   // Filter Data (Strongly Typed from Form Data)
   final termsList = <SyllabusTerm>[].obs;
   final classesList = <SyllabusClass>[].obs;
+  final streamsList = <SyllabusStream>[].obs;
   final filterSubjectsList = <SyllabusSubject>[].obs;
   final sectionsList = <SyllabusSection>[].obs;
   final allowedCombinationsList = <AllowedCombination>[].obs;
@@ -58,6 +59,7 @@ class SyllabusController extends GetxController {
         final filterData = formDataResult.data!;
         termsList.assignAll(filterData.terms ?? []);
         classesList.assignAll(filterData.classes ?? []);
+        streamsList.assignAll(filterData.streams ?? []);
         filterSubjectsList.assignAll(filterData.subjects ?? []);
         sectionsList.assignAll(filterData.sections ?? []);
         allowedCombinationsList.assignAll(filterData.allowedCombinations ?? []);
@@ -116,8 +118,79 @@ class SyllabusController extends GetxController {
   final uploadSelectedTermId = Rxn<int>();
   final uploadSelectedSubjectId = Rxn<int>();
   final uploadSelectedClassId = Rxn<int>();
+  final uploadSelectedStreamId = Rxn<int>();
   final uploadSelectedSectionIds = <int>[].obs;
   final uploadAttachments = <File>[].obs;
+
+  // Dynamically Filter Streams, Sections, Subjects based on Selected Class & Stream
+  List<SyllabusStream> get availableStreamsForSelectedClass {
+    if (uploadSelectedClassId.value == null) return [];
+
+    final classCombos = allowedCombinationsList
+        .where((e) => e.classId == uploadSelectedClassId.value)
+        .toList();
+
+    final streamIds = classCombos
+        .map((e) => e.streamId)
+        .where((id) => id != null)
+        .toSet();
+
+    if (streamIds.isNotEmpty) {
+      return streamsList.where((s) => s.id != null && streamIds.contains(s.id)).toList();
+    }
+
+    return [];
+  }
+
+  List<SyllabusSection> get availableSectionsForSelectedClassAndStream {
+    if (uploadSelectedClassId.value == null) return [];
+
+    var classCombos = allowedCombinationsList
+        .where((e) => e.classId == uploadSelectedClassId.value)
+        .toList();
+
+    if (uploadSelectedStreamId.value != null) {
+      classCombos = classCombos
+          .where((e) => e.streamId == uploadSelectedStreamId.value || e.streamId == null)
+          .toList();
+    }
+
+    final validSectionIds = classCombos
+        .map((e) => e.sectionId)
+        .whereType<int>()
+        .toSet();
+
+    if (validSectionIds.isNotEmpty) {
+      return sectionsList.where((sec) => sec.id != null && validSectionIds.contains(sec.id)).toList();
+    }
+
+    return sectionsList;
+  }
+
+  List<SyllabusSubject> get availableSubjectsForSelectedClassAndStream {
+    if (uploadSelectedClassId.value == null) return filterSubjectsList;
+
+    var classCombos = allowedCombinationsList
+        .where((e) => e.classId == uploadSelectedClassId.value)
+        .toList();
+
+    if (uploadSelectedStreamId.value != null) {
+      classCombos = classCombos
+          .where((e) => e.streamId == uploadSelectedStreamId.value || e.streamId == null)
+          .toList();
+    }
+
+    final validSubjectIds = classCombos
+        .map((e) => e.subjectId)
+        .whereType<int>()
+        .toSet();
+
+    if (validSubjectIds.isNotEmpty) {
+      return filterSubjectsList.where((sub) => sub.id != null && validSubjectIds.contains(sub.id)).toList();
+    }
+
+    return filterSubjectsList;
+  }
 
   // For Update
   final isUpdateMode = false.obs;
@@ -136,10 +209,11 @@ class SyllabusController extends GetxController {
     uploadSelectedTermId.value = syllabus.term?.id;
     uploadSelectedSubjectId.value = syllabus.subject?.id;
     
-    // Set Class and Sections from targets
+    // Set Class, Stream and Sections from targets
     if (syllabus.targets != null && syllabus.targets!.isNotEmpty) {
       final firstTarget = syllabus.targets!.first;
       uploadSelectedClassId.value = firstTarget.classId;
+      uploadSelectedStreamId.value = firstTarget.streamId;
       uploadSelectedSectionIds.assignAll(
         firstTarget.sectionIds?.map((e) => int.tryParse(e.toString()) ?? 0).where((e) => e != 0).toList() ?? []
       );
@@ -158,39 +232,47 @@ class SyllabusController extends GetxController {
       return;
     }
     
-    print("--- START STORE SYLLABUS ---");
     if (uploadTitleController.text.isEmpty) {
-      print("Validation Error: Title is empty");
-      Get.snackbar("Error", "Please enter a title", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", "Please enter a title", backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
       return;
     }
     if (uploadSelectedTermId.value == null) {
-      print("Validation Error: Term not selected");
-      Get.snackbar("Error", "Please select a term", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", "Please select a term", backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
       return;
     }
     if (uploadSelectedClassId.value == null) {
-      print("Validation Error: Class not selected");
-      Get.snackbar("Error", "Please select a class", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", "Please select a class", backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
       return;
     }
 
     try {
       isLoading.value = true;
       
-      // Construct targets JSON
+      final selectedClass = classesList.firstWhereOrNull((c) => c.id == uploadSelectedClassId.value);
+      final selectedStream = streamsList.firstWhereOrNull((s) => s.id == uploadSelectedStreamId.value);
+
       final targets = [
         {
           "class_id": uploadSelectedClassId.value,
-          "stream_id": null,
+          "class_name": selectedClass?.name,
+          "stream_id": uploadSelectedStreamId.value,
+          "stream_name": selectedStream?.name,
           "section_ids": uploadSelectedSectionIds.toList(),
         }
       ];
 
       final targetsJson = jsonEncode(targets);
-      print("Constructed Targets JSON: $targetsJson");
-      print("Uploading with: Title=${uploadTitleController.text}, Term=${uploadSelectedTermId.value}, Subject=${uploadSelectedSubjectId.value}");
-      print("Attachments Count: ${uploadAttachments.length}");
+
+      debugPrint("==================== STORE TEACHER SYLLABUS ====================");
+      debugPrint("Title: ${uploadTitleController.text}");
+      debugPrint("Term ID: ${uploadSelectedTermId.value}");
+      debugPrint("Class ID: ${uploadSelectedClassId.value} (${selectedClass?.name})");
+      debugPrint("Stream ID: ${uploadSelectedStreamId.value} (${selectedStream?.name})");
+      debugPrint("Section IDs: ${uploadSelectedSectionIds.toList()}");
+      debugPrint("Subject ID: ${uploadSelectedSubjectId.value}");
+      debugPrint("Targets JSON: $targetsJson");
+      debugPrint("Attachments: ${uploadAttachments.map((f) => f.path).toList()}");
+      debugPrint("==================================================================");
 
       final result = await _syllabusService.storeSyllabus(
         title: uploadTitleController.text,
@@ -202,21 +284,18 @@ class SyllabusController extends GetxController {
         attachments: uploadAttachments,
       );
 
-      print("Upload Result Success: ${result.success}");
-
       if (result.success == true) {
         Get.back();
         Get.snackbar("Success", result.message ?? "Syllabus uploaded successfully", 
-            backgroundColor: Colors.green, colorText: Colors.white);
-        fetchTeacherSyllabus(); // Refresh list
+            backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.TOP);
+        fetchTeacherSyllabus();
         _clearUploadForm();
       }
     } catch (e) {
-      print("EXCEPTION DURING UPLOAD: $e");
-      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+      debugPrint("❌ [SyllabusController] Store Syllabus Error: $e");
+      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
-      print("--- END STORE SYLLABUS ---");
     }
   }
 
@@ -226,13 +305,33 @@ class SyllabusController extends GetxController {
     try {
       isLoading.value = true;
       
+      final selectedClass = classesList.firstWhereOrNull((c) => c.id == uploadSelectedClassId.value);
+      final selectedStream = streamsList.firstWhereOrNull((s) => s.id == uploadSelectedStreamId.value);
+
       final targets = [
         {
           "class_id": uploadSelectedClassId.value,
-          "stream_id": null,
+          "class_name": selectedClass?.name,
+          "stream_id": uploadSelectedStreamId.value,
+          "stream_name": selectedStream?.name,
           "section_ids": uploadSelectedSectionIds.toList(),
         }
       ];
+
+      final targetsJson = jsonEncode(targets);
+
+      debugPrint("==================== UPDATE TEACHER SYLLABUS ====================");
+      debugPrint("Update ID: ${currentUpdateId.value}");
+      debugPrint("Title: ${uploadTitleController.text}");
+      debugPrint("Term ID: ${uploadSelectedTermId.value}");
+      debugPrint("Class ID: ${uploadSelectedClassId.value} (${selectedClass?.name})");
+      debugPrint("Stream ID: ${uploadSelectedStreamId.value} (${selectedStream?.name})");
+      debugPrint("Section IDs: ${uploadSelectedSectionIds.toList()}");
+      debugPrint("Subject ID: ${uploadSelectedSubjectId.value}");
+      debugPrint("Targets JSON: $targetsJson");
+      debugPrint("New Attachments: ${uploadAttachments.map((f) => f.path).toList()}");
+      debugPrint("Delete Attachments: $deleteAttachmentPaths");
+      debugPrint("==================================================================");
 
       final result = await _syllabusService.updateSyllabus(
         id: currentUpdateId.value!,
@@ -249,12 +348,12 @@ class SyllabusController extends GetxController {
       if (result.success == true) {
         Get.back();
         Get.snackbar("Success", result.message ?? "Syllabus updated successfully", 
-            backgroundColor: Colors.green, colorText: Colors.white);
+            backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.TOP);
         fetchTeacherSyllabus();
         clearUploadMode();
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
     }
@@ -267,14 +366,54 @@ class SyllabusController extends GetxController {
         final data = result['data'];
         final int index = teacherSyllabusList.indexWhere((e) => e.id == id);
         if (index != -1) {
-          teacherSyllabusList[index].status = data['status'];
+          dynamic rawStatus;
+          if (data is Map && data['status'] != null) {
+            rawStatus = data['status'];
+          } else if (data != null && data is! Map) {
+            rawStatus = data;
+          }
+          final currentStatus = teacherSyllabusList[index].status ?? 1;
+          final fallbackStatus = (currentStatus == 1) ? 0 : 1;
+          final parsed = SyllabusData.parseStatus(rawStatus, defaultValue: fallbackStatus);
+          teacherSyllabusList[index].status = parsed;
           teacherSyllabusList.refresh();
         }
-        Get.snackbar("Status Updated", result['message'] ?? "Syllabus status toggled",
-            backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          "Status Updated",
+          result['message'] ?? "Syllabus status toggled",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      } else {
+        final int index = teacherSyllabusList.indexWhere((e) => e.id == id);
+        if (index != -1) {
+          final current = teacherSyllabusList[index].status ?? 1;
+          teacherSyllabusList[index].status = (current == 1) ? 0 : 1;
+          teacherSyllabusList.refresh();
+        }
+        Get.snackbar(
+          "Error",
+          result['message'] ?? "Failed to update status",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+      final int index = teacherSyllabusList.indexWhere((e) => e.id == id);
+      if (index != -1) {
+        final current = teacherSyllabusList[index].status ?? 1;
+        teacherSyllabusList[index].status = (current == 1) ? 0 : 1;
+        teacherSyllabusList.refresh();
+      }
+      Get.snackbar(
+        "Error",
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
@@ -293,6 +432,7 @@ class SyllabusController extends GetxController {
     uploadSelectedTermId.value = null;
     uploadSelectedSubjectId.value = null;
     uploadSelectedClassId.value = null;
+    uploadSelectedStreamId.value = null;
     uploadSelectedSectionIds.clear();
     uploadAttachments.clear();
   }
@@ -347,7 +487,7 @@ class SyllabusController extends GetxController {
 
   Future<void> saveSyllabusTopic() async {
     if (selectedClassId.value == null || selectedSectionId.value == null) {
-      Get.snackbar("Error", "Please select Class and Section", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", "Please select Class and Section", backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
       return;
     }
     if (chapterController.text.isEmpty || topicController.text.isEmpty) {
@@ -378,6 +518,6 @@ class SyllabusController extends GetxController {
     Get.back();
     Get.snackbar("Success", "Syllabus topic added successfully",
         backgroundColor: Colors.green, colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM);
+        snackPosition: SnackPosition.TOP);
   }
 }

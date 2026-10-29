@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import '../controller/announcement_controller.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/app_bar/app_top_bar.dart';
@@ -43,47 +46,58 @@ class AnnouncementListScreen extends GetView<AnnouncementController> {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 itemCount: announcementList.length,
                 itemBuilder: (context, index) {
                   final item = announcementList[index];
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 20),
+                    margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(13),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
                         ),
                       ],
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        width: 1,
+                      ),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(13),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-                            CachedNetworkImage(
-                              imageUrl: item.imageUrl!,
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              memCacheWidth: 600,
-                              memCacheHeight: 400,
-                              maxWidthDiskCache: 1200,
-                              maxHeightDiskCache: 800,
-                              placeholder: (context, url) => Container(
-                                height: 150,
-                                color: Colors.grey[100],
-                                child: const Center(child: SpinKitFadingCircle(color: AppColors.primary, size: 25)),
+                            GestureDetector(
+                              onTap: () => _showFullScreenImage(
+                                context,
+                                item.imageUrl!,
+                                item.title ?? "Announcement",
                               ),
-                              errorWidget: (context, url, error) => const SizedBox.shrink(),
+                              child: CachedNetworkImage(
+                                imageUrl: item.imageUrl!,
+                                height: 160,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                memCacheWidth: 600,
+                                memCacheHeight: 400,
+                                maxWidthDiskCache: 1200,
+                                maxHeightDiskCache: 800,
+                                placeholder: (context, url) => Container(
+                                  height: 160,
+                                  color: Colors.grey[100],
+                                  child: const Center(child: SpinKitFadingCircle(color: AppColors.primary, size: 25)),
+                                ),
+                                errorWidget: (context, url, error) => const SizedBox.shrink(),
+                              ),
                             ),
                           Padding(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(14),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -112,7 +126,7 @@ class AnnouncementListScreen extends GetView<AnnouncementController> {
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 10),
                                 Text(
                                   item.title ?? "Announcement",
                                   style: const TextStyle(
@@ -131,7 +145,7 @@ class AnnouncementListScreen extends GetView<AnnouncementController> {
                                   ),
                                 ),
                                 if (item.createdBy != null) ...[
-                                  const Divider(height: 24),
+                                  const Divider(height: 20),
                                   Row(
                                     children: [
                                       Icon(Icons.person_outline, size: 14, color: Colors.grey[400]),
@@ -156,6 +170,102 @@ class AnnouncementListScreen extends GetView<AnnouncementController> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl, String title) {
+    Get.to(
+      () => Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppTopBar(
+            title: title,
+            showBack: true,
+            backgroundColor: Colors.transparent,
+          ),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Center(
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(Icons.error, color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 30,
+                  left: 20,
+                  right: 20,
+                  child: InkWell(
+                    onTap: () async {
+                      try {
+                        final tempDir = await getTemporaryDirectory();
+                        final path = '${tempDir.path}/shared_announcement.png';
+                        await Dio().download(imageUrl, path);
+                        await Share.shareXFiles([XFile(path)]);
+                      } catch (e) {
+                        Get.snackbar("Error", "Could not share image");
+                      }
+                    },
+                    child: Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.share_rounded, color: Colors.white, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            "Share Image",
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                            Text(
+                              "Share Image",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+      fullscreenDialog: false,
     );
   }
 

@@ -12,7 +12,6 @@ class AttendanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<AttendanceController>();
 
-    // Get arguments from ClassListScreen
     final dynamic args = Get.arguments;
     if (args != null) {
       controller.setIds(
@@ -31,27 +30,16 @@ class AttendanceScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppTopBar(
-          backgroundColor: Colors.transparent,
+        appBar: const AppTopBar(
+          title: "Class Attendance",
           showBack: true,
+          backgroundColor: Colors.transparent,
           showDivider: false,
-          customTitle: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Class Attendance", style: AppTextStyles.appbarh4),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
         body: SafeArea(
           child: Obx(() {
             if (controller.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
 
             if (controller.errorMessage.isNotEmpty) {
@@ -60,7 +48,7 @@ class AttendanceScreen extends StatelessWidget {
 
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -70,15 +58,15 @@ class AttendanceScreen extends StatelessWidget {
                         Text(
                           "Student Roster",
                           style: AppTextStyles.body.copyWith(
-                            color: AppColors.black.withValues(alpha: 0.60),
-                            fontSize: 18,
+                            color: AppColors.black.withValues(alpha: 0.70),
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
                     ListView.builder(
                       itemCount: controller.students.length,
@@ -92,17 +80,17 @@ class AttendanceScreen extends StatelessWidget {
                           final status = controller.studentStatuses[studentId] ?? '';
 
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
+                            margin: const EdgeInsets.only(bottom: 8),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 15,
-                              vertical: 10,
+                              horizontal: 12,
+                              vertical: 8,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.white,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.black.withValues(alpha: 0.05),
+                                  color: AppColors.black.withValues(alpha: 0.04),
                                   blurRadius: 5,
                                   offset: const Offset(0, 2),
                                 ),
@@ -117,13 +105,19 @@ class AttendanceScreen extends StatelessWidget {
                                     color: AppColors.primary,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                CircleAvatar(
-                                  radius: 19,
-                                  backgroundColor: AppColors.grey.withValues(alpha: 0.3),
-                                  child: const Icon(Icons.person, size: 20),
+                                const SizedBox(width: 10),
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.person, size: 20, color: AppColors.primary),
+                                  ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,23 +126,24 @@ class AttendanceScreen extends StatelessWidget {
                                         student.studentName ?? "N/A",
                                         style: AppTextStyles.body.copyWith(
                                           fontWeight: FontWeight.w600,
+                                          fontSize: 14,
                                         ),
                                       ),
-                                      const SizedBox(height: 3),
+                                      const SizedBox(height: 2),
                                       Text(
                                         "ID: ${student.studentUniqueId}",
                                         style: AppTextStyles.body.copyWith(
-                                          fontSize: 12,
-                                          color: AppColors.grey,
+                                          fontSize: 11,
+                                          color: Colors.grey.shade600,
                                         ),
                                       ),
                                       if (student.fatherName != null && student.fatherName!.isNotEmpty) ...[
-                                        const SizedBox(height: 3),
+                                        const SizedBox(height: 2),
                                         Text(
                                           "Father: ${student.fatherName}",
                                           style: AppTextStyles.body.copyWith(
-                                            fontSize: 12,
-                                            color: AppColors.grey,
+                                            fontSize: 11,
+                                            color: Colors.grey.shade600,
                                           ),
                                         ),
                                       ],
@@ -176,43 +171,43 @@ class AttendanceScreen extends StatelessWidget {
             );
           }),
         ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          border: Border(
-            top: BorderSide(color: AppColors.grey.withValues(alpha: 0.2)),
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            border: Border(
+              top: BorderSide(color: AppColors.grey.withValues(alpha: 0.2)),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 45,
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+          child: SafeArea(
+            child: SizedBox(
+              height: 48,
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-              onPressed: () {
-                controller.submitAttendance();
-              },
-              child: Text(
-                "Submit Report",
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                onPressed: () {
+                  controller.submitAttendance();
+                },
+                child: Text(
+                  "Submit Report",
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _attendanceButton(String text, Color color, bool isSelected, VoidCallback onTap) {
     return GestureDetector(

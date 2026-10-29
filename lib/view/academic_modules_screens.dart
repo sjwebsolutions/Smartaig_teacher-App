@@ -97,6 +97,26 @@ class AcademicModuleGrid extends StatelessWidget {
                 Get.toNamed('/teacherLeave');
               },
             ),
+            ModuleItem(
+              title: "Time Table",
+              icon: Icons.schedule_rounded,
+              color: const Color(0xFF8B5CF6),
+              isEnabled: true,
+              badgeCount: timeTableController.timeTables.length,
+              onTap: () {
+                Get.toNamed('/timeTable');
+              },
+            ),
+            ModuleItem(
+              title: "Date Sheet",
+              icon: Icons.calendar_month_rounded,
+              color: const Color(0xFF0EA5E9),
+              isEnabled: true,
+              badgeCount: dateSheetController.dateSheets.length,
+              onTap: () {
+                Get.toNamed('/dateSheet');
+              },
+            ),
           ],
         ),
         ModuleCategory(
@@ -134,26 +154,6 @@ class AcademicModuleGrid extends StatelessWidget {
                 Get.toNamed('/viewMarks');
               },
             ),
-            ModuleItem(
-              title: "Time Table",
-              icon: Icons.schedule_rounded,
-              color: const Color(0xFF8B5CF6),
-              isEnabled: true,
-              badgeCount: timeTableController.timeTables.length,
-              onTap: () {
-                Get.toNamed('/timeTable');
-              },
-            ),
-            ModuleItem(
-              title: "Date Sheet",
-              icon: Icons.calendar_month_rounded,
-              color: const Color(0xFF0EA5E9),
-              isEnabled: true,
-              badgeCount: dateSheetController.dateSheets.length,
-              onTap: () {
-                Get.toNamed('/dateSheet');
-              },
-            ),
           ],
         ),
         ModuleCategory(
@@ -189,16 +189,6 @@ class AcademicModuleGrid extends StatelessWidget {
                 Get.toNamed('/admitCardScanner');
               },
             ),
-            ModuleItem(
-              title: "Get Pass",
-              icon: Icons.badge_rounded,
-              color: const Color(0xFF14B8A6),
-              isEnabled: true,
-              badgeCount: gatePassController.gatePasses.length,
-              onTap: () {
-                Get.toNamed('/getPass');
-              },
-            ),
           ],
         ),
         ModuleCategory(
@@ -227,6 +217,16 @@ class AcademicModuleGrid extends StatelessWidget {
                 Get.toNamed('/banners');
               },
             ),
+            ModuleItem(
+              title: "Get Pass",
+              icon: Icons.badge_rounded,
+              color: const Color(0xFF14B8A6),
+              isEnabled: true,
+              badgeCount: gatePassController.gatePasses.length,
+              onTap: () {
+                Get.toNamed('/getPass');
+              },
+            ),
           ],
         ),
       ];
@@ -244,11 +244,11 @@ class AcademicModuleGrid extends StatelessWidget {
     if (category.items.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.05),
@@ -267,8 +267,8 @@ class AcademicModuleGrid extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 26,
-                height: 26,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: category.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -276,7 +276,7 @@ class AcademicModuleGrid extends StatelessWidget {
                 child: Icon(
                   category.icon,
                   color: category.color,
-                  size: 15,
+                  size: 16,
                 ),
               ),
               const SizedBox(width: 8),
@@ -284,7 +284,7 @@ class AcademicModuleGrid extends StatelessWidget {
                 child: Text(
                   category.title.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                     color: AppColors.black.withValues(alpha: 0.85),
@@ -293,16 +293,16 @@ class AcademicModuleGrid extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: category.items.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: isTablet ? 4 : 3,
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-              childAspectRatio: isTablet ? 1.5 : 1.32,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: isTablet ? 1.05 : 1.02,
             ),
             itemBuilder: (context, index) {
               final item = category.items[index];

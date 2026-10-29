@@ -132,7 +132,7 @@ class _UpdateStudentDataScreenState extends State<UpdateStudentDataScreen> {
               },
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 itemCount: controller.classesList.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 15),
                 itemBuilder: (context, index) {

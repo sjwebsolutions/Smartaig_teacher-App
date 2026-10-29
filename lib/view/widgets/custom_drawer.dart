@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -176,8 +177,28 @@ class CustomDrawer extends StatelessWidget {
                   ],
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: (teacher?.image != null && teacher!.image!.isNotEmpty)
-                    ? CachedNetworkImage(
+                child: Builder(
+                  builder: (context) {
+                    final localPath = controller.localProfileImagePath.value;
+                    if (localPath.isNotEmpty && File(localPath).existsSync()) {
+                      return Image.file(
+                        File(localPath),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          if (teacher?.image != null && teacher!.image!.isNotEmpty) {
+                            return CachedNetworkImage(
+                              imageUrl: teacher.image!,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, err) => const Icon(Icons.person, color: AppColors.primary, size: 35),
+                            );
+                          }
+                          return const Icon(Icons.person, color: AppColors.primary, size: 35);
+                        },
+                      );
+                    } else if (teacher?.image != null && teacher!.image!.isNotEmpty) {
+                      return CachedNetworkImage(
                         imageUrl: teacher.image!,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
@@ -185,8 +206,12 @@ class CustomDrawer extends StatelessWidget {
                           child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                         ),
                         errorWidget: (context, url, error) => const Icon(Icons.person, color: AppColors.primary, size: 35),
-                      )
-                    : const Icon(Icons.person, color: AppColors.primary, size: 35),
+                      );
+                    } else {
+                      return const Icon(Icons.person, color: AppColors.primary, size: 35);
+                    }
+                  },
+                ),
               ),
             ),
             const SizedBox(width: 14),

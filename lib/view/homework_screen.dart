@@ -5,18 +5,19 @@ import '../models/homework_model.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/app_bar/app_top_bar.dart';
 
-class UploadHomeworkScreen extends StatefulWidget {
+class HomeworkScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final bool? showBack;
-  const UploadHomeworkScreen({super.key, this.onBack, this.showBack});
+  const HomeworkScreen({super.key, this.onBack, this.showBack});
 
   @override
-  State<UploadHomeworkScreen> createState() => _UploadHomeworkScreenState();
+  State<HomeworkScreen> createState() => _HomeworkScreenState();
 }
 
-class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
+typedef UploadHomeworkScreen = HomeworkScreen;
+
+class _HomeworkScreenState extends State<HomeworkScreen> {
   final HomeworkController controller = Get.find<HomeworkController>();
-  String _selectedFilter = 'all'; // 'all', 'homework', 'diary'
 
   @override
   Widget build(BuildContext context) {
@@ -49,83 +50,40 @@ class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
               );
             }
 
-            final allHomework = controller.homeworkList;
+            final list = controller.homeworkList;
 
-            // Apply filter
-            final filteredList = allHomework.where((item) {
-              if (_selectedFilter == 'homework') {
-                return item.isDiary != true;
-              } else if (_selectedFilter == 'diary') {
-                return item.isDiary == true;
-              }
-              return true;
-            }).toList();
+            if (list.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: () => controller.fetchHomeworkList(),
+                color: AppColors.primary,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                        child: _buildEmptyState(context),
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
 
             return RefreshIndicator(
               onRefresh: () => controller.fetchHomeworkList(),
               color: AppColors.primary,
-              child: CustomScrollView(
+              child: ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
-                slivers: [
-                  // Filter Chips & Stats
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFilterRow(allHomework),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Total Assignments (${filteredList.length})",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary.withValues(alpha: 0.75),
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                              if (controller.isLoading.value)
-                                const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Empty State or List
-                  if (filteredList.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: _buildEmptyState(context),
-                    )
-                  else
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final homework = filteredList[index];
-                            return _buildHomeworkCard(context, homework);
-                          },
-                          childCount: filteredList.length,
-                        ),
-                      ),
-                    ),
-                ],
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 80),
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  return _buildHomeworkCard(context, list[index]);
+                },
               ),
             );
           }),
@@ -153,116 +111,6 @@ class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
     );
   }
 
-  Widget _buildFilterRow(List<HomeworkData> allHomework) {
-    final int totalCount = allHomework.length;
-    final int hwCount = allHomework.where((h) => h.isDiary != true).length;
-    final int diaryCount = allHomework.where((h) => h.isDiary == true).length;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          _buildFilterChip(
-            label: "All",
-            count: totalCount,
-            isSelected: _selectedFilter == 'all',
-            icon: Icons.grid_view_rounded,
-            onTap: () => setState(() => _selectedFilter = 'all'),
-          ),
-          const SizedBox(width: 8),
-          _buildFilterChip(
-            label: "Homework",
-            count: hwCount,
-            isSelected: _selectedFilter == 'homework',
-            icon: Icons.assignment_rounded,
-            onTap: () => setState(() => _selectedFilter = 'homework'),
-          ),
-          const SizedBox(width: 8),
-          _buildFilterChip(
-            label: "Class Diary",
-            count: diaryCount,
-            isSelected: _selectedFilter == 'diary',
-            icon: Icons.auto_stories_rounded,
-            onTap: () => setState(() => _selectedFilter = 'diary'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required String label,
-    required int count,
-    required bool isSelected,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.25)
-                  : Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.primary.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 15,
-              color: isSelected ? Colors.white : AppColors.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12.5,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.25)
-                    : AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "$count",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : AppColors.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildHomeworkCard(BuildContext context, HomeworkData homework) {
     final bool isDiary = homework.isDiary == true;
     final int attachmentCount = homework.attachments?.length ?? 0;
@@ -271,7 +119,7 @@ class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.05),
@@ -286,10 +134,10 @@ class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () => Get.toNamed('/homeworkDetail', arguments: homework.id),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -515,7 +363,7 @@ class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.05),
@@ -544,11 +392,9 @@ class _UploadHomeworkScreenState extends State<UploadHomeworkScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                _selectedFilter == 'all'
-                    ? "No Homework Found"
-                    : "No ${_selectedFilter == 'homework' ? 'Homework' : 'Class Diary'} Entries",
-                style: const TextStyle(
+              const Text(
+                "No Homework Found",
+                style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
