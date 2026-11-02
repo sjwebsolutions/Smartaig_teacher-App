@@ -227,6 +227,15 @@ class AcademicModuleGrid extends StatelessWidget {
                 Get.toNamed('/getPass');
               },
             ),
+            ModuleItem(
+              title: "Verify E-Pass",
+              icon: Icons.event_rounded,
+              color: const Color(0xFF8B5CF6),
+              isEnabled: true,
+              onTap: () {
+                Get.toNamed('/events');
+              },
+            ),
           ],
         ),
       ];

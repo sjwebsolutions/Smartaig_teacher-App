@@ -57,7 +57,11 @@ import 'view/admit_card_scanner_screen.dart';
 import 'view/admit_card_detail_screen.dart';
 import 'modules/admit_card_scanner_module.dart';
 import 'view/leaves_screen.dart';
+import 'view/events_screen.dart';
+import 'view/event_pass_detail_screen.dart';
+import 'view/event_check_in_result_screen.dart';
 import 'modules/leave_module.dart';
+import 'modules/event_module.dart';
 import 'view/student_leave_screen.dart';
 import 'view/notification_screen.dart';
 import 'modules/notification_module.dart';
@@ -386,6 +390,19 @@ class _MyAppState extends State<MyApp> {
           name: '/applyLeave',
           page: () => const ApplyLeaveScreen(),
           binding: LeaveBinding(),
+        ),
+        GetPage(
+          name: '/events',
+          page: () => const EventsScreen(),
+          binding: EventBinding(),
+        ),
+        GetPage(
+          name: '/eventPassDetail',
+          page: () => const EventPassDetailScreen(),
+        ),
+        GetPage(
+          name: '/eventCheckInResult',
+          page: () => const EventCheckInResultScreen(),
         ),
       ],
     );

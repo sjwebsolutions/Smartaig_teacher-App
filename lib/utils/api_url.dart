@@ -48,6 +48,9 @@ class ApiUrls {
   static String rejectStudentLeave(dynamic id) => "$baseUrl/student-leaves/$id/reject";
   static const String approveStudentLeavePost = "$baseUrl/student-leaves/approve";
   static const String rejectStudentLeavePost = "$baseUrl/student-leaves/reject";
+  static const String eventTodayScans = "$baseUrl/events/passes/today-scans";
+  static const String eventScanPass = "$baseUrl/events/passes/scan";
+  static const String eventCheckInPass = "$baseUrl/events/passes/check-in";
 
   static String syllabus(int studentId) => "https://smartaig.com/api/v1/students/$studentId/syllabus";
 }

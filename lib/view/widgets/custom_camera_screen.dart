@@ -57,7 +57,6 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     if (_controller == null || !_controller!.value.isInitialized) return;
 
     try {
-      final Size screenSize = MediaQuery.of(context).size;
       setState(() {
         _isProcessing = true;
       });
@@ -70,33 +69,57 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       if (capturedImage != null) {
         capturedImage = img.bakeOrientation(capturedImage);
 
-        double frameSize = screenSize.width * 0.85;
-
-        double scale;
-        double offsetX = 0;
-        double offsetY = 0;
+        if (_controller!.description.lensDirection == CameraLensDirection.front) {
+          capturedImage = img.flipHorizontal(capturedImage);
+        }
 
         double imageW = capturedImage.width.toDouble();
         double imageH = capturedImage.height.toDouble();
 
-        if (imageH > imageW) {
-          scale = imageW / frameSize;
-          offsetY = (imageH - frameSize * scale) / 2;
+        // Calculate aspect ratio of camera preview displayed on screen
+        final previewSize = _controller!.value.previewSize;
+        double previewRatio;
+
+        if (previewSize != null && previewSize.width > 0 && previewSize.height > 0) {
+          if (imageH >= imageW) {
+            previewRatio = previewSize.height / previewSize.width;
+          } else {
+            previewRatio = previewSize.width / previewSize.height;
+          }
         } else {
-          scale = imageH / frameSize;
-          offsetX = (imageW - frameSize * scale) / 2;
+          previewRatio = imageW / imageH;
         }
 
-        int cropSize = (frameSize * scale).toInt();
-        int cropX = offsetX.toInt();
-        int cropY = offsetY.toInt();
+        double visibleSquareSize;
+        if (imageH >= imageW) {
+          visibleSquareSize = imageH * previewRatio;
+          if (visibleSquareSize > imageW) {
+            visibleSquareSize = imageW;
+          }
+        } else {
+          visibleSquareSize = imageW * previewRatio;
+          if (visibleSquareSize > imageH) {
+            visibleSquareSize = imageH;
+          }
+        }
+
+        int cropSize = visibleSquareSize.toInt();
+        int cropX = ((imageW - visibleSquareSize) / 2).toInt();
+        int cropY = ((imageH - visibleSquareSize) / 2).toInt();
+
+        cropX = cropX.clamp(0, capturedImage.width - 1);
+        cropY = cropY.clamp(0, capturedImage.height - 1);
+        cropSize = cropSize.clamp(1, capturedImage.width - cropX);
+        if (cropY + cropSize > capturedImage.height) {
+          cropSize = capturedImage.height - cropY;
+        }
 
         img.Image croppedImage = img.copyCrop(
           capturedImage,
-          x: cropX.clamp(0, capturedImage.width - 1),
-          y: cropY.clamp(0, capturedImage.height - 1),
-          width: cropSize.clamp(1, capturedImage.width - cropX),
-          height: cropSize.clamp(1, capturedImage.height - cropY),
+          x: cropX,
+          y: cropY,
+          width: cropSize,
+          height: cropSize,
         );
 
         final String path = imageFile.path.replaceAll('.jpg', '_processed.jpg');

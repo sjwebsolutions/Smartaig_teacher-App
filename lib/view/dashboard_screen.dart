@@ -12,6 +12,14 @@ import '../controller/banner_controller.dart';
 import '../controller/announcement_controller.dart';
 import '../controller/notification_controller.dart';
 import '../controller/student_leave_controller.dart';
+import '../controller/homework_controller.dart';
+import '../controller/marks_controller.dart';
+import '../controller/syllabus_controller.dart';
+import '../controller/date_sheet_controller.dart';
+import '../controller/time_table_controller.dart';
+import '../controller/gate_pass_controller.dart';
+import '../controller/invigilator_controller.dart';
+import '../controller/leave_controller.dart';
 import '../themes/appColors_&_styles/app_Colors.dart';
 import '../themes/appColors_&_styles/text_styles.dart';
 import '../themes/app_bar/app_top_bar.dart';
@@ -96,6 +104,30 @@ class DashboardScreen extends StatelessWidget {
                 await notificationController.fetchUnreadCount();
                 if (Get.isRegistered<StudentLeaveController>()) {
                   await Get.find<StudentLeaveController>().fetchStudentLeaves();
+                }
+                if (Get.isRegistered<HomeworkController>()) {
+                  await Get.find<HomeworkController>().fetchHomeworkList();
+                }
+                if (Get.isRegistered<MarksController>()) {
+                  await Get.find<MarksController>().fetchMarksEntries();
+                }
+                if (Get.isRegistered<SyllabusController>()) {
+                  await Get.find<SyllabusController>().fetchTeacherSyllabus();
+                }
+                if (Get.isRegistered<DateSheetController>()) {
+                  await Get.find<DateSheetController>().fetchDateSheets();
+                }
+                if (Get.isRegistered<TimeTableController>()) {
+                  await Get.find<TimeTableController>().fetchTimeTable();
+                }
+                if (Get.isRegistered<GatePassController>()) {
+                  await Get.find<GatePassController>().fetchGatePasses();
+                }
+                if (Get.isRegistered<InvigilatorController>()) {
+                  await Get.find<InvigilatorController>().fetchInvigilatorDuties();
+                }
+                if (Get.isRegistered<LeaveController>()) {
+                  await Get.find<LeaveController>().fetchLeaves();
                 }
               },
               color: AppColors.primary,
@@ -968,14 +1000,12 @@ class DashboardScreen extends StatelessWidget {
               final isLoading = controller.isLoading.value;
               final attendance = controller.dashboard.value?.data?.todayAttendance;
               
-              final String? statusCode = attendance?.statusCode;
+              final String? statusCode = attendance?.statusCode?.toUpperCase();
               final String? status = attendance?.status?.toLowerCase();
+              final String? statusLabel = attendance?.statusLabel;
               final bool isMarked = attendance?.isMarked ?? false;
               // Check if teacher has clocked in during current session
               final bool localClockedIn = controller.isMarked.value || controller.clockInTime.value != null;
-              
-              final isPresent = status == "present" || isMarked || localClockedIn;
-              final isAbsent = status == "absent" && statusCode != "NM";
 
               String statusText;
               Color statusColor;
@@ -983,12 +1013,24 @@ class DashboardScreen extends StatelessWidget {
               if (isLoading && attendance == null) {
                 statusText = "Checking...";
                 statusColor = Colors.grey;
-              } else if (isPresent) {
-                statusText = "Present";
+              } else if (status == "leave" || statusCode == "L" || (statusLabel != null && statusLabel.toLowerCase().contains("leave"))) {
+                statusText = statusLabel ?? "On Leave";
+                statusColor = Colors.orange;
+              } else if (status == "present" || statusCode == "P" || localClockedIn || (isMarked && (status == "present" || attendance?.clockIn != null))) {
+                statusText = statusLabel ?? "Present";
                 statusColor = AppColors.green;
-              } else if (isAbsent) {
-                statusText = "Absent";
+              } else if (status == "absent" || statusCode == "A") {
+                statusText = statusLabel ?? "Absent";
                 statusColor = AppColors.red;
+              } else if (status == "half_day" || status == "halfday" || statusCode == "HD" || (statusLabel != null && statusLabel.toLowerCase().contains("half"))) {
+                statusText = statusLabel ?? "Half Day";
+                statusColor = Colors.purple;
+              } else if (status == "holiday" || statusCode == "H" || (statusLabel != null && statusLabel.toLowerCase().contains("holiday"))) {
+                statusText = statusLabel ?? "Holiday";
+                statusColor = Colors.blue;
+              } else if (statusLabel != null && statusLabel.isNotEmpty) {
+                statusText = statusLabel;
+                statusColor = isMarked ? AppColors.green : Colors.orange;
               } else {
                 statusText = "Not marked yet";
                 statusColor = Colors.orange;
